@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Pembaikan Dashboard</title>
+    <title>Laporan Pembaikan Dashboard - Pintar AI</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -37,6 +37,9 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
+    <!-- Leaflet Heat -->
+    <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
 
     <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -167,14 +170,14 @@
     <div id="loading-overlay">
         <div class="spinner mb-4"></div>
         <h2 id="loading-text" class="text-xl font-semibold text-blue-400">Loading Data...</h2>
-        <p id="loading-subtext" class="text-gray-400 mt-2 text-sm">Initializing Enterprise Dashboard</p>
+        <p id="loading-subtext" class="text-gray-400 mt-2 text-sm">Initializing Smart Dashboard</p>
     </div>
 
     <!-- Header dengan Navigasi Utama Pintasan -->
     <header class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
             <h1 class="text-3xl font-bold tracking-tight text-white flex items-center gap-3">
-                <i class="fa-solid fa-chart-line text-blue-500"></i> Laporan Pembaikan
+                <i class="fa-solid fa-chart-line text-blue-500"></i> Laporan Pembaikan & Pintar AI
             </h1>
         </div>
         
@@ -188,7 +191,7 @@
                     </li>
                     <li>
                         <button onclick="scrollToSection('map-section')" id="nav-map" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-md text-sm font-medium transition-all duration-200">
-                            Map View
+                            Map & Heatmap
                         </button>
                     </li>
                     <li>
@@ -205,16 +208,52 @@
         </div>
     </header>
 
+    <!-- ANOMALY & RISK DETECTION AGENT ALERT CONTAINER -->
+    <div id="anomaly-alert-container" class="mb-6 hidden">
+        <!-- Dinamik paparan amaran risiko -->
+    </div>
+
+    <!-- NATURAL LANGUAGE DASHBOARD QUERY (AI ASSISTANT BAR) -->
+    <section class="dashboard-card p-4 mb-6 bg-gradient-to-r from-blue-950/40 via-slate-900 to-indigo-950/40 border-blue-500/30">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-blue-400 text-lg">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div>
+                    <h2 class="text-base font-semibold text-white">Natural Language Query (AI Assistant)</h2>
+                    <p class="text-xs text-gray-400">Tanya atau cari data menggunakan ayat biasa (Contoh: "paip pecah dma lukut", "bulan mei")</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 w-full md:w-1/2">
+                <div class="relative w-full">
+                    <input type="text" id="ai-query-input" class="filter-select w-full rounded-lg pl-4 pr-10 py-2.5 text-sm bg-slate-950 border-slate-700 text-white placeholder-gray-500 focus:border-blue-500" placeholder="Taip arahan atau soalan di sini...">
+                    <button id="ai-query-clear" class="absolute right-3 top-3 text-gray-400 hover:text-white text-xs hidden">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                <button id="ai-query-btn" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium transition shadow-md whitespace-nowrap flex items-center gap-2">
+                    <i class="fa-solid fa-paper-plane text-xs"></i> Tanya
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- FILTERS SECTION -->
     <section class="dashboard-card p-4 mb-6" id="dashboard-section">
         <div class="flex justify-between items-center mb-4">
             <h2 class="text-lg font-semibold text-gray-200"><i class="fa-solid fa-filter mr-2"></i>Filters</h2>
-            <button id="btn-reset" class="px-3 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 rounded text-sm transition-colors flex items-center gap-2">
-                <i class="fa-solid fa-rotate-right"></i> Reset
-            </button>
+            <div class="flex items-center gap-2">
+                <button id="btn-export-md" class="px-3 py-1.5 bg-blue-600/20 text-blue-400 hover:bg-blue-600/30 border border-blue-500/20 rounded text-sm transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-file-arrow-down"></i> Eksport .MD (NotebookLM)
+                </button>
+                <button id="btn-reset" class="px-3 py-1.5 bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/20 rounded text-sm transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-rotate-right"></i> Reset
+                </button>
+            </div>
         </div>
         
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            
             <div class="flex flex-col">
                 <label class="text-xs text-gray-400 mb-1 uppercase tracking-wider">Search</label>
                 <div class="relative">
@@ -265,6 +304,7 @@
         </div>
     </section>
 
+    <!-- KPI CARDS -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <div class="dashboard-card p-4 relative overflow-hidden group">
             <div class="absolute right-0 top-0 opacity-10 text-6xl group-hover:scale-110 transition-transform -mt-2 -mr-2"><i class="fa-solid fa-clipboard-list"></i></div>
@@ -297,8 +337,8 @@
         </div>
     </section>
 
+    <!-- CHARTS SECTION -->
     <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        
         <div class="dashboard-card p-4">
             <h3 class="text-lg font-semibold mb-2">Jumlah Aduan Mengikut Bulan</h3>
             <div id="chart-month" class="w-full h-64"></div>
@@ -338,19 +378,23 @@
             <h3 class="text-lg font-semibold mb-2">Kerja Sivil</h3>
             <div id="chart-civil-works" class="w-full h-64"></div>
         </div>
-
     </section>
 
-    <!-- Lokasi Kes (Map View Section) -->
+    <!-- LOKASI KES & HEATMAP SECTION -->
     <section id="map-section" class="mb-6 dashboard-card overflow-hidden scroll-mt-6">
-        <div class="p-4 border-b border-gray-700 bg-gray-800 flex justify-between items-center">
-            <h3 class="text-lg font-semibold flex items-center gap-2"><i class="fa-solid fa-map-location-dot text-blue-400"></i>Lokasi Kes</h3>
-            <button id="btn-fit-bounds" class="text-sm bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded transition">Fit Bounds</button>
+        <div class="p-4 border-b border-gray-700 bg-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <h3 class="text-lg font-semibold flex items-center gap-2"><i class="fa-solid fa-map-location-dot text-blue-400"></i>Peta Lokasi Kes & Heatmap Hotspot</h3>
+            <div class="flex items-center gap-2">
+                <button id="btn-toggle-map" class="text-sm bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded transition text-white font-medium flex items-center gap-1.5">
+                    <i class="fa-solid fa-fire"></i> <span id="map-mode-text">Mod Heatmap</span>
+                </button>
+                <button id="btn-fit-bounds" class="text-sm bg-gray-700 hover:bg-gray-600 px-3 py-1.5 rounded transition">Fit Bounds</button>
+            </div>
         </div>
         <div id="map"></div>
     </section>
 
-    <!-- Butiran (Data Table Section) -->
+    <!-- DATA TABLE SECTION -->
     <section id="table-section" class="dashboard-card p-4 mb-10 overflow-hidden scroll-mt-6">
         <h3 class="text-lg font-semibold mb-4 flex items-center gap-2"><i class="fa-solid fa-table text-emerald-400"></i>Butiran</h3>
         <div class="overflow-x-auto w-full">
@@ -378,7 +422,7 @@
         </div>
     </section>
 
-    <!-- Floating Quick Access/Shortcut Menu -->
+    <!-- Floating Quick Access Menu -->
     <div class="fixed bottom-6 right-6 z-[999] flex flex-col sm:flex-row items-center gap-2 bg-slate-900/90 backdrop-blur border border-slate-700/60 p-2 rounded-full shadow-2xl transition-all duration-300">
         <button onclick="scrollToSection('top')" id="float-dashboard" class="w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded-full hover:bg-blue-500 active:scale-95 transition-all duration-200" title="Ke Dashboard Atas">
             <i class="fa-solid fa-chart-line"></i>
@@ -393,28 +437,18 @@
 
     <script>
         // Constants & State
-        
-        // --- CLOUDFLARE WORKER PROXY ---
-        // GANTIKAN URL DI BAWAH DENGAN URL WORKER CLOUDFLARE ANDA:
         const CSV_URL = 'https://laporanpembaikan.sainspdwater.workers.dev';
-        
-        // (Saya biarkan link asal Google Sheets sebagai rujukan, ianya telah ditutup/comment)
-        // const CSV_URL_ORIGINAL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ7yyExltGkVcuA8A7mf2pwZj4Ta0UimemwjTN3zAEnmTsbX0AKFxrhOCaMqA7ev1IqxOjAZQuVZZzp/pub?gid=96301861&single=true&output=csv';
         
         let rawData = [];
         let filteredData = [];
         
-        // Chart Instances
         let charts = {};
-        
-        // Map Instances
         let map;
         let markerClusterGroup;
-
-        // DataTable Instance
+        let heatLayer = null;
+        let isHeatmapMode = false; // Status mod peta (false = Marker, true = Heatmap)
         let dataTable;
 
-        // Theme Configuration for Charts
         const apexTheme = {
             mode: 'dark',
             palette: 'palette1',
@@ -429,7 +463,6 @@
             grid: { borderColor: '#334155', strokeDashArray: 4 }
         };
 
-        // Shortcut Scroll Logic
         function scrollToSection(id) {
             if (id === 'top') {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -437,17 +470,13 @@
                 const element = document.getElementById(id);
                 if (element) {
                     element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    // Trigger map update if transitioning to map view to ensure tiles load seamlessly
                     if (id === 'map-section' && map) {
-                        setTimeout(() => {
-                            map.invalidateSize();
-                        }, 400);
+                        setTimeout(() => { map.invalidateSize(); }, 400);
                     }
                 }
             }
         }
 
-        // Custom Toast Notifications
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
@@ -456,72 +485,45 @@
                 ? 'bg-emerald-950/90 border-emerald-500 text-emerald-200' 
                 : 'bg-rose-950/90 border-rose-500 text-rose-200'
             }`;
-            
-            const icon = type === 'success' 
-                ? '<i class="fa-solid fa-circle-check text-emerald-400"></i>' 
-                : '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>';
-
+            const icon = type === 'success' ? '<i class="fa-solid fa-circle-check text-emerald-400"></i>' : '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>';
             toast.innerHTML = `${icon} <span>${message}</span>`;
             container.appendChild(toast);
-
-            // Trigger Animation In
-            setTimeout(() => {
-                toast.classList.remove('translate-y-2', 'opacity-0');
-            }, 10);
-
-            // Auto Dismiss
+            setTimeout(() => { toast.classList.remove('translate-y-2', 'opacity-0'); }, 10);
             setTimeout(() => {
                 toast.classList.add('opacity-0', 'translate-y-2');
-                setTimeout(() => {
-                    toast.remove();
-                }, 300);
+                setTimeout(() => { toast.remove(); }, 300);
             }, 4000);
         }
 
-        // Active State Watcher for Navigation (Intersection Observer)
         function initScrollWatcher() {
             const sections = [
                 { id: 'dashboard-section', navId: 'nav-dashboard', floatId: 'float-dashboard' },
                 { id: 'map-section', navId: 'nav-map', floatId: 'float-map' },
                 { id: 'table-section', navId: 'nav-table', floatId: 'float-table' }
             ];
-
-            const observerOptions = {
-                root: null,
-                rootMargin: '-20% 0px -60% 0px',
-                threshold: 0
-            };
-
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         const targetConfig = sections.find(s => s.id === entry.target.id);
                         if (targetConfig) {
-                            // Update header navigation
                             sections.forEach(s => {
                                 const navBtn = document.getElementById(s.navId);
                                 if (navBtn) {
-                                    if (s.navId === targetConfig.navId) {
-                                        navBtn.className = "px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium transition-all duration-200 shadow-md";
-                                    } else {
-                                        navBtn.className = "px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-md text-sm font-medium transition-all duration-200";
-                                    }
+                                    navBtn.className = s.navId === targetConfig.navId 
+                                        ? "px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium transition-all duration-200 shadow-md"
+                                        : "px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-md text-sm font-medium transition-all duration-200";
                                 }
-
-                                // Update float dock navigation
                                 const floatBtn = document.getElementById(s.floatId);
                                 if (floatBtn) {
-                                    if (s.floatId === targetConfig.floatId) {
-                                        floatBtn.className = "w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded-full active:scale-95 transition-all duration-200 shadow-lg scale-110";
-                                    } else {
-                                        floatBtn.className = "w-10 h-10 flex items-center justify-center bg-gray-800 text-slate-300 hover:text-white rounded-full hover:bg-slate-700 active:scale-95 transition-all duration-200";
-                                    }
+                                    floatBtn.className = s.floatId === targetConfig.floatId
+                                        ? "w-10 h-10 flex items-center justify-center bg-blue-600 text-white rounded-full active:scale-95 transition-all duration-200 shadow-lg scale-110"
+                                        : "w-10 h-10 flex items-center justify-center bg-gray-800 text-slate-300 hover:text-white rounded-full hover:bg-slate-700 active:scale-95 transition-all duration-200";
                                 }
                             });
                         }
                     }
                 });
-            }, observerOptions);
+            }, { root: null, rootMargin: '-20% 0px -60% 0px', threshold: 0 });
 
             sections.forEach(s => {
                 const el = document.getElementById(s.id);
@@ -537,7 +539,6 @@
         });
 
         function fetchData() {
-            // Show loading UI
             document.getElementById('loading-overlay').style.display = 'flex';
             
             Papa.parse(CSV_URL, {
@@ -545,7 +546,6 @@
                 header: true,
                 skipEmptyLines: true,
                 complete: function(results) {
-                    // Clean data: ensure core columns exist
                     rawData = results.data.filter(row => row['NO ADUAN'] && row['NO ADUAN'].trim() !== '');
                     filteredData = [...rawData];
                     
@@ -554,7 +554,8 @@
                     
                     populateFilterOptions();
                     initCharts();
-                    updateDashboard(); // Initial render
+                    runAnomalyDetection(); // Jalankan Ejen Pengesan Anomali
+                    updateDashboard();
                 },
                 error: function(error) {
                     console.error("Error fetching CSV:", error);
@@ -566,27 +567,21 @@
 
         function getUniqueValues(key) {
             const values = [...new Set(rawData.map(item => item[key]?.trim()).filter(val => val !== "" && val !== undefined))];
-            
-            // Special numerical sorting for pipe size
             if (key === 'SAIZ PAIP') {
                 return values.sort((a, b) => {
-                    const numA = parseFloat(a);
-                    const numB = parseFloat(b);
+                    const numA = parseFloat(a), numB = parseFloat(b);
                     if (isNaN(numA) && isNaN(numB)) return a.localeCompare(b);
-                    if (isNaN(numA)) return 1; // Put non-numbers at the end
+                    if (isNaN(numA)) return 1;
                     if (isNaN(numB)) return -1;
                     return numA - numB;
                 });
             }
-            
             return values.sort();
         }
 
         function populateSelect(elementId, values) {
             const select = document.getElementById(elementId);
-            // Reset to default "All"
             select.innerHTML = '<option value="">All</option>';
-            
             values.forEach(val => {
                 const option = document.createElement('option');
                 option.value = val;
@@ -625,33 +620,254 @@
                 showToast("Pilihan penapis telah dikosongkan.");
             });
 
+            document.getElementById('btn-export-md').addEventListener('click', exportFilteredToMarkdown);
+
+            // Toggle Map Mode (Marker vs Heatmap)
+            document.getElementById('btn-toggle-map').addEventListener('click', () => {
+                isHeatmapMode = !isHeatmapMode;
+                const modeText = document.getElementById('map-mode-text');
+                if (isHeatmapMode) {
+                    modeText.innerText = "Mod Marker";
+                    showToast("Peta ditukar kepada mod Heatmap Hotspot.");
+                } else {
+                    modeText.innerText = "Mod Heatmap";
+                    showToast("Peta ditukar kepada mod Marker Cluster.");
+                }
+                updateMapMarkers();
+            });
+
             document.getElementById('btn-fit-bounds').addEventListener('click', () => {
-                if(markerClusterGroup && markerClusterGroup.getBounds().isValid()){
+                if(markerClusterGroup && markerClusterGroup.getBounds().isValid() && !isHeatmapMode){
                     map.fitBounds(markerClusterGroup.getBounds(), { padding: [50, 50] });
                     showToast("Sempadan peta dilaraskan mengikut rekod aduan.");
                 } else {
-                    showToast("Tiada koordinat rekod aduan yang valid untuk dilaraskan.", "error");
+                    showToast("Sila guna 'Fit Bounds' dalam mod Marker Cluster.", "error");
                 }
             });
 
+            // Natural Language Query Event Listeners
+            const aiInput = document.getElementById('ai-query-input');
+            const aiClear = document.getElementById('ai-query-clear');
+            
+            aiInput.addEventListener('input', () => {
+                aiClear.classList.toggle('hidden', aiInput.value.trim() === '');
+            });
+
+            aiClear.addEventListener('click', () => {
+                aiInput.value = '';
+                aiClear.classList.add('hidden');
+                aiInput.focus();
+            });
+
+            document.getElementById('ai-query-btn').addEventListener('click', processNaturalLanguageQuery);
+            aiInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') processNaturalLanguageQuery();
+            });
+
             document.getElementById('btn-refresh-data').addEventListener('click', () => {
-                // Return loading UI to active state
                 const overlayText = document.getElementById('loading-text');
                 const overlaySub = document.getElementById('loading-subtext');
                 overlayText.innerText = "Refreshing Data...";
-                overlayText.classList.replace('text-red-500', 'text-blue-400');
-                overlaySub.innerText = "Syncing with Enterprise servers";
                 document.querySelector('.spinner').style.display = 'block';
-                
                 const icon = document.querySelector('#btn-refresh-data i');
                 icon.classList.add('fa-spin');
-                
                 fetchData();
-                
-                setTimeout(() => {
-                    icon.classList.remove('fa-spin');
-                }, 1000);
+                setTimeout(() => { icon.classList.remove('fa-spin'); }, 1000);
             });
+        }
+
+        // ==========================================
+        // 1. NATURAL LANGUAGE DASHBOARD QUERY AGENT
+        // ==========================================
+        function processNaturalLanguageQuery() {
+            const query = document.getElementById('ai-query-input').value.toLowerCase().trim();
+            if (!query) {
+                showToast("Sila masukkan soalan atau arahan kepada AI.", "error");
+                return;
+            }
+
+            showToast("AI sedang memproses arahan...");
+
+            // Reset filters dulu
+            document.getElementById('filter-bulan').value = '';
+            document.getElementById('filter-dma').value = '';
+            document.getElementById('filter-kategori').value = '';
+            document.getElementById('filter-dilaksanakan').value = '';
+            document.getElementById('filter-jenis-paip').value = '';
+            document.getElementById('filter-saiz-paip').value = '';
+            document.getElementById('filter-sivil-works').value = '';
+            document.getElementById('filter-kpi-aduan').value = '';
+            document.getElementById('filter-search').value = '';
+
+            // Carian kata kunci pintar (Smart NLP keyword matching)
+            let matchedCount = 0;
+            
+            // Semak bulan
+            const monthsList = getUniqueValues('BULAN');
+            monthsList.forEach(m => {
+                if (query.includes(m.toLowerCase())) {
+                    document.getElementById('filter-bulan').value = m;
+                    matchedCount++;
+                }
+            });
+
+            // Semak DMA
+            const dmaList = getUniqueValues('DMA');
+            dmaList.forEach(d => {
+                if (query.includes(d.toLowerCase())) {
+                    document.getElementById('filter-dma').value = d;
+                    matchedCount++;
+                }
+            });
+
+            // Semak Kategori
+            const catList = getUniqueValues('KATEGORI');
+            catList.forEach(c => {
+                if (query.includes(c.toLowerCase())) {
+                    document.getElementById('filter-kategori').value = c;
+                    matchedCount++;
+                }
+            });
+
+            // Semak Dilaksanakan Oleh
+            const dilakList = getUniqueValues('DILAKSANAKAN OLEH');
+            dilakList.forEach(d => {
+                if (query.includes(d.toLowerCase())) {
+                    document.getElementById('filter-dilaksanakan').value = d;
+                    matchedCount++;
+                }
+            });
+
+            // Jika tiada padanan spesifik, masukkan ke global search
+            if (matchedCount === 0) {
+                document.getElementById('filter-search').value = query;
+            }
+
+            applyFilters();
+            showToast(`AI Berjaya menapis ${filteredData.length} rekod berdasarkan arahan anda!`);
+        }
+
+        // ==========================================
+        // 2. ANOMALY & RISK DETECTION AGENT
+        // ==========================================
+        function runAnomalyDetection() {
+            const container = document.getElementById('anomaly-alert-container');
+            if (!rawData || rawData.length === 0) return;
+
+            let anomalies = [];
+
+            // Analisis 1: Semak lokasi kerap berulang (Hotspot berisiko)
+            const locationCounts = {};
+            rawData.forEach(row => {
+                const loc = (row['LOKASI / TEMPAT'] || row['LOKASI'] || '').trim().toLowerCase();
+                if (loc && loc !== 'tiada maklumat' && loc !== '-') {
+                    locationCounts[loc] = (locationCounts[loc] || 0) + 1;
+                }
+            });
+
+            Object.entries(locationCounts).forEach(([loc, count]) => {
+                if (count >= 3) {
+                    anomalies.push(`Kawasan <b>"${loc.toUpperCase()}"</b> mencatatkan ${count} aduan berulang. Risiko kerosakan paip berterusan.`);
+                }
+            });
+
+            // Analisis 2: Semak kadar kegagalan KPI
+            let total = rawData.length;
+            let failedKpi = 0;
+            rawData.forEach(row => {
+                const val = (row['KPI ADUAN'] || '').toString().toLowerCase();
+                const isSuccess = val.includes('√') || val === 'yes' || val === '1' || val === 'pass' || val === 'achieved' || val.includes('lulus');
+                if (!isSuccess) failedKpi++;
+            });
+
+            const failRate = Math.round((failedKpi / total) * 100);
+            if (failRate > 15) {
+                anomalies.push(`Kadar kegagalan KPI Aduan keseluruhan agak tinggi (${failRate}% daripada jumlah kes). Perlu tindakan pemantauan segera.`);
+            }
+
+            // Papar amaran jika ada anomali dikesan
+            if (anomalies.length > 0) {
+                let alertHtml = `
+                    <div class="dashboard-card p-4 bg-amber-950/30 border-amber-500/40 text-amber-200">
+                        <div class="flex items-start gap-3">
+                            <div class="text-amber-400 text-xl mt-0.5"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="flex-1">
+                                <h4 class="font-bold text-amber-300 text-sm mb-1 uppercase tracking-wider">Ejen Amaran Risiko & Anomali Dikesan</h4>
+                                <ul class="list-disc list-inside text-xs space-y-1 text-amber-200/90">
+                `;
+                anomalies.slice(0, 3).forEach(item => {
+                    alertHtml += `<li>${item}</li>`;
+                });
+                alertHtml += `
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML = alertHtml;
+                container.classList.remove('hidden');
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        // ==========================================
+        // EXPORT .MD FUNCTION
+        // ==========================================
+        function exportFilteredToMarkdown() {
+            if (!filteredData || filteredData.length === 0) {
+                showToast("Tiada data untuk dieksport berdasarkan penapis semasa.", "error");
+                return;
+            }
+
+            const tarikhHariIni = new Date().toISOString().slice(0, 10);
+            const sBulan = document.getElementById('filter-bulan').value || 'Semua';
+            const sDma = document.getElementById('filter-dma').value || 'Semua';
+            const sKategori = document.getElementById('filter-kategori').value || 'Semua';
+            const sDilaksanakan = document.getElementById('filter-dilaksanakan').value || 'Semua';
+            const sJenis = document.getElementById('filter-jenis-paip').value || 'Semua';
+            const sSaiz = document.getElementById('filter-saiz-paip').value || 'Semua';
+            const sSivil = document.getElementById('filter-sivil-works').value || 'Semua';
+            const sKpi = document.getElementById('filter-kpi-aduan').value || 'Semua';
+            const sSearch = document.getElementById('filter-search').value || 'Tiada';
+
+            let md = `# Laporan Analisis Pembaikan Operasi - Port Dickson\n`;
+            md += `* **Tarikh Eksport:** ${tarikhHariIni}\n`;
+            md += `* **Jumlah Rekod Terpilih:** ${filteredData.length}\n\n`;
+            
+            md += `## Kriteria Tapisan (Filters Aktif)\n`;
+            md += `- Bulan: ${sBulan}\n- DMA: ${sDma}\n- Kategori: ${sKategori}\n- Dilaksanakan Oleh: ${sDilaksanakan}\n- Jenis Paip: ${sJenis}\n- Saiz Paip: ${sSaiz}\n- Sivil Works: ${sSivil}\n- KPI Aduan: ${sKpi}\n- Carian Teks: ${sSearch}\n\n`;
+
+            md += `## Butiran Kes / Rekod Laporan\n\n`;
+            md += `| No Aduan | KPI Aduan | Lokasi / Tempat | DMA | Kategori | Jenis Paip | Saiz Paip | Sivil Works | Dilaksanakan Oleh | Bulan |\n`;
+            md += `|---|---|---|---|---|---|---|---|---|---|\n`;
+
+            filteredData.forEach(row => {
+                const noAduan = (row['NO ADUAN'] || '-').trim();
+                const kpi = (row['KPI ADUAN'] || '-').trim();
+                const lokasi = (row['LOKASI / TEMPAT'] || row['LOKASI'] || '-').trim().replace(/\|/g, '-');
+                const dma = (row['DMA'] || '-').trim();
+                const kategori = (row['KATEGORI'] || '-').trim();
+                const jenis = (row['JENIS PAIP'] || '-').trim();
+                const saiz = (row['SAIZ PAIP'] || '-').trim();
+                const sivil = (row['SIVIL WORKS'] || '-').trim();
+                const oleh = (row['DILAKSANAKAN OLEH'] || '-').trim();
+                const bulan = (row['BULAN'] || '-').trim();
+
+                md += `| ${noAduan} | ${kpi} | ${lokasi} | ${dma} | ${kategori} | ${jenis} | ${saiz} | ${sivil} | ${oleh} | ${bulan} |\n`;
+            });
+
+            const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Laporan_Pembaikan_Filter_${tarikhHariIni}.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast("Fail .md berjaya dijana dan dimuat turun untuk NotebookLM!");
         }
 
         function applyFilters() {
@@ -666,7 +882,6 @@
             const searchTerms = document.getElementById('filter-search').value.toLowerCase().split(' ').filter(t => t);
 
             filteredData = rawData.filter(row => {
-                // Exact Match Filters
                 if (sBulan && row['BULAN'] !== sBulan) return false;
                 if (sDma && row['DMA'] !== sDma) return false;
                 if (sKategori && row['KATEGORI'] !== sKategori) return false;
@@ -676,12 +891,10 @@
                 if (sSivil && row['SIVIL WORKS'] !== sSivil) return false;
                 if (sKpi && row['KPI ADUAN'] !== sKpi) return false;
 
-                // Global Search (search across all values in the row)
                 if (searchTerms.length > 0) {
                     const rowText = Object.values(row).join(' ').toLowerCase();
                     return searchTerms.every(term => rowText.includes(term));
                 }
-
                 return true;
             });
 
@@ -696,7 +909,6 @@
         }
 
         function updateKPIs() {
-            // Helper to check for KPI success
             const isKpiAchieved = (val) => {
                 if(!val) return false;
                 const v = val.toString().toLowerCase();
@@ -704,7 +916,6 @@
             };
 
             const totalComplaints = filteredData.length;
-            
             const uniqueDma = new Set(filteredData.map(d => d['DMA']).filter(Boolean)).size;
             const uniqueCat = new Set(filteredData.map(d => d['KATEGORI']).filter(Boolean)).size;
             
@@ -718,7 +929,6 @@
 
             const kpiPercentage = totalComplaints === 0 ? 0 : Math.round((kpiSuccessCount / totalComplaints) * 100);
 
-            // Animate numbers
             animateValue('kpi-total', parseInt(document.getElementById('kpi-total').innerText.replace(/,/g, '')) || 0, totalComplaints, 500);
             animateValue('kpi-dma', parseInt(document.getElementById('kpi-dma').innerText.replace(/,/g, '')) || 0, uniqueDma, 500);
             animateValue('kpi-category', parseInt(document.getElementById('kpi-category').innerText.replace(/,/g, '')) || 0, uniqueCat, 500);
@@ -737,11 +947,8 @@
                 const progress = Math.min((timestamp - startTimestamp) / duration, 1);
                 const current = Math.floor(progress * (end - start) + start);
                 document.getElementById(id).innerText = current.toLocaleString();
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                } else {
-                    document.getElementById(id).innerText = end.toLocaleString();
-                }
+                if (progress < 1) window.requestAnimationFrame(step);
+                else document.getElementById(id).innerText = end.toLocaleString();
             };
             window.requestAnimationFrame(step);
         }
@@ -765,10 +972,9 @@
                         return parseFloat(a[0]) - parseFloat(b[0]);
                     });
                 } else {
-                    entries.sort((a, b) => a[0].localeCompare(b[0])); // Alphabetical
+                    entries.sort((a, b) => a[0].localeCompare(b[0]));
                 }
             }
-
             if (limit) entries = entries.slice(0, limit);
 
             return {
@@ -778,7 +984,6 @@
         }
 
         function initCharts() {
-            // 1. Month Chart (Bar)
             charts.month = new ApexCharts(document.querySelector("#chart-month"), {
                 ...commonChartOptions,
                 series: [{ name: 'Complaints', data: [] }],
@@ -788,7 +993,6 @@
             });
             charts.month.render();
 
-            // 2. DMA Chart (Bar Horizontal)
             charts.dma = new ApexCharts(document.querySelector("#chart-dma"), {
                 ...commonChartOptions,
                 series: [{ name: 'Complaints', data: [] }],
@@ -799,7 +1003,6 @@
             });
             charts.dma.render();
 
-            // 3. Category (Donut)
             charts.category = new ApexCharts(document.querySelector("#chart-category"), {
                 ...commonChartOptions,
                 series: [],
@@ -810,7 +1013,6 @@
             });
             charts.category.render();
 
-            // 4. KPI Trend by Month (Area)
             charts.kpiTrend = new ApexCharts(document.querySelector("#chart-kpi-trend"), {
                 ...commonChartOptions,
                 series: [{ name: 'Achievement %', data: [] }],
@@ -823,7 +1025,6 @@
             });
             charts.kpiTrend.render();
 
-            // 5. Dilaksanakan Oleh (Bar)
             charts.dilaksanakan = new ApexCharts(document.querySelector("#chart-dilaksanakan"), {
                 ...commonChartOptions,
                 series: [{ name: 'Complaints', data: [] }],
@@ -834,7 +1035,6 @@
             });
             charts.dilaksanakan.render();
 
-            // 6. Jenis Paip (Pie)
             charts.jenisPaip = new ApexCharts(document.querySelector("#chart-jenis-paip"), {
                 ...commonChartOptions,
                 series: [],
@@ -846,7 +1046,6 @@
             });
             charts.jenisPaip.render();
 
-            // 7. Saiz Paip (Bar Horizontal)
             charts.saizPaip = new ApexCharts(document.querySelector("#chart-saiz-paip"), {
                 ...commonChartOptions,
                 series: [{ name: 'Total', data: [] }],
@@ -857,7 +1056,6 @@
             });
             charts.saizPaip.render();
 
-            // 8. Civil Works (Donut)
             charts.civilWorks = new ApexCharts(document.querySelector("#chart-civil-works"), {
                 ...commonChartOptions,
                 series: [],
@@ -871,65 +1069,52 @@
         }
 
         function updateChartsData() {
-            // 1. Month Chart
             const monthData = aggregateData('BULAN', null, false);
             charts.month.updateSeries([{ data: monthData.data }]);
             charts.month.updateOptions({ xaxis: { categories: monthData.categories } });
 
-            // 2. DMA Chart
             const dmaData = aggregateData('DMA', 10);
             charts.dma.updateSeries([{ data: dmaData.data }]);
             charts.dma.updateOptions({ xaxis: { categories: dmaData.categories } });
 
-            // 3. Category Chart
             const categoryData = aggregateData('KATEGORI', 5);
             charts.category.updateSeries(categoryData.data);
             charts.category.updateOptions({ labels: categoryData.categories });
 
-            // 4. KPI Trend Chart
             const months = getUniqueValues('BULAN');
             const kpiRates = months.map(m => {
                 const dataInMonth = filteredData.filter(d => d['BULAN'] === m);
                 if(dataInMonth.length === 0) return 0;
-                
                 let success = 0;
                 dataInMonth.forEach(row => {
                     const val = (row['KPI ADUAN'] || '').toString().toLowerCase();
-                    if (val.includes('√') || val === 'yes' || val === '1' || val === 'pass' || val === 'achieved' || val.includes('lulus')) {
-                        success++;
-                    }
+                    if (val.includes('√') || val === 'yes' || val === '1' || val === 'pass' || val === 'achieved' || val.includes('lulus')) success++;
                 });
                 return Math.round((success / dataInMonth.length) * 100);
             });
             charts.kpiTrend.updateSeries([{ data: kpiRates }]);
             charts.kpiTrend.updateOptions({ xaxis: { categories: months } });
 
-            // 5. Dilaksanakan Oleh Chart
             const dilakData = aggregateData('DILAKSANAKAN OLEH', 10);
             charts.dilaksanakan.updateSeries([{ data: dilakData.data }]);
             charts.dilaksanakan.updateOptions({ xaxis: { categories: dilakData.categories } });
 
-            // 6. Jenis Paip Chart
             const jenisData = aggregateData('JENIS PAIP', 5);
             charts.jenisPaip.updateSeries(jenisData.data);
             charts.jenisPaip.updateOptions({ labels: jenisData.categories });
 
-            // 7. Saiz Paip Chart
-            const saizData = aggregateData('SAIZ PAIP', 10, false, true); // sort numerically, not by value
+            const saizData = aggregateData('SAIZ PAIP', 10, false, true);
             charts.saizPaip.updateSeries([{ data: saizData.data }]);
             charts.saizPaip.updateOptions({ xaxis: { categories: saizData.categories } });
 
-            // 8. Civil Works Chart
             const civilData = aggregateData('SIVIL WORKS', 5);
             charts.civilWorks.updateSeries(civilData.data);
             charts.civilWorks.updateOptions({ labels: civilData.categories });
         }
 
         function initMap() {
-            // Default center focusing on Malaysia
             map = L.map('map').setView([4.2105, 101.9758], 6); 
 
-            // CartoDB Positron untuk tema cerah (Light Theme)
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
                 subdomains: 'abcd',
@@ -951,41 +1136,57 @@
             map.addLayer(markerClusterGroup);
         }
 
+        // ==========================================
+        // 3. HEATMAP & MARKER TOGGLE SYSTEM
+        // ==========================================
         function updateMapMarkers() {
             markerClusterGroup.clearLayers();
+            if (heatLayer) {
+                map.removeLayer(heatLayer);
+            }
+
             const markers = [];
+            const heatPoints = [];
 
             filteredData.forEach(row => {
-                // Handle possible spelling variations in CSV columns
-                const latStr = row['LATITUDE'] || row['LATITUTE'];
-                const lngStr = row['LONGITUDE'] || row['LONGITUTE'];
-                
-                const lat = parseFloat(latStr);
-                const lng = parseFloat(lngStr);
+                const lat = parseFloat(row['LATITUDE'] || row['LATITUTE']);
+                const lng = parseFloat(row['LONGITUDE'] || row['LONGITUTE']);
                 
                 if (!isNaN(lat) && !isNaN(lng)) {
+                    // Marker biasa untuk Cluster mode
                     const marker = L.marker([lat, lng]);
-                    
                     const noAduan = row['NO ADUAN'] || 'N/A';
                     const lokasi = row['LOKASI / TEMPAT'] || row['LOKASI'] || 'Tiada Maklumat';
                     const status = row['KPI ADUAN'] || '-';
                     const category = row['KATEGORI'] || '-';
                     
-                    const popupContent = `
+                    marker.bindPopup(`
                         <div class="p-2 text-slate-100">
                             <h4 class="font-bold text-blue-400 mb-1 border-b border-gray-600 pb-1">${noAduan}</h4>
                             <p class="text-sm mb-1"><i class="fa-solid fa-location-dot w-4 text-gray-400"></i> ${lokasi}</p>
                             <p class="text-sm mb-1"><i class="fa-solid fa-tag w-4 text-gray-400"></i> ${category}</p>
                             <p class="text-sm"><i class="fa-solid fa-clipboard-check w-4 text-gray-400"></i> KPI: ${status}</p>
                         </div>
-                    `;
-                    
-                    marker.bindPopup(popupContent);
+                    `);
                     markers.push(marker);
+
+                    // Titik koordinat untuk Heatmap mode [lat, lng, intensity]
+                    heatPoints.push([lat, lng, 1.0]);
                 }
             });
 
-            markerClusterGroup.addLayers(markers);
+            if (isHeatmapMode) {
+                // Aktifkan Heatmap Layer
+                heatLayer = L.heatLayer(heatPoints, {
+                    radius: 25,
+                    blur: 15,
+                    maxZoom: 17,
+                    gradient: { 0.4: 'blue', 0.65: 'lime', 1: 'red' }
+                }).addTo(map);
+            } else {
+                // Aktifkan Marker Cluster Layer
+                markerClusterGroup.addLayers(markers);
+            }
         }
 
         function updateTableData() {
