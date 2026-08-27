@@ -74,7 +74,6 @@
         
         .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
         
-        /* LOADING OVERLAY BAR & PERCENTAGE STYLES */
         #loading-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
         .spinner { border: 4px solid rgba(59, 130, 246, 0.2); border-left-color: #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -90,15 +89,13 @@
     <!-- Toast Notification -->
     <div id="toast-container" class="fixed bottom-6 right-6 z-[100] flex flex-col gap-2 pointer-events-none"></div>
 
-    <!-- MODEN LOADING OVERLAY DENGAN PROGRESS BAR & PERCENTAGE -->
+    <!-- MODEN LOADING OVERLAY -->
     <div id="loading-overlay">
         <div class="relative flex items-center justify-center mb-6">
             <div class="absolute animate-ping w-16 h-16 rounded-full bg-blue-500 opacity-20"></div>
             <div class="spinner"></div>
         </div>
         <h2 id="loading-text" class="text-lg font-bold text-blue-400 tracking-wide mb-3">Memuat Data Sistem...</h2>
-        
-        <!-- Progress Bar & Percentage -->
         <div class="w-72 sm:w-80 bg-slate-800 rounded-full h-3.5 p-0.5 border border-slate-700 shadow-inner overflow-hidden">
             <div id="loading-progress-bar" class="bg-gradient-to-r from-blue-600 to-emerald-500 h-full rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
         </div>
@@ -115,6 +112,9 @@
             </button>
             <button id="nav-update" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="Pengurusan Data">
                 <i class="fa-solid fa-database w-6 text-center"></i> <span class="sidebar-text ml-3 font-medium">Pengurusan Data</span>
+            </button>
+            <button id="nav-daily" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="Laporan Harian">
+                <i class="fa-solid fa-calendar-day w-6 text-center"></i> <span class="sidebar-text ml-3 font-medium">Laporan Harian</span>
             </button>
         </nav>
 
@@ -304,6 +304,60 @@
                 </table>
             </section>
         </div>
+
+        <!-- TAB 3: LAPORAN HARIAN & NOTA WHATSAPP -->
+        <div id="daily-content" class="hidden pb-24">
+            <header class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3"><i class="fa-solid fa-calendar-day text-blue-500"></i> Laporan Harian & Nota Rasmi</h2>
+                    <p class="text-slate-500 dark:text-gray-400 mt-1">Pilih tarikh untuk jana format laporan harian operasi ke WhatsApp</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="btn-copy-daily-whatsapp" class="px-4 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-md text-sm font-bold flex items-center gap-2 shadow transition">
+                        <i class="fa-solid fa-copy"></i> Copy Text
+                    </button>
+                    <button id="btn-open-whatsapp-link" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-sm font-bold flex items-center gap-2 shadow transition">
+                        <i class="fa-brands fa-whatsapp text-lg"></i> Pautan WhatsApp
+                    </button>
+                </div>
+            </header>
+
+            <!-- KOTAK PILIH KALENDER -->
+            <section class="dashboard-card p-6 mb-6">
+                <div class="flex flex-col sm:flex-row items-center gap-4">
+                    <div class="w-full sm:w-1/3">
+                        <label class="form-label">Pilih Tarikh Laporan</label>
+                        <input type="date" id="daily-date-picker" class="form-input">
+                    </div>
+                    <div class="w-full sm:w-auto self-end">
+                        <button id="btn-load-daily" class="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-bold flex items-center gap-2 shadow transition">
+                            <i class="fa-solid fa-magnifying-glass"></i> Jana Laporan Tarikh Ini
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PREBIU KOTAK NOTA RASMI -->
+            <section class="dashboard-card p-6 mb-6 border-2 border-blue-500/30">
+                <div class="flex justify-between items-center mb-3">
+                    <h3 class="text-md font-bold text-slate-800 dark:text-gray-200 flex items-center gap-2">
+                        <i class="fa-solid fa-eye text-blue-500"></i> Prebiu Templat Laporan (Boleh edit manual jika perlu)
+                    </h3>
+                    <span class="text-xs text-slate-400 font-mono">Format Rasmi WhatsApp</span>
+                </div>
+                <textarea id="daily-whatsapp-preview" rows="16" class="form-input font-mono text-xs leading-relaxed resize-y bg-slate-900 text-slate-100 p-4 rounded-xl border border-slate-700" placeholder="Sila pilih tarikh dan klik 'Jana Laporan Tarikh Ini'..."></textarea>
+            </section>
+
+            <!-- RUJUKAN KES HARIAN -->
+            <section class="dashboard-card p-6">
+                <h3 class="text-lg font-semibold text-slate-800 dark:text-gray-200 mb-4">
+                    Senarai Kes Terperinci Pada Tarikh: <span id="daily-label-date" class="text-blue-500 font-mono">-</span>
+                </h3>
+                <div id="daily-cases-list" class="space-y-4">
+                    <p class="text-sm text-slate-500 text-center py-8">Sila pilih tarikh pada kalender di atas dan klik "Jana Laporan Tarikh Ini".</p>
+                </div>
+            </section>
+        </div>
     </main>
 
     <!-- MODAL: TAMBAH / KEMASKINI REKOD -->
@@ -315,26 +369,18 @@
             </h3>
 
             <form id="form-mutation" class="space-y-6">
-                <!-- SEKSYEN 1 -->
                 <div class="bg-slate-50 dark:bg-gray-800/40 p-4 rounded-lg border border-slate-200 dark:border-gray-700/50">
                     <h4 class="text-sm font-bold text-cyan-500 dark:text-cyan-400 mb-4 flex items-center gap-2"><i class="fa-solid fa-location-dot"></i> Maklumat Asas & Lokasi</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div><label class="form-label">No Aduan <span class="text-red-500">*</span></label><input type="text" id="m-noAduan" class="form-input" required></div>
-                        <div><label class="form-label">Zon</label>
-                            <select id="m-zon" class="form-input"></select>
-                        </div>
-                        <div><label class="form-label">DMA</label>
-                            <select id="m-dma" class="form-input"></select>
-                        </div>
-                        <div><label class="form-label">Kategori</label>
-                            <select id="m-kategori" class="form-input"></select>
-                        </div>
+                        <div><label class="form-label">Zon</label><select id="m-zon" class="form-input"></select></div>
+                        <div><label class="form-label">DMA</label><select id="m-dma" class="form-input"></select></div>
+                        <div><label class="form-label">Kategori</label><select id="m-kategori" class="form-input"></select></div>
                         <div class="md:col-span-2"><label class="form-label">Lokasi / Tempat</label><input type="text" id="m-lokasi" class="form-input"></div>
                         <div class="md:col-span-3"><label class="form-label">Kordinat</label><input type="text" id="m-kordinat" class="form-input" placeholder="2.538748, 101.797395"></div>
                     </div>
                 </div>
 
-                <!-- SEKSYEN 2 -->
                 <div class="bg-slate-50 dark:bg-gray-800/40 p-4 rounded-lg border border-slate-200 dark:border-gray-700/50">
                     <h4 class="text-sm font-bold text-emerald-500 dark:text-emerald-400 mb-4 flex items-center gap-2"><i class="fa-solid fa-clock"></i> Status & KPI</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -342,34 +388,21 @@
                         <div><label class="form-label">Tarikh Tutup Aduan</label><input type="datetime-local" id="m-tarikhTutup" class="form-input"></div>
                         <div class="md:col-span-2">
                             <label class="form-label">KPI Masa Tutup (Auto dari Sheet)</label>
-                            <input type="text" id="m-kpiMasaTutup" class="form-input" readonly title="Dikira secara automatik di Google Sheets">
+                            <input type="text" id="m-kpiMasaTutup" class="form-input" readonly>
                         </div>
                     </div>
                 </div>
 
-                <!-- SEKSYEN 3 -->
                 <div class="bg-slate-50 dark:bg-gray-800/40 p-4 rounded-lg border border-slate-200 dark:border-gray-700/50">
                     <h4 class="text-sm font-bold text-amber-500 dark:text-amber-400 mb-4 flex items-center gap-2"><i class="fa-solid fa-screwdriver-wrench"></i> Spesifikasi Paip & Pembaikan</h4>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div><label class="form-label">Jenis Paip (Lama)</label>
-                            <select id="m-jenisPaip" class="form-input"></select>
-                        </div>
-                        <div><label class="form-label">Saiz (Lama)</label>
-                            <select id="m-saizPaip" class="form-input"></select>
-                        </div>
-                        <div><label class="form-label">Jenis Paip (Baru)</label>
-                            <select id="m-jenisPaipBaru" class="form-input"></select>
-                        </div>
-                        <div><label class="form-label">Saiz (Baru)</label>
-                            <select id="m-saiz" class="form-input"></select>
-                        </div>
+                        <div><label class="form-label">Jenis Paip (Lama)</label><select id="m-jenisPaip" class="form-input"></select></div>
+                        <div><label class="form-label">Saiz (Lama)</label><select id="m-saizPaip" class="form-input"></select></div>
+                        <div><label class="form-label">Jenis Paip (Baru)</label><select id="m-jenisPaipBaru" class="form-input"></select></div>
+                        <div><label class="form-label">Saiz (Baru)</label><select id="m-saiz" class="form-input"></select></div>
                         <div><label class="form-label">Panjang Paip (M)</label><input type="number" step="any" id="m-panjangPaip" class="form-input"></div>
-                        <div><label class="form-label">Kerja Sivil</label>
-                            <select id="m-sivilWorks" class="form-input"></select>
-                        </div>
-                        <div class="md:col-span-2"><label class="form-label">Dilaksanakan Oleh</label>
-                            <select id="m-dilaksanakanOleh" class="form-input"></select>
-                        </div>
+                        <div><label class="form-label">Kerja Sivil</label><select id="m-sivilWorks" class="form-input"></select></div>
+                        <div class="md:col-span-2"><label class="form-label">Dilaksanakan Oleh</label><select id="m-dilaksanakanOleh" class="form-input"></select></div>
                     </div>
                 </div>
 
@@ -417,11 +450,10 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('sainsLoggedIn') !== 'true') {
-                window.location.href = 'index.html';
+                try { window.location.href = 'index.html'; } catch(e) { document.body.innerHTML = "<h2 style='color:red;text-align:center;margin-top:20vh;'>Sila Log Masuk Semula</h2>"; }
                 return;
             }
 
-            // SISTEM KESELAMATAN: SETTING IDLE & ABSOLUTE TIMEOUT SECARA SELAMAT
             initSessionTimeouts();
 
             if(localStorage.getItem('sainsTheme') === 'dark') {
@@ -478,56 +510,40 @@
             }, 300);
         });
 
-        // FUNGSI LOG KELUAR SELAMAT (Kekalkan Data Cache & Offline Queue)
         function safeLogout(reason) {
             alert(reason);
             localStorage.removeItem('sainsLoggedIn');
             localStorage.removeItem('sainsUserLevel');
             localStorage.removeItem('sainsSessionStart');
             localStorage.removeItem('sainsLastActivity');
-            // Nota: sainsRawData, sainsDropdowns dan sainsOfflineQueue TIDAK DIPADAM supaya data penting tidak hilang.
-            window.location.href = 'index.html';
+            try { window.location.href = 'index.html'; } catch(e) {}
         }
 
-        // FUNGSI PENGURUSAN MASA (15 Minit Idle & 2 Jam Hard Limit)
         function initSessionTimeouts() {
             const now = Date.now();
             let sessionStart = localStorage.getItem('sainsSessionStart');
             let lastActivity = localStorage.getItem('sainsLastActivity');
 
-            // Jika mula sesi baru
-            if (!sessionStart) {
-                localStorage.setItem('sainsSessionStart', now);
-                sessionStart = now;
-            }
-            if (!lastActivity) {
-                localStorage.setItem('sainsLastActivity', now);
-                lastActivity = now;
-            }
+            if (!sessionStart) { localStorage.setItem('sainsSessionStart', now); sessionStart = now; }
+            if (!lastActivity) { localStorage.setItem('sainsLastActivity', now); lastActivity = now; }
 
-            // Semak had masa mutlak 2 jam (120 minit)
             const absoluteLimit = 2 * 60 * 60 * 1000; 
             if (now - parseInt(sessionStart) > absoluteLimit) {
                 safeLogout("Sesi anda telah tamat selepas mencapai had masa 2 jam.");
                 return;
             }
 
-            // Semak had masa terbiar (idle) 15 minit
             const idleLimit = 15 * 60 * 1000;
             if (now - parseInt(lastActivity) > idleLimit) {
                 safeLogout("Sesi anda ditamatkan kerana terbiar (idle) selama 15 minit.");
                 return;
             }
 
-            // Kemas kini masa aktif apabila pengguna sentuh tetikus, skrin, atau taip
-            const resetIdle = () => {
-                localStorage.setItem('sainsLastActivity', Date.now());
-            };
+            const resetIdle = () => { localStorage.setItem('sainsLastActivity', Date.now()); };
             ['mousemove', 'mousedown', 'keypress', 'touchstart', 'scroll'].forEach(evt => {
                 window.addEventListener(evt, resetIdle, { passive: true });
             });
 
-            // Pantau setiap 30 saat di latar belakang
             setInterval(() => {
                 const currentTime = Date.now();
                 const start = parseInt(localStorage.getItem('sainsSessionStart') || currentTime);
@@ -564,9 +580,7 @@
                 const dateStr = now.toLocaleDateString('ms-MY', options);
                 const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                 const clockEl = document.getElementById('clock-text');
-                if(clockEl) {
-                    clockEl.innerText = `${dateStr} • ${timeStr}`;
-                }
+                if(clockEl) { clockEl.innerText = `${dateStr} • ${timeStr}`; }
             };
             updateClock();
             setInterval(updateClock, 1000);
@@ -634,7 +648,6 @@
 
         function formatForDateTimeInput(val) {
             if(!val || val === '-') return '';
-            
             let d = new Date(val);
             if (isNaN(d.getTime())) {
                 const parts = String(val).split(/[\s/:\-]/); 
@@ -646,7 +659,6 @@
                     }
                 }
             }
-            
             if (!isNaN(d.getTime())) {
                 const yyyy = d.getFullYear();
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -816,9 +828,7 @@
                 rawData.unshift(payloadData);
             } else if(actionType === 'updateData') {
                 const idx = rawData.findIndex(item => String(item['NO ADUAN']).trim() === String(noAduan).trim());
-                if(idx !== -1) {
-                    rawData[idx] = { ...rawData[idx], ...payloadData };
-                }
+                if(idx !== -1) { rawData[idx] = { ...rawData[idx], ...payloadData }; }
             } else if(actionType === 'deleteData') {
                 rawData = rawData.filter(item => String(item['NO ADUAN']).trim() === String(noAduan).trim() === false);
             }
@@ -831,7 +841,6 @@
 
             try {
                 showLoading(true, 40, "Menghantar kemas kini ke pelayan...");
-
                 const res = await fetch(WORKER_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain' },
@@ -839,7 +848,6 @@
                 });
                 showLoading(true, 90, "Menunggu pengesahan...");
                 const result = await res.json();
-
                 showLoading(false);
                 if(result.status === 'success') {
                     showToast(result.message);
@@ -852,17 +860,13 @@
                 let queue = JSON.parse(localStorage.getItem('sainsOfflineQueue') || '[]');
                 queue.push({ action: actionType, data: payloadData, noAduan: noAduan });
                 localStorage.setItem('sainsOfflineQueue', JSON.stringify(queue));
-
-                showToast("Mod Offline: Perubahan disimpan dalam peranti. Akan diselaraskan bila ada internet.", "error");
+                showToast("Mod Offline: Perubahan disimpan dalam peranti.", "error");
             }
         }
 
         async function processOfflineQueue() {
             let queue = JSON.parse(localStorage.getItem('sainsOfflineQueue') || '[]');
             if(queue.length === 0) return;
-
-            showToast(`Menyelaras ${queue.length} perubahan luar talian ke Google Sheet...`);
-            
             let remainingQueue = [];
             for(let item of queue) {
                 try {
@@ -872,17 +876,12 @@
                         body: JSON.stringify({ action: item.action, data: item.data, noAduan: item.noAduan })
                     });
                     const result = await res.json();
-                    if(result.status !== 'success') {
-                        remainingQueue.push(item);
-                    }
-                } catch(e) {
-                    remainingQueue.push(item);
-                }
+                    if(result.status !== 'success') remainingQueue.push(item);
+                } catch(e) { remainingQueue.push(item); }
             }
-
             localStorage.setItem('sainsOfflineQueue', JSON.stringify(remainingQueue));
             if(remainingQueue.length === 0) {
-                showToast("Semua data offline berjaya diselaraskan dengan Google Sheet!");
+                showToast("Semua data offline berjaya diselaraskan!");
                 await fetchFreshData(false);
             }
         }
@@ -900,9 +899,7 @@
             recordModal.classList.remove('hidden');
         });
 
-        document.getElementById('btn-open-delete').addEventListener('click', () => {
-            deleteModal.classList.remove('hidden');
-        });
+        document.getElementById('btn-open-delete').addEventListener('click', () => { deleteModal.classList.remove('hidden'); });
 
         function closeModals() {
             recordModal.classList.add('hidden');
@@ -922,7 +919,6 @@
             document.getElementById('modalSubmitBtn').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan`;
             
             populateModalDropdowns();
-
             document.getElementById('m-noAduan').value = rowData['NO ADUAN'] || '';
             document.getElementById('m-noAduan').setAttribute('readonly', true);
             
@@ -964,24 +960,42 @@
         function setupEvents() {
             const navD = document.getElementById('nav-dash');
             const navU = document.getElementById('nav-update');
-            navD.addEventListener('click', () => {
-                document.getElementById('dashboard-content').style.display = 'block';
+            const navDaily = document.getElementById('nav-daily');
+
+            const hideAllTabs = () => {
+                document.getElementById('dashboard-content').style.display = 'none';
                 document.getElementById('update-content').style.display = 'none';
-                navD.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
+                document.getElementById('daily-content').style.display = 'none';
+                navD.className = "w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 transition-colors";
                 navU.className = "w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 transition-colors";
+                navDaily.className = "w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 transition-colors";
+            };
+
+            navD.addEventListener('click', () => {
+                hideAllTabs();
+                document.getElementById('dashboard-content').style.display = 'block';
+                navD.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
                 if(map) setTimeout(()=>map.invalidateSize(), 300);
             });
+
             navU.addEventListener('click', () => {
-                document.getElementById('dashboard-content').style.display = 'none';
+                hideAllTabs();
                 document.getElementById('update-content').style.display = 'block';
                 navU.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
-                navD.className = "w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 transition-colors";
                 if(managementTable) managementTable.columns.adjust();
+            });
+
+            navDaily.addEventListener('click', () => {
+                hideAllTabs();
+                document.getElementById('daily-content').style.display = 'block';
+                navDaily.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
+                const picker = document.getElementById('daily-date-picker');
+                if(picker && !picker.value) picker.value = new Date().toISOString().split('T')[0];
             });
 
             document.getElementById('nav-logout').addEventListener('click', () => {
                 localStorage.clear();
-                window.location.href = 'index.html';
+                try { window.location.href = 'index.html'; } catch(e) {}
             });
 
             document.getElementById('btn-refresh-data').addEventListener('click', () => fetchFreshData(true));
@@ -1001,8 +1015,7 @@
             });
 
             document.getElementById('mgmt-filter-bulan').addEventListener('change', (e) => {
-                const val = e.target.value;
-                managementTable.column(3).search(val).draw();
+                managementTable.column(3).search(e.target.value).draw();
             });
 
             document.getElementById('btn-toggle-map').addEventListener('click', () => {
@@ -1021,7 +1034,6 @@
 
         function populateFilters() {
             const uniqueValues = (key) => [...new Set(rawData.map(i => i[key]).filter(Boolean))];
-            
             const populateSel = (id, vals) => {
                 const sel = document.getElementById(id);
                 if(!sel) return;
@@ -1033,10 +1045,7 @@
             populateSel('filter-bulan', sortedMonths);
             populateSel('filter-kategori', uniqueValues('KATEGORI').sort());
             populateSel('filter-jenis-paip', uniqueValues('JENIS PAIP').sort());
-            
-            const sortedSaizPaip = sortNumeric(uniqueValues('SAIZ PAIP'));
-            populateSel('filter-saiz-paip', sortedSaizPaip);
-
+            populateSel('filter-saiz-paip', sortNumeric(uniqueValues('SAIZ PAIP')));
             populateSel('mgmt-filter-bulan', sortedMonths);
 
             const dmas = uniqueValues('DMA').sort();
@@ -1071,13 +1080,9 @@
                 if(sJenisPaip && row['JENIS PAIP'] !== sJenisPaip) return false;
                 if(sSaizPaip && row['SAIZ PAIP'] !== sSaizPaip) return false;
                 if(checkedDmas.length > 0 && !checkedDmas.includes(row['DMA'])) return false;
-                
-                if(sSearch) {
-                    return Object.values(row).join(' ').toLowerCase().includes(sSearch);
-                }
+                if(sSearch) return Object.values(row).join(' ').toLowerCase().includes(sSearch);
                 return true;
             });
-
             updateDashboard();
         }
 
@@ -1089,40 +1094,22 @@
                 dataLabels: { enabled: true, style: { fontSize: '11px' } }
             };
             
-            charts.month = new ApexCharts(document.querySelector("#chart-month"), {...opt, series: [], chart: {type:'bar'}, colors:['#3b82f6']});
-            charts.month.render();
-            charts.dma = new ApexCharts(document.querySelector("#chart-dma"), {...opt, series: [], chart: {type:'bar'}, plotOptions: {bar:{horizontal:true}}, colors:['#06b6d4']});
-            charts.dma.render();
-            
-            charts.civilWorks = new ApexCharts(document.querySelector("#chart-civil-works"), {...opt, series: [], chart: {type:'bar'}, colors:['#f59e0b']});
-            charts.civilWorks.render();
-
-            charts.jenisPaip = new ApexCharts(document.querySelector("#chart-jenis-paip"), {...opt, series: [], chart: {type:'donut'}, labels:[], stroke:{width:0}, dataLabels: { enabled: true, dropShadow: {enabled: false} }});
-            charts.jenisPaip.render();
-            charts.saizPaip = new ApexCharts(document.querySelector("#chart-saiz-paip"), {...opt, series: [], chart: {type:'bar'}, colors:['#f59e0b']});
-            charts.saizPaip.render();
-
-            charts.jenisBaru = new ApexCharts(document.querySelector("#chart-jenis-baru"), {...opt, series: [], chart: {type:'donut'}, labels:[], stroke:{width:0}, dataLabels: { enabled: true, dropShadow: {enabled: false} }});
-            charts.jenisBaru.render();
-            charts.saizBaru = new ApexCharts(document.querySelector("#chart-saiz-baru"), {...opt, series: [], chart: {type:'bar'}, colors:['#10b981']});
-            charts.saizBaru.render();
-            
-            charts.panjangPaip = new ApexCharts(document.querySelector("#chart-panjang-paip"), {...opt, series: [], chart: {type:'bar'}, colors:['#8b5cf6']});
-            charts.panjangPaip.render();
+            charts.month = new ApexCharts(document.querySelector("#chart-month"), {...opt, series: [], chart: {type:'bar'}, colors:['#3b82f6']}); charts.month.render();
+            charts.dma = new ApexCharts(document.querySelector("#chart-dma"), {...opt, series: [], chart: {type:'bar'}, plotOptions: {bar:{horizontal:true}}, colors:['#06b6d4']}); charts.dma.render();
+            charts.civilWorks = new ApexCharts(document.querySelector("#chart-civil-works"), {...opt, series: [], chart: {type:'bar'}, colors:['#f59e0b']}); charts.civilWorks.render();
+            charts.jenisPaip = new ApexCharts(document.querySelector("#chart-jenis-paip"), {...opt, series: [], chart: {type:'donut'}, labels:[], stroke:{width:0}}); charts.jenisPaip.render();
+            charts.saizPaip = new ApexCharts(document.querySelector("#chart-saiz-paip"), {...opt, series: [], chart: {type:'bar'}, colors:['#f59e0b']}); charts.saizPaip.render();
+            charts.jenisBaru = new ApexCharts(document.querySelector("#chart-jenis-baru"), {...opt, series: [], chart: {type:'donut'}, labels:[], stroke:{width:0}}); charts.jenisBaru.render();
+            charts.saizBaru = new ApexCharts(document.querySelector("#chart-saiz-baru"), {...opt, series: [], chart: {type:'bar'}, colors:['#10b981']}); charts.saizBaru.render();
+            charts.panjangPaip = new ApexCharts(document.querySelector("#chart-panjang-paip"), {...opt, series: [], chart: {type:'bar'}, colors:['#8b5cf6']}); charts.panjangPaip.render();
         }
 
         function initMap() {
             map = L.map('map').setView([4.2105, 101.9758], 7);
-    
-    	    // Tukar kepada OpenStreetMap yang percuma dan tiada sekatan API Key
-    	    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            	maxZoom: 19,
-        	attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-    	    }).addTo(map);
-
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
             markerClusterGroup = L.markerClusterGroup();
             map.addLayer(markerClusterGroup);
-   	}
+        }
 
         function updateDashboard() {
             document.getElementById('kpi-total').innerText = filteredData.length;
@@ -1139,8 +1126,7 @@
                 const kpiVal = String(d['KPI ADUAN'] || '').trim();
                 return kpiVal.includes('✓') || kpiVal.includes('√') || (kpiVal !== '' && kpiVal !== '-');
             }).length;
-            const kpiPercent = filteredData.length > 0 ? Math.round((kpiAchievedCount / filteredData.length) * 100) : 0;
-            document.getElementById('kpi-achievement').innerText = kpiPercent + '%';
+            document.getElementById('kpi-achievement').innerText = (filteredData.length > 0 ? Math.round((kpiAchievedCount / filteredData.length) * 100) : 0) + '%';
 
             const countBy = (key) => {
                 const counts = {};
@@ -1152,7 +1138,6 @@
             filteredData.forEach(r => { let v = r['BULAN']||'Tiada'; dMonthCounts[v] = (dMonthCounts[v]||0)+1; });
             let sortedMonthKeys = sortMonths(Object.keys(dMonthCounts));
             let dMonth = sortedMonthKeys.map(m => [m, dMonthCounts[m]]);
-
             charts.month.updateSeries([{name: 'Kes', data: dMonth.map(d=>d[1])}]);
             charts.month.updateOptions({xaxis: {categories: dMonth.map(d=>d[0])}});
             
@@ -1160,7 +1145,6 @@
             charts.dma.updateSeries([{name: 'Kes', data: dDma.map(d=>d[1])}]);
             charts.dma.updateOptions({xaxis: {categories: dDma.map(d=>d[0])}});
 
-            // Kategori Kes Custom Sort: PECAH dulu, kemudian Bocor, diikuti yang lain
             const dCat = countBy('KATEGORI');
             const categoryPriority = { 'PECAH': 1, 'Bocor': 2 };
             dCat.sort((a, b) => {
@@ -1170,17 +1154,10 @@
                 return b[1] - a[1];
             });
 
-            const totalCases = filteredData.length;
             let catTableHtml = '';
             dCat.forEach(([cat, count]) => {
-                const percent = totalCases > 0 ? ((count / totalCases) * 100).toFixed(1) + '%' : '0.0%';
-                catTableHtml += `
-                    <tr class="border-b border-slate-200 dark:border-gray-700/50 hover:bg-slate-50 dark:hover:bg-gray-800/50">
-                        <td class="p-2.5 font-medium">${formatKategori(cat)}</td>
-                        <td class="p-2.5 text-right">${count}</td>
-                        <td class="p-2.5 text-right font-semibold text-blue-600 dark:text-blue-400">${percent}</td>
-                    </tr>
-                `;
+                const percent = filteredData.length > 0 ? ((count / filteredData.length) * 100).toFixed(1) + '%' : '0.0%';
+                catTableHtml += `<tr class="border-b border-slate-200 dark:border-gray-700/50 hover:bg-slate-50"><td class="p-2.5 font-medium">${formatKategori(cat)}</td><td class="p-2.5 text-right">${count}</td><td class="p-2.5 text-right font-semibold text-blue-600">${percent}</td></tr>`;
             });
             document.getElementById('table-category-body').innerHTML = catTableHtml || '<tr><td colspan="3" class="p-4 text-center text-gray-500">Tiada Data</td></tr>';
 
@@ -1189,24 +1166,19 @@
             charts.civilWorks.updateOptions({xaxis: {categories: dCivil.map(d=>d[0])}});
 
             const dJenisPaip = countBy('JENIS PAIP').slice(0,5);
-            charts.jenisPaip.updateSeries(dJenisPaip.map(d=>d[1]));
-            charts.jenisPaip.updateOptions({labels: dJenisPaip.map(d=>d[0])});
+            charts.jenisPaip.updateSeries(dJenisPaip.map(d=>d[1])); charts.jenisPaip.updateOptions({labels: dJenisPaip.map(d=>d[0])});
 
             const dSaizPaip = countBy('SAIZ PAIP').slice(0,5);
-            charts.saizPaip.updateSeries([{name: 'Kes', data: dSaizPaip.map(d=>d[1])}]);
-            charts.saizPaip.updateOptions({xaxis: {categories: dSaizPaip.map(d=>d[0])}});
+            charts.saizPaip.updateSeries([{name: 'Kes', data: dSaizPaip.map(d=>d[1])}]); charts.saizPaip.updateOptions({xaxis: {categories: dSaizPaip.map(d=>d[0])}});
 
             const dJenisBaru = countBy('JENIS PAIP BARU').slice(0,5);
-            charts.jenisBaru.updateSeries(dJenisBaru.map(d=>d[1]));
-            charts.jenisBaru.updateOptions({labels: dJenisBaru.map(d=>d[0])});
+            charts.jenisBaru.updateSeries(dJenisBaru.map(d=>d[1])); charts.jenisBaru.updateOptions({labels: dJenisBaru.map(d=>d[0])});
 
             const dSaizBaru = countBy('SAIZ').slice(0,5);
-            charts.saizBaru.updateSeries([{name: 'Kes', data: dSaizBaru.map(d=>d[1])}]);
-            charts.saizBaru.updateOptions({xaxis: {categories: dSaizBaru.map(d=>d[0])}});
+            charts.saizBaru.updateSeries([{name: 'Kes', data: dSaizBaru.map(d=>d[1])}]); charts.saizBaru.updateOptions({xaxis: {categories: dSaizBaru.map(d=>d[0])}});
 
             const dPanjang = countBy('PANJANG PAIP (M)').slice(0,5);
-            charts.panjangPaip.updateSeries([{name: 'Meter', data: dPanjang.map(d=>d[1])}]);
-            charts.panjangPaip.updateOptions({xaxis: {categories: dPanjang.map(d=>d[0])}});
+            charts.panjangPaip.updateSeries([{name: 'Meter', data: dPanjang.map(d=>d[1])}]); charts.panjangPaip.updateOptions({xaxis: {categories: dPanjang.map(d=>d[0])}});
 
             updateMapMarkers();
             updateTable();
@@ -1215,7 +1187,6 @@
         function updateMapMarkers() {
             markerClusterGroup.clearLayers();
             if(heatLayer) map.removeLayer(heatLayer);
-            
             const markers = [], heatPts = [];
             filteredData.forEach(r => {
                 const lat = parseFloat(r['LATITUDE']||r['LATITUTE']);
@@ -1225,7 +1196,6 @@
                     heatPts.push([lat, lng, 1]);
                 }
             });
-
             if(isHeatmapMode) {
                 heatLayer = L.heatLayer(heatPts, {radius: 25, blur: 15, gradient:{0.4:'blue',0.65:'lime',1:'red'}}).addTo(map);
             } else {
@@ -1235,22 +1205,13 @@
 
         function updateTable() {
             const tbData = filteredData.map(r => {
-                const linkMaps = r['LINK MAPS'] ? `<a href="${r['LINK MAPS']}" target="_blank" class="text-blue-500 hover:text-blue-700 text-base" title="Buka Peta"><i class="fa-solid fa-map-location-dot"></i></a>` : '-';
-                const kordinat = r['KORDINAT'] || '-';
-                const kategori = formatKategori(r['KATEGORI']);
-
-                return [
-                    r['NO ADUAN']||'-', r['KPI ADUAN']||'-', (r['LOKASI / TEMPAT']||r['LOKASI']||'-').substring(0,30),
-                    r['DMA']||'-', kategori, linkMaps, kordinat
-                ];
+                const linkMaps = r['LINK MAPS'] ? `<a href="${r['LINK MAPS']}" target="_blank" class="text-blue-500"><i class="fa-solid fa-map-location-dot"></i></a>` : '-';
+                return [r['NO ADUAN']||'-', r['KPI ADUAN']||'-', (r['LOKASI / TEMPAT']||r['LOKASI']||'-').substring(0,30), r['DMA']||'-', formatKategori(r['KATEGORI']), linkMaps, r['KORDINAT']||'-'];
             });
             if($.fn.DataTable.isDataTable('#dataTable')) {
                 dataTable.clear().rows.add(tbData).draw();
             } else {
-                dataTable = $('#dataTable').DataTable({
-                    data: tbData, pageLength: 5, responsive: true,
-                    dom: 'Bfrtip', buttons: ['excel', 'pdf', 'print']
-                });
+                dataTable = $('#dataTable').DataTable({ data: tbData, pageLength: 5, responsive: true, dom: 'Bfrtip', buttons: ['excel', 'pdf', 'print'] });
             }
         }
 
@@ -1258,52 +1219,202 @@
             const userLevel = localStorage.getItem('sainsUserLevel');
             const mgmtData = rawData.map(r => {
                 const noAduan = r['NO ADUAN'] || '';
-                const actionBtn = (userLevel === 'GUEST') 
-                    ? `<span class="text-xs text-gray-400">View Only</span>`
-                    : `<button onclick="openEditModal('${noAduan}')" class="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs flex items-center gap-1 shadow"><i class="fa-solid fa-pen-to-square"></i> Edit</button>`;
-
-                const linkMaps = r['LINK MAPS'] ? `<a href="${r['LINK MAPS']}" target="_blank" class="text-blue-500 hover:text-blue-700 text-base" title="Buka Peta"><i class="fa-solid fa-map-location-dot"></i></a>` : '-';
-                const kategori = formatKategori(r['KATEGORI']);
-                const tarikhTutupVal = r['TARIKH  TUTUP ADUAN'] || r['TARIKH TUTUP ADUAN'] || r['TARIKH TUTUP'] || '-';
-
+                const actionBtn = (userLevel === 'GUEST') ? `<span class="text-xs text-gray-400">View Only</span>` : `<button onclick="openEditModal('${noAduan}')" class="px-2.5 py-1 bg-blue-600 text-white rounded text-xs"><i class="fa-solid fa-pen-to-square"></i> Edit</button>`;
+                const linkMaps = r['LINK MAPS'] ? `<a href="${r['LINK MAPS']}" target="_blank" class="text-blue-500"><i class="fa-solid fa-map-location-dot"></i></a>` : '-';
                 return [
-                    actionBtn,
-                    noAduan, 
-                    r['ZON'] || '-', 
-                    r['BULAN'] || '-', 
-                    formatDateToDDMMYYYY(r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA']), 
-                    formatDateToDDMMYYYY(tarikhTutupVal),
-                    r['KPI MASA TUTUP ADUAN'] || '-', 
-                    r['KPI Aduan'] || r['KPI ADUAN'] || '-', 
-                    r['LOKASI / TEMPAT'] || r['LOKASI'] || '-', 
-                    r['DMA'] || '-',
-                    kategori, 
-                    r['JENIS PAIP'] || '-', 
-                    r['SAIZ PAIP'] || '-', 
-                    r['JENIS PAIP BARU'] || '-', 
-                    r['SAIZ'] || '-',
-                    r['PANJANG PAIP (M)'] || '-', 
-                    r['SIVIL WORKS'] || '-', 
-                    formatDateToDDMMYYYY(r['TARIKH']), 
-                    r['DILAKSANAKAN OLEH'] || '-', 
-                    linkMaps, 
-                    r['KORDINAT'] || '-'
+                    actionBtn, noAduan, r['ZON']||'-', r['BULAN']||'-', formatDateToDDMMYYYY(r['TARIKH & MASA TERIMA  ADUAN']||r['TARIKH TERIMA']),
+                    formatDateToDDMMYYYY(r['TARIKH  TUTUP ADUAN']||r['TARIKH TUTUP']), r['KPI MASA TUTUP ADUAN']||'-', r['KPI Aduan']||r['KPI ADUAN']||'-',
+                    r['LOKASI / TEMPAT']||r['LOKASI']||'-', r['DMA']||'-', formatKategori(r['KATEGORI']), r['JENIS PAIP']||'-', r['SAIZ PAIP']||'-',
+                    r['JENIS PAIP BARU']||'-', r['SAIZ']||'-', r['PANJANG PAIP (M)']||'-', r['SIVIL WORKS']||'-', formatDateToDDMMYYYY(r['TARIKH']),
+                    r['DILAKSANAKAN OLEH']||'-', linkMaps, r['KORDINAT']||'-'
                 ];
             });
 
             if($.fn.DataTable.isDataTable('#managementTable')) {
                 managementTable.clear().rows.add(mgmtData).draw();
             } else {
-                managementTable = $('#managementTable').DataTable({
-                    data: mgmtData,
-                    pageLength: 10,
-                    scrollX: true,
-                    order: [[4, 'desc']],
-                    dom: 'Bfrtip',
-                    buttons: ['excel', 'pdf', 'print']
-                });
+                managementTable = $('#managementTable').DataTable({ data: mgmtData, pageLength: 10, scrollX: true, order: [[4, 'desc']], dom: 'Bfrtip', buttons: ['excel', 'pdf', 'print'] });
             }
         }
+
+        // ==============================================================================
+        // LOGIK TEMPLAT LAPORAN HARIAN & PENGESANAN TARIKH TEPAT
+        // ==============================================================================
+        document.getElementById('btn-load-daily').addEventListener('click', () => {
+            const selectedDate = document.getElementById('daily-date-picker').value;
+            if (!selectedDate) {
+                showToast("Sila pilih tarikh terlebih dahulu!", "error");
+                return;
+            }
+
+            const parts = selectedDate.split('-'); // YYYY-MM-DD
+            const formattedTarget = `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
+            document.getElementById('daily-label-date').innerText = formattedTarget;
+
+            // Tapis data dengan menyemak pelbagai variasi nama lajur tarikh dan format
+            const matchedCases = rawData.filter(row => {
+                const rawDateVal = row['TARIKH & MASA TERIMA  ADUAN'] || row['TARIKH TERIMA'] || row['tarikhTerima'] || row['Tarikh Terima'] || '';
+                const dateStr = String(rawDateVal).trim();
+                
+                if (!dateStr) return false;
+                if (dateStr.includes(formattedTarget)) return true;
+                if (dateStr.includes(selectedDate)) return true;
+
+                return false;
+            });
+
+            const tarikhKemaskini = new Date().toLocaleDateString('ms-MY') + ' ' + new Date().toLocaleTimeString('ms-MY', {hour: '2-digit', minute:'2-digit'});
+            
+            const kesPecah = matchedCases.filter(r => {
+                const cat = String(r['KATEGORI'] || r['kategori'] || '').toUpperCase();
+                return cat.includes('PECAH');
+            });
+
+            const kesBocor = matchedCases.filter(r => {
+                const cat = String(r['KATEGORI'] || r['kategori'] || '').toUpperCase();
+                return cat.includes('BOCOR');
+            });
+
+            const totalPecahBocor = kesPecah.length + kesBocor.length;
+
+            // Geng Pembaikan SAINS
+            const sainsCases = matchedCases.filter(r => {
+                const pelaksana = String(r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh'] || '').toUpperCase();
+                return pelaksana.includes('SAINS');
+            });
+            const sainsText = sainsCases.length > 0 ? sainsCases.map(r => `${r['NO ADUAN'] || r['noAduan']} - ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}`).join(', ') : 'TIADA';
+
+            // Kerja Turap
+            const kesTurap = matchedCases.filter(r => {
+                const sivil = String(r['SIVIL WORKS'] || r['sivilWorks'] || r['Kerja Sivil'] || '').toUpperCase();
+                return sivil.includes('TURAP');
+            });
+
+            // Fungsi pembantu untuk ambil MASA dengan format HH:MM am/pm
+            const extractTimeWithAmPm = (val) => {
+                if (!val || val === '-') return 'HH:MM am/pm';
+                const str = String(val).trim();
+                
+                // Cari corak jam (HH:MM atau HH:MM:SS)
+                const timeMatch = str.match(/(\d{2}):(\d{2})/);
+                if (timeMatch) {
+                    let hours = parseInt(timeMatch[1], 10);
+                    const minutes = timeMatch[2];
+                    const ampm = hours >= 12 ? 'pm' : 'am';
+                    hours = hours % 12;
+                    hours = hours ? hours : 12; // Jam '0' jadi '12'
+                    const formattedHours = String(hours).padStart(2, '0');
+                    return `${formattedHours}:${minutes} ${ampm}`;
+                }
+                return str;
+            };
+
+            // --- BINA TEMPLAT RASMI ---
+            let template = `*LAPORAN HARIAN OPERASI* :\n\n`;
+            template += `*Tarikh Laporan* : ${formattedTarget}\n`;
+            template += `Tarikh Kemaskini : ${tarikhKemaskini}\n`;
+            template += `*Daerah* : PORT DICKSON\n\n`;
+            
+            template += `*PAIP PECAH / BOCOR :*\n\n`;
+            template += `*GENG PEMBAIKAN SAINS & LOKASI² ADUAN :* ${sainsText}\n\n`;
+            template += `*KONTRAKTOR² & LOKASI² ADUAN:* ${totalPecahBocor} NOS\n`;
+            
+            if (matchedCases.length > 0) {
+                matchedCases.forEach((r, i) => {
+                    const noAduan = r['NO ADUAN'] || r['noAduan'] || '-';
+                    const lokasi = r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi'] || '-';
+                    const saiz = r['SAIZ PAIP'] || r['saizPaip'] || '-';
+                    const jenisPaip = r['JENIS PAIP'] || r['jenisPaip'] || '-';
+                    
+                    // Ambil Masa + am/pm untuk Tarikh Terima & Tutup
+                    const tTerima = extractTimeWithAmPm(r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA']);
+                    const rawTutup = r['TARIKH  TUTUP ADUAN'] || r['TARIKH TUTUP'] || r['tarikhTutup'];
+                    const tTutup = rawTutup ? extractTimeWithAmPm(rawTutup) : 'DALAM TINDAKAN';
+                    
+                    const pelaksana = r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh'] || '-';
+                    
+                    template += `${i + 1}. ${noAduan} - ${lokasi} – ${saiz}'' - ${jenisPaip} - ${tTerima} hingga ${tTutup} - ${pelaksana}\n`;
+                });
+            } else {
+                template += `TIADA\n`;
+            }
+
+            template += `\n*KAWASAN² TERLIBAT GANGGUAN AIR KES PAIP PECAH :* ${kesPecah.length} NOS\n`;
+            if (kesPecah.length > 0) {
+                kesPecah.forEach((r, i) => {
+                    template += `${i + 1}. ${r['NO ADUAN'] || r['noAduan']} – ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}\n`;
+                });
+            } else {
+                template += `TIADA\n`;
+            }
+
+            template += `\n*UKZ² & LOKASI² ADUAN :* TIADA\n\n`;
+            template += `*JUMLAH PECAH :* ${kesPecah.length}\n`;
+            template += `*JUMLAH BOCOR :* ${kesBocor.length}\n\n`;
+
+            template += `*NO². ADUAN KERJA LIBAT JALAN :* ${kesTurap.length} NOS\n`;
+            if (kesTurap.length > 0) {
+                kesTurap.forEach((r, i) => {
+                    template += `${i + 1}. ${r['NO ADUAN'] || r['noAduan']}, Turap\n`;
+                });
+            } else {
+                template += `TIADA\n`;
+            }
+
+            template += `\n*GANGGUAN BEKALAN AIR LAIN² HAL :* TIADA\n`;
+            template += `*PENGHANTARAN AIR MELALUI LORI TANGKI :* TIADA\n`;
+            template += `*KOLAM KRITIKAL (PARAS RENDAH) :* TIADA\n`;
+            template += `*LAIN-LAIN HAL :* TIADA`;
+
+            document.getElementById('daily-whatsapp-preview').value = template;
+
+            // Paparkan kad senarai di bawah
+            const container = document.getElementById('daily-cases-list');
+            if (matchedCases.length === 0) {
+                container.innerHTML = `<p class="text-sm text-slate-500 text-center py-8">Tiada rekod kes ditemui pada tarikh ${formattedTarget}.</p>`;
+                return;
+            }
+
+            let html = '';
+            matchedCases.forEach((r) => {
+                html += `
+                    <div class="p-4 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800/50 shadow-sm flex flex-col gap-2 text-xs">
+                        <div class="flex justify-between font-bold text-blue-600 dark:text-blue-400 text-sm">
+                            <span>${r['NO ADUAN'] || r['noAduan']} (${r['KATEGORI'] || r['kategori']})</span>
+                            <span>DMA: ${r['DMA'] || r['dma']}</span>
+                        </div>
+                        <div><b>Lokasi:</b> ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}</div>
+                        <div><b>Pelaksana:</b> ${r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh']} | <b>Sivil:</b> ${r['SIVIL WORKS'] || r['sivilWorks'] || 'Tiada'}</div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        });
+
+        document.getElementById('btn-copy-daily-whatsapp').addEventListener('click', () => {
+            const previewBox = document.getElementById('daily-whatsapp-preview');
+            if (!previewBox.value) {
+                showToast("Sila jana laporan harian terlebih dahulu!", "error");
+                return;
+            }
+            previewBox.select();
+            navigator.clipboard.writeText(previewBox.value).then(() => {
+                showToast("Teks laporan berjaya disalin!", "success");
+            }).catch(() => {
+                showToast("Gagal menyalin teks.", "error");
+            });
+        });
+
+        document.getElementById('btn-open-whatsapp-link').addEventListener('click', () => {
+            const previewBox = document.getElementById('daily-whatsapp-preview');
+            if (!previewBox.value) {
+                showToast("Sila jana laporan harian terlebih dahulu!", "error");
+                return;
+            }
+            const encodedText = encodeURIComponent(previewBox.value);
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
+            window.open(whatsappUrl, '_blank');
+        });
     </script>
 </body>
 </html>
