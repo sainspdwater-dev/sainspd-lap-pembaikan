@@ -417,7 +417,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('sainsLoggedIn') !== 'true') {
-                window.location.href = 'login.html';
+                window.location.href = 'index.html';
                 return;
             }
 
@@ -486,7 +486,7 @@
             localStorage.removeItem('sainsSessionStart');
             localStorage.removeItem('sainsLastActivity');
             // Nota: sainsRawData, sainsDropdowns dan sainsOfflineQueue TIDAK DIPADAM supaya data penting tidak hilang.
-            window.location.href = 'login.html';
+            window.location.href = 'index.html';
         }
 
         // FUNGSI PENGURUSAN MASA (15 Minit Idle & 2 Jam Hard Limit)
