@@ -74,7 +74,7 @@
         
         .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
         
-        #loading-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); z-index: 9999; display: none; justify-content: center; align-items: center; flex-direction: column; }
+        #loading-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
         .spinner { border: 4px solid rgba(59, 130, 246, 0.2); border-left-color: #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
@@ -449,6 +449,7 @@
 
     <!-- SCRIPT UTAMA -->
     <script>
+        // Serta-merta halang cache browser back button jika belum log masuk
         if (localStorage.getItem('sainsLoggedIn') !== 'true') {
             window.location.replace('index.html');
         }
@@ -495,11 +496,14 @@
             startLiveClock();
             setupEvents();
 
+            showLoading(true, 10, "Memeriksa sesi pengguna...");
+
             const cachedData = localStorage.getItem('sainsRawData');
             const cachedDropdowns = localStorage.getItem('sainsDropdowns');
             
             if(cachedData) {
                 try {
+                    setTimeout(() => showLoading(true, 40, "Memuatkan data tempatan..."), 100);
                     rawData = JSON.parse(cachedData);
                     if(cachedDropdowns) dropdownOptions = JSON.parse(cachedDropdowns);
                     filteredData = [...rawData];
@@ -512,9 +516,6 @@
                 } catch(e) {
                     console.error("Ralat baca cache tempatan:", e);
                 }
-            } else {
-                // Jika tiada cache langsung, baru papar loading
-                showLoading(true, 50, "Memuat data pertama kali...");
             }
 
             window.addEventListener('online', () => {
@@ -522,13 +523,14 @@
                 processOfflineQueue();
             });
 
-            // Muat data pelayan secara latar belakang (silent background fetch)
-            fetchFreshData(false).then(() => {
-                showLoading(false);
-                processOfflineQueue();
-            }).catch(() => {
-                showLoading(false);
-            });
+            setTimeout(() => {
+                showLoading(true, 70, "Loading...");
+                fetchFreshData(false).then(() => {
+                    showLoading(true, 100, "Selesai!");
+                    setTimeout(() => showLoading(false), 400);
+                    processOfflineQueue();
+                });
+            }, 300);
         });
 
         function safeLogout(reason) {
@@ -796,20 +798,16 @@
 
         async function fetchFreshData(isManualRefresh = false) {
             if(isManualRefresh) {
-                showLoading(true, 30, "Menyegar data baharu...");
+                showLoading(true, 20, "Menyegar data baharu...");
                 showToast("Memuat data baharu...");
             }
 
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 7000);
-
             try {
-                const res = await fetch(`${WORKER_URL}?fetch=all&t=${new Date().getTime()}`, {
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
+                if(isManualRefresh) showLoading(true, 50, "Memuat turun dari pelayan...");
+                const res = await fetch(`${WORKER_URL}?fetch=all&t=${new Date().getTime()}`);
                 if(!res.ok) throw new Error("Gagal mengambil data dari pelayan.");
 
+                if(isManualRefresh) showLoading(true, 80, "Memproses fail JSON...");
                 const jsonRes = await res.json();
                 
                 if (Array.isArray(jsonRes)) {
@@ -839,16 +837,15 @@
                 updateManagementTable();
                 
                 if(isManualRefresh) {
-                    showLoading(false);
+                    showLoading(true, 100, "Selesai!");
+                    setTimeout(() => showLoading(false), 300);
                     showToast("Data berjaya dikemaskini!");
                 }
             } catch (err) {
-                clearTimeout(timeoutId);
                 if(isManualRefresh) {
                     showLoading(false);
-                    showToast("Gagal memuat data dari pelayan.", "error");
+                    showToast("Tiada internet. Menggunakan data luar talian (offline).", "error");
                 }
-                throw err;
             }
         }
 
@@ -1278,189 +1275,191 @@
         }
 
         // ==============================================================================
-        // LOGIK TEMPLAT LAPORAN HARIAN & PENGESANAN TARIKH TEPAT (DD/MM/YYYY)
+        // LOGIK TEMPLAT LAPORAN HARIAN & PENGESANAN TARIKH TEPAT
         // ==============================================================================
         document.getElementById('btn-load-daily').addEventListener('click', () => {
-            const selectedDate = document.getElementById('daily-date-picker').value; // Format: YYYY-MM-DD
-            if (!selectedDate) {
-                showToast("Sila pilih tarikh terlebih dahulu!", "error");
-                return;
+    const selectedDate = document.getElementById('daily-date-picker').value; // Format: YYYY-MM-DD
+    if (!selectedDate) {
+        showToast("Sila pilih tarikh terlebih dahulu!", "error");
+        return;
+    }
+
+    const [targetYear, targetMonth, targetDay] = selectedDate.split('-').map(Number);
+    const targetDDMMYYYY = `${String(targetDay).padStart(2, '0')}/${String(targetMonth).padStart(2, '0')}/${targetYear}`;
+    document.getElementById('daily-label-date').innerText = targetDDMMYYYY;
+
+    // Parser jitu menyokong semua format tarikh (DD/MM/YYYY, YYYY-MM-DD, dll.)
+    const parseRowDate = (val) => {
+        if (!val) return null;
+        let str = String(val).trim();
+        
+        let isoMatch = str.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
+        if (isoMatch) {
+            return { y: parseInt(isoMatch[1], 10), m: parseInt(isoMatch[2], 10), d: parseInt(isoMatch[3], 10) };
+        }
+
+        let dmyMatch = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
+        if (dmyMatch) {
+            return { d: parseInt(dmyMatch[1], 10), m: parseInt(dmyMatch[2], 10), y: parseInt(dmyMatch[3], 10) };
+        }
+
+        let shortDmyMatch = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2})(?!\d)/);
+        if (shortDmyMatch) {
+            let yy = parseInt(shortDmyMatch[3], 10);
+            return { d: parseInt(shortDmyMatch[1], 10), m: parseInt(shortDmyMatch[2], 10), y: yy < 100 ? 2000 + yy : yy };
+        }
+
+        let nums = str.match(/\d+/g);
+        if (nums && nums.length >= 3) {
+            let n0 = parseInt(nums[0], 10);
+            let n1 = parseInt(nums[1], 10);
+            let n2 = parseInt(nums[2], 10);
+            if (n0 > 1000) return { y: n0, m: n1, d: n2 };
+            if (n2 > 1000) return { d: n0, m: n1, y: n2 };
+            if (n2 < 100) return { d: n0, m: n1, y: 2000 + n2 };
+        }
+
+        return null;
+    };
+
+    const matchedCases = rawData.filter(row => {
+        let rawDateVal = '';
+        // Cari mana-mana kolum yang mengandungi perkataan 'TERIMA' atau 'TARIKH' secara dinamik
+        for (let key in row) {
+            const uKey = key.toUpperCase();
+            if ((uKey.includes('TERIMA') && !uKey.includes('TUTUP')) || uKey.includes('TARIKH')) {
+                if (row[key]) {
+                    rawDateVal = row[key];
+                    break;
+                }
             }
+        }
 
-            const [targetYear, targetMonth, targetDay] = selectedDate.split('-').map(Number);
-            const targetDDMMYYYY = `${String(targetDay).padStart(2, '0')}/${String(targetMonth).padStart(2, '0')}/${targetYear}`;
-            document.getElementById('daily-label-date').innerText = targetDDMMYYYY;
+        const parsed = parseRowDate(rawDateVal);
+        if (!parsed) return false;
 
-            const parseRowDate = (val) => {
-                if (!val) return null;
-                let str = String(val).trim();
-                
-                let isoMatch = str.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
-                if (isoMatch) {
-                    return { y: parseInt(isoMatch[1], 10), m: parseInt(isoMatch[2], 10), d: parseInt(isoMatch[3], 10) };
-                }
+        return parsed.y === targetYear && parsed.m === targetMonth && parsed.d === targetDay;
+    });
 
-                let dmyMatch = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
-                if (dmyMatch) {
-                    return { d: parseInt(dmyMatch[1], 10), m: parseInt(dmyMatch[2], 10), y: parseInt(dmyMatch[3], 10) };
-                }
+    const tarikhKemaskini = new Date().toLocaleDateString('ms-MY') + ' ' + new Date().toLocaleTimeString('ms-MY', {hour: '2-digit', minute:'2-digit'});
+    
+    const kesPecah = matchedCases.filter(r => {
+        const cat = String(r['KATEGORI'] || r['kategori'] || '').toUpperCase();
+        return cat.includes('PECAH');
+    });
 
-                let shortDmyMatch = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2})(?!\d)/);
-                if (shortDmyMatch) {
-                    let yy = parseInt(shortDmyMatch[3], 10);
-                    return { d: parseInt(shortDmyMatch[1], 10), m: parseInt(shortDmyMatch[2], 10), y: yy < 100 ? 2000 + yy : yy };
-                }
+    const kesBocor = matchedCases.filter(r => {
+        const cat = String(r['KATEGORI'] || r['kategori'] || '').toUpperCase();
+        return cat.includes('BOCOR');
+    });
 
-                let nums = str.match(/\d+/g);
-                if (nums && nums.length >= 3) {
-                    let n0 = parseInt(nums[0], 10);
-                    let n1 = parseInt(nums[1], 10);
-                    let n2 = parseInt(nums[2], 10);
-                    if (n0 > 1000) return { y: n0, m: n1, d: n2 };
-                    if (n2 > 1000) return { d: n0, m: n1, y: n2 };
-                    if (n2 < 100) return { d: n0, m: n1, y: 2000 + n2 };
-                }
+    const totalPecahBocor = kesPecah.length + kesBocor.length;
 
-                return null;
-            };
+    const sainsCases = matchedCases.filter(r => {
+        const pelaksana = String(r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh'] || '').toUpperCase();
+        return pelaksana.includes('SAINS');
+    });
+    const sainsText = sainsCases.length > 0 ? sainsCases.map(r => `${r['NO ADUAN'] || r['noAduan']} - ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}`).join(', ') : 'TIADA';
 
-            const matchedCases = rawData.filter(row => {
-                let rawDateVal = '';
-                for (let key in row) {
-                    const uKey = key.toUpperCase();
-                    if ((uKey.includes('TERIMA') && !uKey.includes('TUTUP')) || uKey.includes('TARIKH')) {
-                        if (row[key]) {
-                            rawDateVal = row[key];
-                            break;
-                        }
-                    }
-                }
+    const kesTurap = matchedCases.filter(r => {
+        const sivil = String(r['SIVIL WORKS'] || r['sivilWorks'] || r['Kerja Sivil'] || '').toUpperCase();
+        return sivil.includes('TURAP');
+    });
 
-                const parsed = parseRowDate(rawDateVal);
-                if (!parsed) return false;
+    const extractTimeWithAmPm = (val) => {
+        if (!val || val === '-') return 'HH:MM am/pm';
+        const str = String(val).trim();
+        const timeMatch = str.match(/(\d{2}):(\d{2})/);
+        if (timeMatch) {
+            let hours = parseInt(timeMatch[1], 10);
+            const minutes = timeMatch[2];
+            const ampm = hours >= 12 ? 'pm' : 'am';
+            hours = hours % 12;
+            hours = hours ? hours : 12; 
+            const formattedHours = String(hours).padStart(2, '0');
+            return `${formattedHours}:${minutes} ${ampm}`;
+        }
+        return str;
+    };
 
-                return parsed.y === targetYear && parsed.m === targetMonth && parsed.d === targetDay;
-            });
-
-            const tarikhKemaskini = new Date().toLocaleDateString('ms-MY') + ' ' + new Date().toLocaleTimeString('ms-MY', {hour: '2-digit', minute:'2-digit'});
+    let template = `*LAPORAN HARIAN OPERASI* :\n\n`;
+    template += `*Tarikh Laporan* : ${targetDDMMYYYY}\n`;
+    template += `Tarikh Kemaskini : ${tarikhKemaskini}\n`;
+    template += `*Daerah* : PORT DICKSON\n\n`;
+    
+    template += `*PAIP PECAH / BOCOR :*\n\n`;
+    template += `*GENG PEMBAIKAN SAINS & LOKASI² ADUAN :* ${sainsText}\n\n`;
+    template += `*KONTRAKTOR² & LOKASI² ADUAN:* ${totalPecahBocor} NOS\n`;
+    
+    if (matchedCases.length > 0) {
+        matchedCases.forEach((r, i) => {
+            const noAduan = r['NO ADUAN'] || r['noAduan'] || '-';
+            const lokasi = r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi'] || '-';
+            const saiz = r['SAIZ PAIP'] || r['saizPaip'] || '-';
+            const jenisPaip = r['JENIS PAIP'] || r['jenisPaip'] || '-';
             
-            const kesPecah = matchedCases.filter(r => {
-                const cat = String(r['KATEGORI'] || r['kategori'] || '').toUpperCase();
-                return cat.includes('PECAH');
-            });
-
-            const kesBocor = matchedCases.filter(r => {
-                const cat = String(r['KATEGORI'] || r['kategori'] || '').toUpperCase();
-                return cat.includes('BOCOR');
-            });
-
-            const totalPecahBocor = kesPecah.length + kesBocor.length;
-
-            const sainsCases = matchedCases.filter(r => {
-                const pelaksana = String(r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh'] || '').toUpperCase();
-                return pelaksana.includes('SAINS');
-            });
-            const sainsText = sainsCases.length > 0 ? sainsCases.map(r => `${r['NO ADUAN'] || r['noAduan']} - ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}`).join(', ') : 'TIADA';
-
-            const kesTurap = matchedCases.filter(r => {
-                const sivil = String(r['SIVIL WORKS'] || r['sivilWorks'] || r['Kerja Sivil'] || '').toUpperCase();
-                return sivil.includes('TURAP');
-            });
-
-            const extractTimeWithAmPm = (val) => {
-                if (!val || val === '-') return 'HH:MM am/pm';
-                const str = String(val).trim();
-                const timeMatch = str.match(/(\d{2}):(\d{2})/);
-                if (timeMatch) {
-                    let hours = parseInt(timeMatch[1], 10);
-                    const minutes = timeMatch[2];
-                    const ampm = hours >= 12 ? 'pm' : 'am';
-                    hours = hours % 12;
-                    hours = hours ? hours : 12; 
-                    const formattedHours = String(hours).padStart(2, '0');
-                    return `${formattedHours}:${minutes} ${ampm}`;
-                }
-                return str;
-            };
-
-            let template = `*LAPORAN HARIAN OPERASI* :\n\n`;
-            template += `*Tarikh Laporan* : ${targetDDMMYYYY}\n`;
-            template += `Tarikh Kemaskini : ${tarikhKemaskini}\n`;
-            template += `*Daerah* : PORT DICKSON\n\n`;
+            const tTerima = extractTimeWithAmPm(r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA']);
+            const rawTutup = r['TARIKH  TUTUP ADUAN'] || r['TARIKH TUTUP'] || r['tarikhTutup'];
+            const tTutup = rawTutup ? extractTimeWithAmPm(rawTutup) : 'DALAM TINDAKAN';
             
-            template += `*PAIP PECAH / BOCOR :*\n\n`;
-            template += `*GENG PEMBAIKAN SAINS & LOKASI² ADUAN :* ${sainsText}\n\n`;
-            template += `*KONTRAKTOR² & LOKASI² ADUAN:* ${totalPecahBocor} NOS\n`;
+            const pelaksana = r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh'] || '-';
             
-            if (matchedCases.length > 0) {
-                matchedCases.forEach((r, i) => {
-                    const noAduan = r['NO ADUAN'] || r['noAduan'] || '-';
-                    const lokasi = r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi'] || '-';
-                    const saiz = r['SAIZ PAIP'] || r['saizPaip'] || '-';
-                    const jenisPaip = r['JENIS PAIP'] || r['jenisPaip'] || '-';
-                    
-                    const tTerima = extractTimeWithAmPm(r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA']);
-                    const rawTutup = r['TARIKH  TUTUP ADUAN'] || r['TARIKH TUTUP'] || r['tarikhTutup'];
-                    const tTutup = rawTutup ? extractTimeWithAmPm(rawTutup) : 'DALAM TINDAKAN';
-                    
-                    const pelaksana = r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh'] || '-';
-                    
-                    template += `${i + 1}. ${noAduan} - ${lokasi} – ${saiz}'' - ${jenisPaip} - ${tTerima} hingga ${tTutup} - ${pelaksana}\n`;
-                });
-            } else {
-                template += `TIADA\n`;
-            }
-
-            template += `\n*KAWASAN² TERLIBAT GANGGUAN AIR KES PAIP PECAH :* ${kesPecah.length} NOS\n`;
-            if (kesPecah.length > 0) {
-                kesPecah.forEach((r, i) => {
-                    template += `${i + 1}. ${r['NO ADUAN'] || r['noAduan']} – ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}\n`;
-                });
-            } else {
-                template += `TIADA\n`;
-            }
-
-            template += `\n*UKZ² & LOKASI² ADUAN :* TIADA\n\n`;
-            template += `*JUMLAH PECAH :* ${kesPecah.length}\n`;
-            template += `*JUMLAH BOCOR :* ${kesBocor.length}\n\n`;
-
-            template += `*NO². ADUAN KERJA LIBAT JALAN :* ${kesTurap.length} NOS\n`;
-            if (kesTurap.length > 0) {
-                kesTurap.forEach((r, i) => {
-                    template += `${i + 1}. ${r['NO ADUAN'] || r['noAduan']}, Turap\n`;
-                });
-            } else {
-                template += `TIADA\n`;
-            }
-
-            template += `\n*GANGGUAN BEKALAN AIR LAIN² HAL :* TIADA\n`;
-            template += `*PENGHANTARAN AIR MELALUI LORI TANGKI :* TIADA\n`;
-            template += `*KOLAM KRITIKAL (PARAS RENDAH) :* TIADA\n`;
-            template += `*LAIN-LAIN HAL :* TIADA`;
-
-            document.getElementById('daily-whatsapp-preview').value = template;
-
-            const container = document.getElementById('daily-cases-list');
-            if (matchedCases.length === 0) {
-                container.innerHTML = `<p class="text-sm text-slate-500 text-center py-8">Tiada rekod kes ditemui pada tarikh ${targetDDMMYYYY}.</p>`;
-                return;
-            }
-
-            let html = '';
-            matchedCases.forEach((r) => {
-                html += `
-                    <div class="p-4 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800/50 shadow-sm flex flex-col gap-2 text-xs">
-                        <div class="flex justify-between font-bold text-blue-600 dark:text-blue-400 text-sm">
-                            <span>${r['NO ADUAN'] || r['noAduan']} (${r['KATEGORI'] || r['kategori']})</span>
-                            <span>DMA: ${r['DMA'] || r['dma']}</span>
-                        </div>
-                        <div><b>Lokasi:</b> ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}</div>
-                        <div><b>Pelaksana:</b> ${r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh']} | <b>Sivil:</b> ${r['SIVIL WORKS'] || r['sivilWorks'] || 'Tiada'}</div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
+            template += `${i + 1}. ${noAduan} - ${lokasi} – ${saiz}'' - ${jenisPaip} - ${tTerima} hingga ${tTutup} - ${pelaksana}\n`;
         });
+    } else {
+        template += `TIADA\n`;
+    }
+
+    template += `\n*KAWASAN² TERLIBAT GANGGUAN AIR KES PAIP PECAH :* ${kesPecah.length} NOS\n`;
+    if (kesPecah.length > 0) {
+        kesPecah.forEach((r, i) => {
+            template += `${i + 1}. ${r['NO ADUAN'] || r['noAduan']} – ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}\n`;
+        });
+    } else {
+        template += `TIADA\n`;
+    }
+
+    template += `\n*UKZ² & LOKASI² ADUAN :* TIADA\n\n`;
+    template += `*JUMLAH PECAH :* ${kesPecah.length}\n`;
+    template += `*JUMLAH BOCOR :* ${kesBocor.length}\n\n`;
+
+    template += `*NO². ADUAN KERJA LIBAT JALAN :* ${kesTurap.length} NOS\n`;
+    if (kesTurap.length > 0) {
+        kesTurap.forEach((r, i) => {
+            template += `${i + 1}. ${r['NO ADUAN'] || r['noAduan']}, Turap\n`;
+        });
+    } else {
+        template += `TIADA\n`;
+    }
+
+    template += `\n*GANGGUAN BEKALAN AIR LAIN² HAL :* TIADA\n`;
+    template += `*PENGHANTARAN AIR MELALUI LORI TANGKI :* TIADA\n`;
+    template += `*KOLAM KRITIKAL (PARAS RENDAH) :* TIADA\n`;
+    template += `*LAIN-LAIN HAL :* TIADA`;
+
+    document.getElementById('daily-whatsapp-preview').value = template;
+
+    const container = document.getElementById('daily-cases-list');
+    if (matchedCases.length === 0) {
+        container.innerHTML = `<p class="text-sm text-slate-500 text-center py-8">Tiada rekod kes ditemui pada tarikh ${targetDDMMYYYY}.</p>`;
+        return;
+    }
+
+    let html = '';
+    matchedCases.forEach((r) => {
+        html += `
+            <div class="p-4 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800/50 shadow-sm flex flex-col gap-2 text-xs">
+                <div class="flex justify-between font-bold text-blue-600 dark:text-blue-400 text-sm">
+                    <span>${r['NO ADUAN'] || r['noAduan']} (${r['KATEGORI'] || r['kategori']})</span>
+                    <span>DMA: ${r['DMA'] || r['dma']}</span>
+                </div>
+                <div><b>Lokasi:</b> ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}</div>
+                <div><b>Pelaksana:</b> ${r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh']} | <b>Sivil:</b> ${r['SIVIL WORKS'] || r['sivilWorks'] || 'Tiada'}</div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+});
 
         document.getElementById('btn-copy-daily-whatsapp').addEventListener('click', () => {
             const previewBox = document.getElementById('daily-whatsapp-preview');
