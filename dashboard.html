@@ -400,11 +400,11 @@
                         <div><label class="form-label">Saiz (Lama)</label><select id="m-saizPaip" class="form-input"></select></div>
                         <div><label class="form-label">Jenis Paip (Baru)</label><select id="m-jenisPaipBaru" class="form-input"></select></div>
                         <div><label class="form-label">Saiz (Baru)</label><select id="m-saiz" class="form-input"></select></div>
-                        <div class="md:col-span-2">
+                        <div>
                             <label class="form-label">PANJANG PAIP (M)</label>
                             <div class="flex gap-2">
                                 <input type="number" step="any" id="m-panjangPaip" class="form-input" placeholder="Nilai">
-                                <select id="m-unitPaip" class="form-input" style="max-width: 120px;">
+                                <select id="m-unitPaip" class="form-input" style="max-width: 110px;">
                                     <option value="Meter">Meter</option>
                                     <option value="Nos">Nos</option>
                                     <option value="m2">m2</option>
@@ -449,6 +449,18 @@
 
     <!-- SCRIPT UTAMA -->
     <script>
+        // Serta-merta halang cache browser back button jika belum log masuk
+        if (localStorage.getItem('sainsLoggedIn') !== 'true') {
+            window.location.replace('index.html');
+        }
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted || (performance.getEntriesByType("navigation")[0] && performance.getEntriesByType("navigation")[0].type === 'back_forward')) {
+                if (localStorage.getItem('sainsLoggedIn') !== 'true') {
+                    window.location.replace('index.html');
+                }
+            }
+        });
+
         const WORKER_URL = 'https://laporanpembaikan.sainspdwater.workers.dev/';
 
         let rawData = [];
@@ -461,7 +473,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('sainsLoggedIn') !== 'true') {
-                try { window.location.href = 'index.html'; } catch(e) { document.body.innerHTML = "<h2 style='color:red;text-align:center;margin-top:20vh;'>Sila Log Masuk Semula</h2>"; }
+                window.location.replace('index.html');
                 return;
             }
 
@@ -527,7 +539,7 @@
             localStorage.removeItem('sainsUserLevel');
             localStorage.removeItem('sainsSessionStart');
             localStorage.removeItem('sainsLastActivity');
-            try { window.location.href = 'index.html'; } catch(e) {}
+            window.location.replace('index.html');
         }
 
         function initSessionTimeouts() {
@@ -1020,7 +1032,7 @@
 
             document.getElementById('nav-logout').addEventListener('click', () => {
                 localStorage.clear();
-                try { window.location.href = 'index.html'; } catch(e) {}
+                window.location.replace('index.html');
             });
 
             document.getElementById('btn-refresh-data').addEventListener('click', () => fetchFreshData(true));
