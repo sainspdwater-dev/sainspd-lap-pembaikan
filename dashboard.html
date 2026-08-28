@@ -1287,37 +1287,31 @@
     const targetDDMMYYYY = `${String(targetDay).padStart(2, '0')}/${String(targetMonth).padStart(2, '0')}/${targetYear}`;
     document.getElementById('daily-label-date').innerText = targetDDMMYYYY;
 
-    // Fungsi semakan tarikh jitu menggunakan perbandingan nombor tahun, bulan, dan hari
+    // Parser jitu mengekstrak nombor tarikh tanpa terkesan isu pembilang digit tunggal atau format US
     const isMatchingDate = (val) => {
         if (!val) return false;
         let str = String(val).trim();
+        let matches = str.match(/\d+/g);
+        if (!matches || matches.length < 3) return false;
 
-        // 1. Cuba parse sebagai objek Date standard
-        let d = new Date(str);
-        if (!isNaN(d.getTime())) {
-            return d.getFullYear() === targetYear && 
-                   (d.getMonth() + 1) === targetMonth && 
-                   d.getDate() === targetDay;
+        let num1 = parseInt(matches[0], 10);
+        let num2 = parseInt(matches[1], 10);
+        let num3 = parseInt(matches[2], 10);
+
+        let d = 0, m = 0, y = 0;
+
+        if (num1 > 1000) {
+            y = num1;
+            m = num2;
+            d = num3;
+        } else {
+            d = num1;
+            m = num2;
+            y = num3;
+            if (y < 100) y += 2000;
         }
 
-        // 2. Cubaurai manual untuk format teks (Cth: DD/MM/YYYY atau YYYY-MM-DD)
-        let parts = str.split(/[\s/:\-]/);
-        if (parts.length >= 3) {
-            let p0 = parseInt(parts[0], 10);
-            let p1 = parseInt(parts[1], 10);
-            let p2 = parseInt(parts[2], 10);
-
-            // Jika format DD/MM/YYYY
-            if (parts[2].length === 4 || p2 > 1000) {
-                if (p0 === targetDay && p1 === targetMonth && p2 === targetYear) return true;
-            }
-            // Jika format YYYY/MM/DD
-            if (parts[0].length === 4 || p0 > 1000) {
-                if (p0 === targetYear && p1 === targetMonth && p2 === targetDay) return true;
-            }
-        }
-
-        return false;
+        return y === targetYear && m === targetMonth && d === targetDay;
     };
 
     const matchedCases = rawData.filter(row => {
@@ -1368,7 +1362,7 @@
 
     let template = `*LAPORAN HARIAN OPERASI* :\n\n`;
     template += `*Tarikh Laporan* : ${targetDDMMYYYY}\n`;
-    template += `Tarikh Kemaskini : ${tarikhKemaskini}\n`;
+    template += `*Tarikh Kemaskini* : ${tarikhKemaskini}\n`;
     template += `*Daerah* : PORT DICKSON\n\n`;
     
     template += `*PAIP PECAH / BOCOR :*\n\n`;
@@ -1429,6 +1423,21 @@
         return;
     }
 
+    let html = '';
+    matchedCases.forEach((r) => {
+        html += `
+            <div class="p-4 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800/50 shadow-sm flex flex-col gap-2 text-xs">
+                <div class="flex justify-between font-bold text-blue-600 dark:text-blue-400 text-sm">
+                    <span>${r['NO ADUAN'] || r['noAduan']} (${r['KATEGORI'] || r['kategori']})</span>
+                    <span>DMA: ${r['DMA'] || r['dma']}</span>
+                </div>
+                <div><b>Lokasi:</b> ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}</div>
+                <div><b>Pelaksana:</b> ${r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh']} | <b>Sivil:</b> ${r['SIVIL WORKS'] || r['sivilWorks'] || 'Tiada'}</div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+});
     let html = '';
     matchedCases.forEach((r) => {
         html += `
