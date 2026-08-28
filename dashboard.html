@@ -74,7 +74,7 @@
         
         .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
         
-        #loading-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
+        #loading-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); z-index: 9999; display: none; justify-content: center; align-items: center; flex-direction: column; }
         .spinner { border: 4px solid rgba(59, 130, 246, 0.2); border-left-color: #3b82f6; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
@@ -495,14 +495,11 @@
             startLiveClock();
             setupEvents();
 
-            showLoading(true, 10, "Memeriksa sesi pengguna...");
-
             const cachedData = localStorage.getItem('sainsRawData');
             const cachedDropdowns = localStorage.getItem('sainsDropdowns');
             
             if(cachedData) {
                 try {
-                    setTimeout(() => showLoading(true, 40, "Memuatkan data tempatan..."), 100);
                     rawData = JSON.parse(cachedData);
                     if(cachedDropdowns) dropdownOptions = JSON.parse(cachedDropdowns);
                     filteredData = [...rawData];
@@ -515,33 +512,23 @@
                 } catch(e) {
                     console.error("Ralat baca cache tempatan:", e);
                 }
+            } else {
+                // Jika tiada cache langsung, baru papar loading
+                showLoading(true, 50, "Memuat data pertama kali...");
             }
-
-            // Keselamatan Mutlak: Tutup loading paksa selepas 8 saat jika tersangkut
-            const safetyTimeout = setTimeout(() => {
-                const overlay = document.getElementById('loading-overlay');
-                if (overlay && overlay.style.display !== 'none') {
-                    showLoading(false);
-                    showToast("Sambungan pelayan masa tamat (Timeout). Menggunakan data tempatan.", "error");
-                }
-            }, 8000);
 
             window.addEventListener('online', () => {
                 showToast("Internet kembali! Menyelaras data tertunda...", "success");
                 processOfflineQueue();
             });
 
-            setTimeout(() => {
-                showLoading(true, 70, "Memuat data pelayan...");
-                fetchFreshData(false).then(() => {
-                    clearTimeout(safetyTimeout);
-                    showLoading(false);
-                    processOfflineQueue();
-                }).catch(() => {
-                    clearTimeout(safetyTimeout);
-                    showLoading(false);
-                });
-            }, 300);
+            // Muat data pelayan secara latar belakang (silent background fetch)
+            fetchFreshData(false).then(() => {
+                showLoading(false);
+                processOfflineQueue();
+            }).catch(() => {
+                showLoading(false);
+            });
         });
 
         function safeLogout(reason) {
@@ -809,22 +796,20 @@
 
         async function fetchFreshData(isManualRefresh = false) {
             if(isManualRefresh) {
-                showLoading(true, 20, "Menyegar data baharu...");
+                showLoading(true, 30, "Menyegar data baharu...");
                 showToast("Memuat data baharu...");
             }
 
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 7000); // 7 saat timeout fetch
+            const timeoutId = setTimeout(() => controller.abort(), 7000);
 
             try {
-                if(isManualRefresh) showLoading(true, 50, "Memuat turun dari pelayan...");
                 const res = await fetch(`${WORKER_URL}?fetch=all&t=${new Date().getTime()}`, {
                     signal: controller.signal
                 });
                 clearTimeout(timeoutId);
                 if(!res.ok) throw new Error("Gagal mengambil data dari pelayan.");
 
-                if(isManualRefresh) showLoading(true, 80, "Memproses fail JSON...");
                 const jsonRes = await res.json();
                 
                 if (Array.isArray(jsonRes)) {
@@ -854,14 +839,15 @@
                 updateManagementTable();
                 
                 if(isManualRefresh) {
-                    showLoading(true, 100, "Selesai!");
-                    setTimeout(() => showLoading(false), 300);
+                    showLoading(false);
                     showToast("Data berjaya dikemaskini!");
                 }
             } catch (err) {
                 clearTimeout(timeoutId);
-                showLoading(false);
-                showToast("Gagal memuat data dari pelayan. Menggunakan data sedia ada.", "error");
+                if(isManualRefresh) {
+                    showLoading(false);
+                    showToast("Gagal memuat data dari pelayan.", "error");
+                }
                 throw err;
             }
         }
