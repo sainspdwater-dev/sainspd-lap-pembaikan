@@ -1278,24 +1278,60 @@
         // LOGIK TEMPLAT LAPORAN HARIAN & PENGESANAN TARIKH TEPAT
         // ==============================================================================
         document.getElementById('btn-load-daily').addEventListener('click', () => {
-    const selectedDate = document.getElementById('daily-date-picker').value;
+    const selectedDate = document.getElementById('daily-date-picker').value; // Format: YYYY-MM-DD
     if (!selectedDate) {
         showToast("Sila pilih tarikh terlebih dahulu!", "error");
         return;
     }
 
-    const parts = selectedDate.split('-'); // YYYY-MM-DD
+    const parts = selectedDate.split('-'); 
     const formattedTarget = `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
     document.getElementById('daily-label-date').innerText = formattedTarget;
 
-    // Tapis data dengan menyemak pelbagai variasi nama lajur tarikh dan format
-    const matchedCases = rawData.filter(row => {
-        const rawDateVal = row['TARIKH & MASA TERIMA  ADUAN'] || row['TARIKH TERIMA'] || row['tarikhTerima'] || row['Tarikh Terima'] || '';
-        const dateStr = String(rawDateVal).trim();
+    // Fungsi pintar menukar pelbagai format tarikh kepada YYYY-MM-DD untuk perbandingan tepat
+    const parseDateToYMD = (val) => {
+        if (!val) return '';
+        let str = String(val).trim();
         
-        if (!dateStr) return false;
-        if (dateStr.includes(formattedTarget)) return true;
-        if (dateStr.includes(selectedDate)) return true;
+        // Semak format YYYY-MM-DD
+        let m = str.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
+        if (m) {
+            return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+        }
+        
+        // Semak format DD/MM/YYYY atau D/M/YYYY
+        let m2 = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
+        if (m2) {
+            return `${m2[3]}-${m2[2].padStart(2,'0')}-${m2[1].padStart(2,'0')}`;
+        }
+        
+        let d = new Date(str);
+        if (!isNaN(d.getTime())) {
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+        return '';
+    };
+
+    // Tapis data dengan mengimbas mana-mana kolum yang berkaitan tarikh terima
+    const matchedCases = rawData.filter(row => {
+        let rawDateVal = '';
+        for (let key in row) {
+            if (key.toUpperCase().includes('TERIMA') || key.toUpperCase().includes('TARIKH')) {
+                if (row[key]) {
+                    rawDateVal = row[key];
+                    break;
+                }
+            }
+        }
+
+        const rowYMD = parseDateToYMD(rawDateVal);
+        if (rowYMD && rowYMD === selectedDate) return true;
+
+        const dateStr = String(rawDateVal).trim();
+        if (dateStr.includes(formattedTarget) || dateStr.includes(selectedDate)) return true;
 
         return false;
     });
@@ -1314,39 +1350,33 @@
 
     const totalPecahBocor = kesPecah.length + kesBocor.length;
 
-    // Geng Pembaikan SAINS
     const sainsCases = matchedCases.filter(r => {
         const pelaksana = String(r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh'] || '').toUpperCase();
         return pelaksana.includes('SAINS');
     });
     const sainsText = sainsCases.length > 0 ? sainsCases.map(r => `${r['NO ADUAN'] || r['noAduan']} - ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}`).join(', ') : 'TIADA';
 
-    // Kerja Turap
     const kesTurap = matchedCases.filter(r => {
         const sivil = String(r['SIVIL WORKS'] || r['sivilWorks'] || r['Kerja Sivil'] || '').toUpperCase();
         return sivil.includes('TURAP');
     });
 
-    // Fungsi pembantu untuk ambil MASA dengan format HH:MM am/pm
     const extractTimeWithAmPm = (val) => {
         if (!val || val === '-') return 'HH:MM am/pm';
         const str = String(val).trim();
-        
-        // Cari corak jam (HH:MM atau HH:MM:SS)
         const timeMatch = str.match(/(\d{2}):(\d{2})/);
         if (timeMatch) {
             let hours = parseInt(timeMatch[1], 10);
             const minutes = timeMatch[2];
             const ampm = hours >= 12 ? 'pm' : 'am';
             hours = hours % 12;
-            hours = hours ? hours : angka12 = 12; // Jam '0' jadi '12'
+            hours = hours ? hours : 12; 
             const formattedHours = String(hours).padStart(2, '0');
             return `${formattedHours}:${minutes} ${ampm}`;
         }
         return str;
     };
 
-    // --- BINA TEMPLAT RASMI ---
     let template = `*LAPORAN HARIAN OPERASI* :\n\n`;
     template += `*Tarikh Laporan* : ${formattedTarget}\n`;
     template += `Tarikh Kemaskini : ${tarikhKemaskini}\n`;
@@ -1363,7 +1393,6 @@
             const saiz = r['SAIZ PAIP'] || r['saizPaip'] || '-';
             const jenisPaip = r['JENIS PAIP'] || r['jenisPaip'] || '-';
             
-            // Ambil Masa + am/pm untuk Tarikh Terima & Tutup
             const tTerima = extractTimeWithAmPm(r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA']);
             const rawTutup = r['TARIKH  TUTUP ADUAN'] || r['TARIKH TUTUP'] || r['tarikhTutup'];
             const tTutup = rawTutup ? extractTimeWithAmPm(rawTutup) : 'DALAM TINDAKAN';
@@ -1405,7 +1434,6 @@
 
     document.getElementById('daily-whatsapp-preview').value = template;
 
-    // Paparkan kad senarai di bawah
     const container = document.getElementById('daily-cases-list');
     if (matchedCases.length === 0) {
         container.innerHTML = `<p class="text-sm text-slate-500 text-center py-8">Tiada rekod kes ditemui pada tarikh ${formattedTarget}.</p>`;
