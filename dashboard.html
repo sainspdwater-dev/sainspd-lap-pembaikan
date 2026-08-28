@@ -1278,62 +1278,42 @@
         // LOGIK TEMPLAT LAPORAN HARIAN & PENGESANAN TARIKH TEPAT
         // ==============================================================================
         document.getElementById('btn-load-daily').addEventListener('click', () => {
-    const selectedDate = document.getElementById('daily-date-picker').value; // Format: YYYY-MM-DD
+    const selectedDate = document.getElementById('daily-date-picker').value; // Format dari input: YYYY-MM-DD
     if (!selectedDate) {
         showToast("Sila pilih tarikh terlebih dahulu!", "error");
         return;
     }
 
-    const parts = selectedDate.split('-'); 
-    const formattedTarget = `${parts[2]}/${parts[1]}/${parts[0]}`; // DD/MM/YYYY
-    document.getElementById('daily-label-date').innerText = formattedTarget;
+    const [sYear, sMonth, sDay] = selectedDate.split('-');
+    const targetDDMMYYYY = `${sDay.padStart(2, '0')}/${sMonth.padStart(2, '0')}/${sYear}`; // Tukar ke DD/MM/YYYY
+    document.getElementById('daily-label-date').innerText = targetDDMMYYYY;
 
-    // Fungsi pintar menukar pelbagai format tarikh kepada YYYY-MM-DD untuk perbandingan tepat
-    const parseDateToYMD = (val) => {
+    // Fungsi seragamkan sebarang format tarikh dari database kepada DD/MM/YYYY untuk perbandingan tepat
+    const normalizeToDDMMYYYY = (val) => {
         if (!val) return '';
         let str = String(val).trim();
         
-        // Semak format YYYY-MM-DD
-        let m = str.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
-        if (m) {
-            return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+        // Jika tarikh dari Cloudflare dalam format YYYY-MM-DD (ISO)
+        let mIso = str.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
+        if (mIso) {
+            return `${mIso[3].padStart(2, '0')}/${mIso[2].padStart(2, '0')}/${mIso[1]}`;
         }
         
-        // Semak format DD/MM/YYYY atau D/M/YYYY
-        let m2 = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
-        if (m2) {
-            return `${m2[3]}-${m2[2].padStart(2,'0')}-${m2[1].padStart(2,'0')}`;
+        // Jika tarikh dalam format DD/MM/YYYY atau D/M/YYYY
+        let mDmy = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
+        if (mDmy) {
+            return `${mDmy[1].padStart(2, '0')}/${mDmy[2].padStart(2, '0')}/${mDmy[3]}`;
         }
         
-        let d = new Date(str);
-        if (!isNaN(d.getTime())) {
-            const yyyy = d.getFullYear();
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            return `${yyyy}-${mm}-${dd}`;
-        }
-        return '';
+        return str;
     };
 
-    // Tapis data dengan mengimbas mana-mana kolum yang berkaitan tarikh terima
+    // Tapis data kes berdasarkan tarikh terima yang telah diseragamkan kepada DD/MM/YYYY
     const matchedCases = rawData.filter(row => {
-        let rawDateVal = '';
-        for (let key in row) {
-            if (key.toUpperCase().includes('TERIMA') || key.toUpperCase().includes('TARIKH')) {
-                if (row[key]) {
-                    rawDateVal = row[key];
-                    break;
-                }
-            }
-        }
-
-        const rowYMD = parseDateToYMD(rawDateVal);
-        if (rowYMD && rowYMD === selectedDate) return true;
-
-        const dateStr = String(rawDateVal).trim();
-        if (dateStr.includes(formattedTarget) || dateStr.includes(selectedDate)) return true;
-
-        return false;
+        const rawDateVal = row['TARIKH & MASA TERIMA  ADUAN'] || row['TARIKH TERIMA'] || row['tarikhTerima'] || row['Tarikh Terima'] || '';
+        const normalizedRowDate = normalizeToDDMMYYYY(rawDateVal);
+        
+        return normalizedRowDate === targetDDMMYYYY;
     });
 
     const tarikhKemaskini = new Date().toLocaleDateString('ms-MY') + ' ' + new Date().toLocaleTimeString('ms-MY', {hour: '2-digit', minute:'2-digit'});
@@ -1378,8 +1358,8 @@
     };
 
     let template = `*LAPORAN HARIAN OPERASI* :\n\n`;
-    template += `*Tarikh Laporan* : ${formattedTarget}\n`;
-    template += `*Tarikh Kemaskini* : ${tarikhKemaskini}\n`;
+    template += `*Tarikh Laporan* : ${targetDDMMYYYY}\n`;
+    template += `Tarikh Kemaskini : ${tarikhKemaskini}\n`;
     template += `*Daerah* : PORT DICKSON\n\n`;
     
     template += `*PAIP PECAH / BOCOR :*\n\n`;
@@ -1436,10 +1416,25 @@
 
     const container = document.getElementById('daily-cases-list');
     if (matchedCases.length === 0) {
-        container.innerHTML = `<p class="text-sm text-slate-500 text-center py-8">Tiada rekod kes ditemui pada tarikh ${formattedTarget}.</p>`;
+        container.innerHTML = `<p class="text-sm text-slate-500 text-center py-8">Tiada rekod kes ditemui pada tarikh ${targetDDMMYYYY}.</p>`;
         return;
     }
 
+    let html = '';
+    matchedCases.forEach((r) => {
+        html += `
+            <div class="p-4 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800/50 shadow-sm flex flex-col gap-2 text-xs">
+                <div class="flex justify-between font-bold text-blue-600 dark:text-blue-400 text-sm">
+                    <span>${r['NO ADUAN'] || r['noAduan']} (${r['KATEGORI'] || r['kategori']})</span>
+                    <span>DMA: ${r['DMA'] || r['dma']}</span>
+                </div>
+                <div><b>Lokasi:</b> ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}</div>
+                <div><b>Pelaksana:</b> ${r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh']} | <b>Sivil:</b> ${r['SIVIL WORKS'] || r['sivilWorks'] || 'Tiada'}</div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+});
     let html = '';
     matchedCases.forEach((r) => {
         html += `
