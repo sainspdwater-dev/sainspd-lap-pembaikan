@@ -400,7 +400,18 @@
                         <div><label class="form-label">Saiz (Lama)</label><select id="m-saizPaip" class="form-input"></select></div>
                         <div><label class="form-label">Jenis Paip (Baru)</label><select id="m-jenisPaipBaru" class="form-input"></select></div>
                         <div><label class="form-label">Saiz (Baru)</label><select id="m-saiz" class="form-input"></select></div>
-                        <div><label class="form-label">Panjang Paip (M)</label><input type="number" step="any" id="m-panjangPaip" class="form-input"></div>
+                        <div class="md:col-span-2">
+                            <label class="form-label">PANJANG PAIP (M)</label>
+                            <div class="flex gap-2">
+                                <input type="number" step="any" id="m-panjangPaip" class="form-input" placeholder="Nilai">
+                                <select id="m-unitPaip" class="form-input" style="max-width: 120px;">
+                                    <option value="Meter">Meter</option>
+                                    <option value="Nos">Nos</option>
+                                    <option value="m2">m2</option>
+                                    <option value="m3">m3</option>
+                                </select>
+                            </div>
+                        </div>
                         <div><label class="form-label">Kerja Sivil</label><select id="m-sivilWorks" class="form-input"></select></div>
                         <div class="md:col-span-2"><label class="form-label">Dilaksanakan Oleh</label><select id="m-dilaksanakanOleh" class="form-input"></select></div>
                     </div>
@@ -694,7 +705,11 @@
             const saizPaip = document.getElementById('m-saizPaip').value;
             const jenisPaipBaru = document.getElementById('m-jenisPaipBaru').value;
             const saiz = document.getElementById('m-saiz').value;
-            const panjangPaip = document.getElementById('m-panjangPaip').value;
+            
+            const valNum = document.getElementById('m-panjangPaip').value.trim();
+            const valUnit = document.getElementById('m-unitPaip').value;
+            const panjangPaip = (valUnit === 'Meter' || !valUnit || !valNum) ? valNum : `${valNum} ${valUnit}`;
+
             const sivilWorks = document.getElementById('m-sivilWorks').value;
             const dilaksanakanOleh = document.getElementById('m-dilaksanakanOleh').value;
             const kordinat = document.getElementById('m-kordinat').value;
@@ -895,6 +910,7 @@
             document.getElementById('modalSubmitBtn').innerHTML = `<i class="fa-solid fa-folder-plus"></i> Tambah Rekod`;
             document.getElementById('form-mutation').reset();
             document.getElementById('m-noAduan').removeAttribute('readonly');
+            document.getElementById('m-unitPaip').value = 'Meter';
             populateModalDropdowns();
             recordModal.classList.remove('hidden');
         });
@@ -935,7 +951,16 @@
             document.getElementById('m-lokasi').value = rowData['LOKASI / TEMPAT'] || rowData['LOKASI'] || '';
             document.getElementById('m-kordinat').value = rowData['KORDINAT'] || '';
             document.getElementById('m-kpiMasaTutup').value = rowData['KPI MASA TUTUP ADUAN'] || '';
-            document.getElementById('m-panjangPaip').value = rowData['PANJANG PAIP (M)'] || '';
+            
+            const rawPanjang = rowData['PANJANG PAIP (M)'] || '';
+            const parts = String(rawPanjang).trim().split(' ');
+            if (parts.length > 1 && ['Nos', 'm2', 'm3'].includes(parts[1])) {
+                document.getElementById('m-panjangPaip').value = parts[0];
+                document.getElementById('m-unitPaip').value = parts[1];
+            } else {
+                document.getElementById('m-panjangPaip').value = rawPanjang;
+                document.getElementById('m-unitPaip').value = 'Meter';
+            }
 
             document.getElementById('m-tarikhTerima').value = formatForDateTimeInput(rowData['TARIKH & MASA TERIMA  ADUAN'] || rowData['TARIKH TERIMA']);
             document.getElementById('m-tarikhTutup').value = formatForDateTimeInput(rowData['TARIKH  TUTUP ADUAN'] || rowData['TARIKH TUTUP ADUAN'] || rowData['TARIKH TUTUP']);
@@ -1178,7 +1203,7 @@
             charts.saizBaru.updateSeries([{name: 'Kes', data: dSaizBaru.map(d=>d[1])}]); charts.saizBaru.updateOptions({xaxis: {categories: dSaizBaru.map(d=>d[0])}});
 
             const dPanjang = countBy('PANJANG PAIP (M)').slice(0,5);
-            charts.panjangPaip.updateSeries([{name: 'Meter', data: dPanjang.map(d=>d[1])}]); charts.panjangPaip.updateOptions({xaxis: {categories: dPanjang.map(d=>d[0])}});
+            charts.panjangPaip.updateSeries([{name: 'Nilai', data: dPanjang.map(d=>d[1])}]); charts.panjangPaip.updateOptions({xaxis: {categories: dPanjang.map(d=>d[0])}});
 
             updateMapMarkers();
             updateTable();
@@ -1408,7 +1433,7 @@
         document.getElementById('btn-open-whatsapp-link').addEventListener('click', () => {
             const previewBox = document.getElementById('daily-whatsapp-preview');
             if (!previewBox.value) {
-                showToast("Sila jana laporan harian terlebih dahulu!", "error");
+                showToast("Sila salin atau jana laporan harian terlebih dahulu!", "error");
                 return;
             }
             const encodedText = encodeURIComponent(previewBox.value);
