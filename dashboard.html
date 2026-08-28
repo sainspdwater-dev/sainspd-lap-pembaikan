@@ -1287,36 +1287,57 @@
     const targetDDMMYYYY = `${String(targetDay).padStart(2, '0')}/${String(targetMonth).padStart(2, '0')}/${targetYear}`;
     document.getElementById('daily-label-date').innerText = targetDDMMYYYY;
 
-    // Parser jitu mengekstrak nombor tarikh tanpa terkesan isu pembilang digit tunggal atau format US
-    const isMatchingDate = (val) => {
-        if (!val) return false;
+    // Parser jitu menyokong semua format tarikh (DD/MM/YYYY, YYYY-MM-DD, dll.)
+    const parseRowDate = (val) => {
+        if (!val) return null;
         let str = String(val).trim();
-        let matches = str.match(/\d+/g);
-        if (!matches || matches.length < 3) return false;
-
-        let num1 = parseInt(matches[0], 10);
-        let num2 = parseInt(matches[1], 10);
-        let num3 = parseInt(matches[2], 10);
-
-        let d = 0, m = 0, y = 0;
-
-        if (num1 > 1000) {
-            y = num1;
-            m = num2;
-            d = num3;
-        } else {
-            d = num1;
-            m = num2;
-            y = num3;
-            if (y < 100) y += 2000;
+        
+        let isoMatch = str.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
+        if (isoMatch) {
+            return { y: parseInt(isoMatch[1], 10), m: parseInt(isoMatch[2], 10), d: parseInt(isoMatch[3], 10) };
         }
 
-        return y === targetYear && m === targetMonth && d === targetDay;
+        let dmyMatch = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
+        if (dmyMatch) {
+            return { d: parseInt(dmyMatch[1], 10), m: parseInt(dmyMatch[2], 10), y: parseInt(dmyMatch[3], 10) };
+        }
+
+        let shortDmyMatch = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2})(?!\d)/);
+        if (shortDmyMatch) {
+            let yy = parseInt(shortDmyMatch[3], 10);
+            return { d: parseInt(shortDmyMatch[1], 10), m: parseInt(shortDmyMatch[2], 10), y: yy < 100 ? 2000 + yy : yy };
+        }
+
+        let nums = str.match(/\d+/g);
+        if (nums && nums.length >= 3) {
+            let n0 = parseInt(nums[0], 10);
+            let n1 = parseInt(nums[1], 10);
+            let n2 = parseInt(nums[2], 10);
+            if (n0 > 1000) return { y: n0, m: n1, d: n2 };
+            if (n2 > 1000) return { d: n0, m: n1, y: n2 };
+            if (n2 < 100) return { d: n0, m: n1, y: 2000 + n2 };
+        }
+
+        return null;
     };
 
     const matchedCases = rawData.filter(row => {
-        const rawDateVal = row['TARIKH & MASA TERIMA  ADUAN'] || row['TARIKH TERIMA'] || row['tarikhTerima'] || row['Tarikh Terima'] || '';
-        return isMatchingDate(rawDateVal);
+        let rawDateVal = '';
+        // Cari mana-mana kolum yang mengandungi perkataan 'TERIMA' atau 'TARIKH' secara dinamik
+        for (let key in row) {
+            const uKey = key.toUpperCase();
+            if ((uKey.includes('TERIMA') && !uKey.includes('TUTUP')) || uKey.includes('TARIKH')) {
+                if (row[key]) {
+                    rawDateVal = row[key];
+                    break;
+                }
+            }
+        }
+
+        const parsed = parseRowDate(rawDateVal);
+        if (!parsed) return false;
+
+        return parsed.y === targetYear && parsed.m === targetMonth && parsed.d === targetDay;
     });
 
     const tarikhKemaskini = new Date().toLocaleDateString('ms-MY') + ' ' + new Date().toLocaleTimeString('ms-MY', {hour: '2-digit', minute:'2-digit'});
@@ -1362,7 +1383,7 @@
 
     let template = `*LAPORAN HARIAN OPERASI* :\n\n`;
     template += `*Tarikh Laporan* : ${targetDDMMYYYY}\n`;
-    template += `*Tarikh Kemaskini* : ${tarikhKemaskini}\n`;
+    template += `Tarikh Kemaskini : ${tarikhKemaskini}\n`;
     template += `*Daerah* : PORT DICKSON\n\n`;
     
     template += `*PAIP PECAH / BOCOR :*\n\n`;
@@ -1422,6 +1443,22 @@
         container.innerHTML = `<p class="text-sm text-slate-500 text-center py-8">Tiada rekod kes ditemui pada tarikh ${targetDDMMYYYY}.</p>`;
         return;
     }
+
+    let html = '';
+    matchedCases.forEach((r) => {
+        html += `
+            <div class="p-4 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800/50 shadow-sm flex flex-col gap-2 text-xs">
+                <div class="flex justify-between font-bold text-blue-600 dark:text-blue-400 text-sm">
+                    <span>${r['NO ADUAN'] || r['noAduan']} (${r['KATEGORI'] || r['kategori']})</span>
+                    <span>DMA: ${r['DMA'] || r['dma']}</span>
+                </div>
+                <div><b>Lokasi:</b> ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}</div>
+                <div><b>Pelaksana:</b> ${r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh']} | <b>Sivil:</b> ${r['SIVIL WORKS'] || r['sivilWorks'] || 'Tiada'}</div>
+            </div>
+        `;
+    });
+    container.innerHTML = html;
+});
 
     let html = '';
     matchedCases.forEach((r) => {
