@@ -677,16 +677,16 @@
                 if (pct) pct.innerText = percent + '%';
                 if (txt) txt.innerText = text;
 
-                // Tetapkan semula kedudukan lori ke asal jika peratusan bermula pada nilai rendah (<= 20)
-                if (percent <= 20) {
+                // Tetapkan semula kedudukan lori ke asal jika peratusan bermula pada nilai <= 40
+                if (percent <= 40) {
                     if(elTruckGroup) elTruckGroup.style.transform = "translateX(0)";
                     if(elWheels) elWheels.forEach(w => w.style.transform = "rotate(0deg)");
                     if(elValveWheel) elValveWheel.style.transform = "rotate(0deg)";
                     if(elWaterStream) elWaterStream.style.opacity = "0";
                     if(elWaterFill) { elWaterFill.setAttribute('y', 280); elWaterFill.setAttribute('height', 0); }
                 } 
-                else if (percent > 20 && percent < 80) {
-                    let fillRatio = (percent - 20) / 60;
+                else if (percent > 40 && percent < 80) {
+                    let fillRatio = (percent - 40) / 40;
                     let waterHeight = fillRatio * 130;
                     let waterY = 280 - waterHeight;
                     
@@ -793,12 +793,16 @@
             if(!val) return '-';
             const d = parseCustomDate(val);
             if(!isNaN(d.getTime()) && d.getTime() > 0) {
-                const yyyy = d.getFullYear();
+                const yy = String(d.getFullYear()).slice(-2);
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
                 const dd = String(d.getDate()).padStart(2, '0');
-                const hh = String(d.getHours()).padStart(2, '0');
+                let hours = d.getHours();
                 const min = String(d.getMinutes()).padStart(2, '0');
-                return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
+                const ampm = hours >= 12 ? 'pm' : 'am';
+                hours = hours % 12;
+                hours = hours ? hours : 12;
+                const hh = String(hours).padStart(2, '0');
+                return `${dd}/${mm}/${yy} ${hh}:${min} ${ampm}`;
             }
             return val;
         }
