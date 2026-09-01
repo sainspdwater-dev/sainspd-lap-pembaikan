@@ -677,7 +677,6 @@
                 if (pct) pct.innerText = percent + '%';
                 if (txt) txt.innerText = text;
 
-                // Tetapkan semula kedudukan lori ke asal jika peratusan bermula pada nilai <= 40
                 if (percent <= 40) {
                     if(elTruckGroup) elTruckGroup.style.transform = "translateX(0)";
                     if(elWheels) elWheels.forEach(w => w.style.transform = "rotate(0deg)");
@@ -977,8 +976,11 @@
             }
         }
 
+        // --- BACKGROUND SYNC MUTATION FUNCTION ---
         async function sendMutation(actionType, payloadData) {
             const noAduan = payloadData['NO ADUAN'] || payloadData.noAduan;
+            
+            // 1. Kemaskini UI tempatan serta-merta (Optimistic Update)
             if(actionType === 'addData') {
                 rawData.unshift(payloadData);
             } else if(actionType === 'updateData') {
@@ -992,30 +994,30 @@
             filteredData = [...rawData];
             updateDashboard();
             updateManagementTable();
-            closeModals();
+            closeModals(); // Modal terus tutup serta-merta tanpa tunggu pelayan
 
+            showToast("Perubahan disimpan. Menyelaras dengan pelayan...", "success");
+
+            // 2. Hantar ke pelayan di latar belakang (Background Sync)
             try {
-                showLoading(true, 40, "Menghantar kemas kini ke pelayan...");
                 const res = await fetch(WORKER_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({ action: actionType, data: payloadData, noAduan: noAduan })
                 });
-                showLoading(true, 90, "Menunggu pengesahan...");
                 const result = await res.json();
-                showLoading(false);
+                
                 if(result.status === 'success') {
-                    showToast(result.message);
-                    await fetchFreshData(false);
+                    showToast(result.message || "Data berjaya diselaraskan dengan pelayan!", "success");
+                    fetchFreshData(false);
                 } else {
-                    throw new Error(result.message || "Ralat operasi");
+                    throw new Error(result.message || "Ralat operasi pelayan");
                 }
             } catch(err) {
-                showLoading(false);
                 let queue = JSON.parse(localStorage.getItem('sainsOfflineQueue') || '[]');
                 queue.push({ action: actionType, data: payloadData, noAduan: noAduan });
                 localStorage.setItem('sainsOfflineQueue', JSON.stringify(queue));
-                showToast("Mod Offline: Perubahan disimpan dalam peranti.", "error");
+                showToast("Pelayan sibuk. Disimpan dalam giliran latar belakang.", "error");
             }
         }
 
