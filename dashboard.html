@@ -347,13 +347,16 @@
                     <h2 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3"><i class="fa-solid fa-database text-emerald-500"></i> Pengurusan Data Rekod</h2>
                     <p class="text-slate-500 dark:text-gray-400 mt-1">Senarai terperinci</p>
                 </div>
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-4 flex-wrap">
                     <div class="flex items-center gap-2">
                         <label class="text-xs font-bold text-slate-600 dark:text-gray-400 uppercase">Tapis Bulan:</label>
                         <select id="mgmt-filter-bulan" class="filter-select rounded px-3 py-1.5 text-sm">
                             <option value="">Semua Bulan</option>
                         </select>
                     </div>
+                    <button id="btn-mgmt-refresh" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-bold flex items-center gap-2 shadow-sm transition">
+                        <i class="fa-solid fa-rotate"></i> Muat Semula
+                    </button>
                     <div id="admin-action-buttons" class="flex gap-3">
                         <button id="btn-open-add" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-sm font-bold flex items-center gap-2 shadow-sm transition">
                             <i class="fa-solid fa-plus-circle"></i> Tambah Laporan
@@ -674,18 +677,15 @@
                 if (pct) pct.innerText = percent + '%';
                 if (txt) txt.innerText = text;
 
-                if (percent < 10) {
+                // Tetapkan semula kedudukan lori ke asal jika peratusan bermula pada nilai rendah (<= 20)
+                if (percent <= 20) {
                     if(elTruckGroup) elTruckGroup.style.transform = "translateX(0)";
                     if(elWheels) elWheels.forEach(w => w.style.transform = "rotate(0deg)");
                     if(elValveWheel) elValveWheel.style.transform = "rotate(0deg)";
                     if(elWaterStream) elWaterStream.style.opacity = "0";
                     if(elWaterFill) { elWaterFill.setAttribute('y', 280); elWaterFill.setAttribute('height', 0); }
                 } 
-                else if (percent >= 10 && percent < 20) {
-                    if(elValveWheel) elValveWheel.style.transform = "rotate(360deg)";
-                    setTimeout(() => { if(elWaterStream) elWaterStream.style.opacity = "1"; }, 300);
-                } 
-                else if (percent >= 20 && percent < 80) {
+                else if (percent > 20 && percent < 80) {
                     let fillRatio = (percent - 20) / 60;
                     let waterHeight = fillRatio * 130;
                     let waterY = 280 - waterHeight;
@@ -776,10 +776,23 @@
             sel.value = val;
         }
 
+        function parseCustomDate(val) {
+            if(!val) return new Date(0);
+            if(val instanceof Date) return val;
+            let str = String(val).trim();
+            if(str.includes('/')) {
+                const parts = str.split(/[\s/:\-]/);
+                if(parts.length >= 3) {
+                    return new Date(parts[2], parseInt(parts[1])-1, parts[0], parts[3]||0, parts[4]||0);
+                }
+            }
+            return new Date(str);
+        }
+
         function formatDateToDDMMYYYY(val) {
             if(!val) return '-';
-            const d = new Date(val);
-            if(!isNaN(d.getTime())) {
+            const d = parseCustomDate(val);
+            if(!isNaN(d.getTime()) && d.getTime() > 0) {
                 const yyyy = d.getFullYear();
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
                 const dd = String(d.getDate()).padStart(2, '0');
@@ -792,18 +805,8 @@
 
         function formatForDateTimeInput(val) {
             if(!val || val === '-') return '';
-            let d = new Date(val);
-            if (isNaN(d.getTime())) {
-                const parts = String(val).split(/[\s/:\-]/); 
-                if (parts.length >= 5) {
-                    if(val.includes('/')) {
-                        d = new Date(parts[2], parseInt(parts[1])-1, parts[0], parts[3], parts[4]);
-                    } else {
-                        d = new Date(parts[0], parseInt(parts[1])-1, parts[2], parts[3], parts[4]);
-                    }
-                }
-            }
-            if (!isNaN(d.getTime())) {
+            const d = parseCustomDate(val);
+            if (!isNaN(d.getTime()) && d.getTime() > 0) {
                 const yyyy = d.getFullYear();
                 const mm = String(d.getMonth() + 1).padStart(2, '0');
                 const dd = String(d.getDate()).padStart(2, '0');
@@ -942,8 +945,8 @@
                 }
 
                 rawData.sort((a, b) => {
-                    const dateA = new Date(a['TARIKH & MASA TERIMA  ADUAN'] || a['TARIKH TERIMA'] || 0);
-                    const dateB = new Date(b['TARIKH & MASA TERIMA  ADUAN'] || b['TARIKH TERIMA'] || 0);
+                    const dateA = parseCustomDate(a['TARIKH & MASA TERIMA  ADUAN'] || a['TARIKH TERIMA'] || 0);
+                    const dateB = parseCustomDate(b['TARIKH & MASA TERIMA  ADUAN'] || b['TARIKH TERIMA'] || 0);
                     return dateB - dateA;
                 });
 
@@ -1157,6 +1160,8 @@
             });
 
             document.getElementById('btn-refresh-data').addEventListener('click', () => fetchFreshData(true));
+            document.getElementById('btn-mgmt-refresh').addEventListener('click', () => fetchFreshData(true));
+            
             document.getElementById('btn-reset').addEventListener('click', () => {
                 document.getElementById('filter-search').value = '';
                 document.getElementById('filter-bulan').value = '';
