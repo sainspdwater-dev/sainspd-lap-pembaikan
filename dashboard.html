@@ -241,7 +241,7 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                     <div>
                         <label class="text-xs font-bold text-slate-600 dark:text-gray-400 mb-1 block uppercase">Carian</label>
-                        <input type="text" id="filter-search" class="filter-select w-full rounded px-3 py-2 text-sm" placeholder="Cari apa sahaja...">
+                        <input type="text" id="filter-search" class="filter-select w-full rounded px-3 py-2 text-sm" autocomplete="off" placeholder="Cari apa sahaja...">
                     </div>
                     <div>
                         <label class="text-xs font-bold text-slate-600 dark:text-gray-400 mb-1 block uppercase">Bulan</label>
@@ -446,27 +446,28 @@
                 <i class="fa-solid fa-file-pen text-blue-500"></i> <span id="modalTitleText">Kemaskini Rekod</span>
             </h3>
 
-            <form id="form-mutation" class="space-y-6">
+            <!-- Tambah autocomplete="off" di sini untuk hentikan paparan autofill history -->
+            <form id="form-mutation" class="space-y-6" autocomplete="off">
                 <div class="bg-slate-50 dark:bg-gray-800/40 p-4 rounded-lg border border-slate-200 dark:border-gray-700/50">
                     <h4 class="text-sm font-bold text-cyan-500 dark:text-cyan-400 mb-4 flex items-center gap-2"><i class="fa-solid fa-location-dot"></i> Maklumat Asas & Lokasi</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div><label class="form-label">No Aduan <span class="text-red-500">*</span></label><input type="text" id="m-noAduan" class="form-input" required></div>
+                        <div><label class="form-label">No Aduan <span class="text-red-500">*</span></label><input type="text" id="m-noAduan" class="form-input" autocomplete="off" required></div>
                         <div><label class="form-label">Zon</label><select id="m-zon" class="form-input"></select></div>
                         <div><label class="form-label">DMA</label><select id="m-dma" class="form-input"></select></div>
                         <div><label class="form-label">Kategori</label><select id="m-kategori" class="form-input"></select></div>
-                        <div class="md:col-span-2"><label class="form-label">Lokasi / Tempat</label><input type="text" id="m-lokasi" class="form-input"></div>
-                        <div class="md:col-span-3"><label class="form-label">Kordinat</label><input type="text" id="m-kordinat" class="form-input" placeholder="2.538748, 101.797395"></div>
+                        <div class="md:col-span-2"><label class="form-label">Lokasi / Tempat</label><input type="text" id="m-lokasi" class="form-input" autocomplete="off"></div>
+                        <div class="md:col-span-3"><label class="form-label">Kordinat</label><input type="text" id="m-kordinat" class="form-input" autocomplete="off" placeholder="2.538748, 101.797395"></div>
                     </div>
                 </div>
 
                 <div class="bg-slate-50 dark:bg-gray-800/40 p-4 rounded-lg border border-slate-200 dark:border-gray-700/50">
                     <h4 class="text-sm font-bold text-emerald-500 dark:text-emerald-400 mb-4 flex items-center gap-2"><i class="fa-solid fa-clock"></i> Status & KPI</h4>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div><label class="form-label">Tarikh & Masa Terima</label><input type="datetime-local" id="m-tarikhTerima" class="form-input"></div>
-                        <div><label class="form-label">Tarikh Tutup Aduan</label><input type="datetime-local" id="m-tarikhTutup" class="form-input"></div>
+                        <div><label class="form-label">Tarikh & Masa Terima</label><input type="datetime-local" id="m-tarikhTerima" class="form-input" autocomplete="off"></div>
+                        <div><label class="form-label">Tarikh Tutup Aduan</label><input type="datetime-local" id="m-tarikhTutup" class="form-input" autocomplete="off"></div>
                         <div class="md:col-span-2">
                             <label class="form-label">KPI Masa Tutup (Auto dari Sheet)</label>
-                            <input type="text" id="m-kpiMasaTutup" class="form-input" readonly>
+                            <input type="text" id="m-kpiMasaTutup" class="form-input" readonly autocomplete="off">
                         </div>
                     </div>
                 </div>
@@ -481,7 +482,7 @@
                         <div>
                             <label class="form-label">PANJANG PAIP (M)</label>
                             <div class="flex gap-2">
-                                <input type="number" step="any" id="m-panjangPaip" class="form-input" placeholder="Nilai">
+                                <input type="number" step="any" id="m-panjangPaip" class="form-input" autocomplete="off" placeholder="Nilai">
                                 <select id="m-unitPaip" class="form-input" style="max-width: 110px;">
                                     <option value="Meter">Meter</option>
                                     <option value="Nos">Nos</option>
@@ -516,7 +517,7 @@
             <div class="space-y-4">
                 <div>
                     <label class="form-label text-red-500">No Aduan <span class="text-red-500">*</span></label>
-                    <input type="text" id="del-noAduan" class="form-input" placeholder="Cth: AD2026102">
+                    <input type="text" id="del-noAduan" class="form-input" autocomplete="off" placeholder="Cth: AD2026102">
                 </div>
                 <button type="button" id="confirmDeleteBtn" class="w-full py-2.5 bg-red-600 hover:bg-red-500 rounded text-white font-bold text-sm transition flex justify-center items-center gap-2">
                     <i class="fa-solid fa-triangle-exclamation"></i> Padam Rekod Ini
