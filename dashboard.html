@@ -452,9 +452,28 @@
                     <h4 class="text-sm font-bold text-cyan-500 dark:text-cyan-400 mb-4 flex items-center gap-2"><i class="fa-solid fa-location-dot"></i> Maklumat Asas & Lokasi</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div><label class="form-label">No Aduan <span class="text-red-500">*</span></label><input type="text" id="m-noAduan" class="form-input" autocomplete="off" required></div>
-                        <div><label class="form-label">Zon</label><select id="m-zon" class="form-input"></select></div>
-                        <div><label class="form-label">DMA</label><select id="m-dma" class="form-input"></select></div>
-                        <div><label class="form-label">Kategori</label><select id="m-kategori" class="form-input"></select></div>
+                        
+                        <!-- ZON (Searchable Input + Datalist) -->
+                        <div>
+                            <label class="form-label">Zon</label>
+                            <input type="text" id="m-zon" class="form-input" list="list-zon" autocomplete="off" placeholder="Pilih atau taip...">
+                            <datalist id="list-zon"></datalist>
+                        </div>
+
+                        <!-- DMA (Searchable Input + Datalist) -->
+                        <div>
+                            <label class="form-label">DMA</label>
+                            <input type="text" id="m-dma" class="form-input" list="list-dma" autocomplete="off" placeholder="Pilih atau taip...">
+                            <datalist id="list-dma"></datalist>
+                        </div>
+
+                        <!-- KATEGORI (Searchable Input + Datalist) -->
+                        <div>
+                            <label class="form-label">Kategori</label>
+                            <input type="text" id="m-kategori" class="form-input" list="list-kategori" autocomplete="off" placeholder="Pilih atau taip...">
+                            <datalist id="list-kategori"></datalist>
+                        </div>
+
                         <div class="md:col-span-2"><label class="form-label">Lokasi / Tempat</label><input type="text" id="m-lokasi" class="form-input" autocomplete="off"></div>
                         <div class="md:col-span-3"><label class="form-label">Kordinat</label><input type="text" id="m-kordinat" class="form-input" autocomplete="off" placeholder="2.538748, 101.797395"></div>
                     </div>
@@ -475,10 +494,35 @@
                 <div class="bg-slate-50 dark:bg-gray-800/40 p-4 rounded-lg border border-slate-200 dark:border-gray-700/50">
                     <h4 class="text-sm font-bold text-amber-500 dark:text-amber-400 mb-4 flex items-center gap-2"><i class="fa-solid fa-screwdriver-wrench"></i> Spesifikasi Paip & Pembaikan</h4>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        <div><label class="form-label">Jenis Paip (Lama)</label><select id="m-jenisPaip" class="form-input"></select></div>
-                        <div><label class="form-label">Saiz (Lama)</label><select id="m-saizPaip" class="form-input"></select></div>
-                        <div><label class="form-label">Jenis Paip (Baru)</label><select id="m-jenisPaipBaru" class="form-input"></select></div>
-                        <div><label class="form-label">Saiz (Baru)</label><select id="m-saiz" class="form-input"></select></div>
+                        
+                        <!-- JENIS PAIP LAMA (Searchable Input + Datalist) -->
+                        <div>
+                            <label class="form-label">Jenis Paip (Lama)</label>
+                            <input type="text" id="m-jenisPaip" class="form-input" list="list-jenisPaip" autocomplete="off" placeholder="Pilih atau taip...">
+                            <datalist id="list-jenisPaip"></datalist>
+                        </div>
+
+                        <!-- SAIZ PAIP LAMA (Searchable Input + Datalist) -->
+                        <div>
+                            <label class="form-label">Saiz (Lama)</label>
+                            <input type="text" id="m-saizPaip" class="form-input" list="list-saizPaip" autocomplete="off" placeholder="Pilih atau taip...">
+                            <datalist id="list-saizPaip"></datalist>
+                        </div>
+
+                        <!-- JENIS PAIP BARU (Searchable Input + Datalist) -->
+                        <div>
+                            <label class="form-label">Jenis Paip (Baru)</label>
+                            <input type="text" id="m-jenisPaipBaru" class="form-input" list="list-jenisPaipBaru" autocomplete="off" placeholder="Pilih atau taip...">
+                            <datalist id="list-jenisPaipBaru"></datalist>
+                        </div>
+
+                        <!-- SAIZ BARU (Searchable Input + Datalist) -->
+                        <div>
+                            <label class="form-label">Saiz (Baru)</label>
+                            <input type="text" id="m-saiz" class="form-input" list="list-saiz" autocomplete="off" placeholder="Pilih atau taip...">
+                            <datalist id="list-saiz"></datalist>
+                        </div>
+
                         <div>
                             <label class="form-label">PANJANG PAIP (M)</label>
                             <div class="flex gap-2">
@@ -491,8 +535,21 @@
                                 </select>
                             </div>
                         </div>
-                        <div><label class="form-label">Kerja Sivil</label><select id="m-sivilWorks" class="form-input"></select></div>
-                        <div class="md:col-span-2"><label class="form-label">Dilaksanakan Oleh</label><select id="m-dilaksanakanOleh" class="form-input"></select></div>
+
+                        <!-- KERJA SIVIL (Searchable Input + Datalist) -->
+                        <div>
+                            <label class="form-label">Kerja Sivil</label>
+                            <input type="text" id="m-sivilWorks" class="form-input" list="list-sivilWorks" autocomplete="off" placeholder="Pilih atau taip...">
+                            <datalist id="list-sivilWorks"></datalist>
+                        </div>
+
+                        <!-- DILAKSANAKAN OLEH (Searchable Input + Datalist) -->
+                        <div class="md:col-span-2">
+                            <label class="form-label">Dilaksanakan Oleh</label>
+                            <input type="text" id="m-dilaksanakanOleh" class="form-input" list="list-dilaksanakanOleh" autocomplete="off" placeholder="Pilih atau taip...">
+                            <datalist id="list-dilaksanakanOleh"></datalist>
+                        </div>
+
                     </div>
                 </div>
 
@@ -730,6 +787,7 @@
             setInterval(updateClock, 1000);
         }
 
+        // --- FUNGSI MENGISI DATALIST INPUT (SEARCHABLE DROPDOWN) ---
         function populateModalDropdowns() {
             const options = dropdownOptions.zon ? dropdownOptions : {
                 zon: ['1', '2', '3'],
@@ -741,39 +799,34 @@
                 pelaksana: ['IU Legacy', 'NJA Prisma', 'Kaza Berkat', 'CTIU', 'Rynzaty', 'IR Vision', 'Namiio Waja', 'ZNA ENT', 'SAINS']
             };
 
-            const fillSelect = (id, list) => {
-                const sel = document.getElementById(id);
-                if(!sel) return;
-                const currentVal = sel.value;
-                sel.innerHTML = '<option value="">Sila Pilih</option>';
+            const fillDatalist = (inputId, listId, list) => {
+                const inputEl = document.getElementById(inputId);
+                const listEl = document.getElementById(listId);
+                if(!listEl) return;
+                
+                listEl.innerHTML = '';
                 if(list && Array.isArray(list)) {
-                    list.forEach(item => { sel.innerHTML += `<option value="${item}">${item}</option>`; });
+                    list.forEach(item => {
+                        listEl.innerHTML += `<option value="${item}">`;
+                    });
                 }
-                if(currentVal) sel.value = currentVal;
             };
 
-            fillSelect('m-zon', options.zon);
-            fillSelect('m-dma', options.dma);
-            fillSelect('m-kategori', options.kategori);
-            fillSelect('m-jenisPaip', options.jenisPaip);
-            fillSelect('m-saizPaip', options.saiz);
-            fillSelect('m-jenisPaipBaru', options.jenisPaip);
-            fillSelect('m-saiz', options.saiz);
-            fillSelect('m-sivilWorks', options.sivil);
-            fillSelect('m-dilaksanakanOleh', options.pelaksana);
+            fillDatalist('m-zon', 'list-zon', options.zon);
+            fillDatalist('m-dma', 'list-dma', options.dma);
+            fillDatalist('m-kategori', 'list-kategori', options.kategori);
+            fillDatalist('m-jenisPaip', 'list-jenisPaip', options.jenisPaip);
+            fillDatalist('m-saizPaip', 'list-saizPaip', options.saiz);
+            fillDatalist('m-jenisPaipBaru', 'list-jenisPaipBaru', options.jenisPaip);
+            fillDatalist('m-saiz', 'list-saiz', options.saiz);
+            fillDatalist('m-sivilWorks', 'list-sivilWorks', options.sivil);
+            fillDatalist('m-dilaksanakanOleh', 'list-dilaksanakanOleh', options.pelaksana);
         }
 
-        function setSelectValue(id, val) {
-            const sel = document.getElementById(id);
-            if(!sel) return;
-            if(!val) { sel.value = ''; return; }
-            
-            let found = false;
-            for(let i=0; i<sel.options.length; i++){
-                if(sel.options[i].value === val) { found = true; break; }
-            }
-            if(!found) { sel.innerHTML += `<option value="${val}">${val}</option>`; }
-            sel.value = val;
+        function setInputValue(id, val) {
+            const inputEl = document.getElementById(id);
+            if(!inputEl) return;
+            inputEl.value = val || '';
         }
 
         function parseCustomDate(val) {
@@ -1081,15 +1134,15 @@
             document.getElementById('m-noAduan').value = rowData['NO ADUAN'] || '';
             document.getElementById('m-noAduan').setAttribute('readonly', true);
             
-            setSelectValue('m-zon', rowData['ZON'] || '');
-            setSelectValue('m-dma', rowData['DMA'] || '');
-            setSelectValue('m-kategori', rowData['KATEGORI'] || '');
-            setSelectValue('m-jenisPaip', rowData['JENIS PAIP'] || '');
-            setSelectValue('m-saizPaip', rowData['SAIZ PAIP'] || '');
-            setSelectValue('m-jenisPaipBaru', rowData['JENIS PAIP BARU'] || '');
-            setSelectValue('m-saiz', rowData['SAIZ'] || '');
-            setSelectValue('m-sivilWorks', rowData['SIVIL WORKS'] || '');
-            setSelectValue('m-dilaksanakanOleh', rowData['DILAKSANAKAN OLEH'] || '');
+            setInputValue('m-zon', rowData['ZON'] || '');
+            setInputValue('m-dma', rowData['DMA'] || '');
+            setInputValue('m-kategori', rowData['KATEGORI'] || '');
+            setInputValue('m-jenisPaip', rowData['JENIS PAIP'] || '');
+            setInputValue('m-saizPaip', rowData['SAIZ PAIP'] || '');
+            setInputValue('m-jenisPaipBaru', rowData['JENIS PAIP BARU'] || '');
+            setInputValue('m-saiz', rowData['SAIZ'] || '');
+            setInputValue('m-sivilWorks', rowData['SIVIL WORKS'] || '');
+            setInputValue('m-dilaksanakanOleh', rowData['DILAKSANAKAN OLEH'] || '');
             
             document.getElementById('m-lokasi').value = rowData['LOKASI / TEMPAT'] || rowData['LOKASI'] || '';
             document.getElementById('m-kordinat').value = rowData['KORDINAT'] || '';
