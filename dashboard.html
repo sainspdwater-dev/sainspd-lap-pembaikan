@@ -58,12 +58,8 @@
         .dark .filter-select { background-color: #0f172a; border: 1px solid #475569; color: #f8fafc; }
 
         #managementTable td, #dataTable td { white-space: normal !important; word-break: break-word; max-width: 200px; }
-        
         #managementTable td:nth-child(5), #managementTable td:nth-child(6),
-        #managementTable th:nth-child(5), #managementTable th:nth-child(6) {
-            white-space: nowrap !important;
-        }
-
+        #managementTable th:nth-child(5), #managementTable th:nth-child(6) { white-space: nowrap !important; }
         #dataTable td:nth-child(3), #dataTable th:nth-child(3) { min-width: 300px; max-width: 400px; }
         #managementTable td:nth-child(9), #managementTable th:nth-child(9) { min-width: 300px; max-width: 400px; }
 
@@ -71,7 +67,6 @@
         .dark .dataTables_wrapper .dataTables_length, .dark .dataTables_wrapper .dataTables_filter, .dark .dataTables_wrapper .dataTables_info, .dark .dataTables_wrapper .dataTables_paginate { color: #cbd5e1 !important; }
         .dataTables_wrapper input, .dataTables_wrapper select { background-color: #ffffff; border: 1px solid #cbd5e1; color: #1e293b; padding: 4px; border-radius: 4px; }
         .dark .dataTables_wrapper input, .dark .dataTables_wrapper select { background-color: #0f172a; border: 1px solid #475569; color: white; }
-        
         .dark input[type="datetime-local"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
         
         #loading-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(8px); z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column; transition: opacity 0.6s ease; }
@@ -81,7 +76,7 @@
         .sidebar-text { display: none; white-space: nowrap; }
         #sidebar:hover .sidebar-text { display: inline-block; }
 
-        /* Animasi Loading SVG Lori Air */
+        /* Animasi Loading SVG */
         #valve-wheel { transform-origin: 140px 200px; transition: transform 1s ease-in-out; }
         #water-stream { transition: opacity 0.3s ease-in; opacity: 0; transform-origin: top; animation: flowDown 0.5s infinite linear; }
         #truck-group { transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -91,16 +86,39 @@
         #wheel-3 { transform-origin: 610px 320px; }
         #water-fill { transition: y 0.2s linear, height 0.2s linear; }
 
-        @keyframes flowDown {
-            0% { stroke-dashoffset: 0; }
-            100% { stroke-dashoffset: -20; }
-        }
-        @keyframes subtleWave {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-2px); }
-            100% { transform: translateY(0); }
-        }
+        @keyframes flowDown { 0% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -20; } }
+        @keyframes subtleWave { 0% { transform: translateY(0); } 50% { transform: translateY(-2px); } 100% { transform: translateY(0); } }
         .water-surface { animation: subtleWave 2s infinite ease-in-out; }
+
+        /* CRO Excel Spreadsheet Style & Freezing Kolom 1 & 2 */
+        .excel-table { border-collapse: collapse; min-width: 100%; font-size: 0.85rem; }
+        .excel-table th, .excel-table td { box-sizing: border-box; }
+        .excel-table th { position: sticky; top: 0; background: #cbd5e1; border: 1px solid #94a3b8; padding: 6px 10px; z-index: 20; color: #1e293b; white-space: nowrap; box-shadow: inset 0 -1px 0 #94a3b8; }
+        .excel-table td { border: 1px solid #cbd5e1; padding: 0; background: #fff; position: relative; outline: none; }
+        .excel-table td:focus { box-shadow: inset 0 0 0 2px #3b82f6; z-index: 10; background: #eff6ff; }
+        .dark .excel-table th { background: #334155; border: 1px solid #475569; color: #f8fafc; box-shadow: inset 0 -1px 0 #475569; }
+        .dark .excel-table td { border: 1px solid #475569; background: #1e293b; }
+        .dark .excel-table td:focus { background: #172554; box-shadow: inset 0 0 0 2px #3b82f6; }
+        
+        .excel-input { width: 100%; height: 100%; min-height: 32px; background: transparent; border: none; padding: 6px 8px; outline: none; min-width: 140px; color: inherit; pointer-events: none; box-sizing: border-box; }
+        td.editing .excel-input { pointer-events: auto; background: #ffffff; }
+        .dark td.editing .excel-input { background: #0f172a; }
+        
+        /* Freeze Kolom 1: Tindakan (Lebar diselaraskan kepada 145px) */
+        .col-1 { position: sticky; left: 0; z-index: 25; width: 145px; min-width: 145px; max-width: 145px; background: #cbd5e1; }
+        td.col-1 { z-index: 15; background: #f8fafc; }
+        .dark th.col-1 { background: #334155; }
+        .dark td.col-1 { background: #1e293b; }
+
+        /* Freeze Kolom 2: No Aduan (Bermula tepat pada left: 145px, lebar 130px) */
+        .col-2 { position: sticky; left: 0px; z-index: 25; width: 115px; min-width: 115px; max-width: 115px; background: #cbd5e1; }
+        td.col-2 { z-index: 15; background: #ffffff; }
+        .dark th.col-2 { background: #334155; }
+        .dark td.col-2 { background: #1e293b; }
+
+        /* Lokasi / Tempat Wrap Text Styling */
+        .col-lokasi { min-width: 280px; max-width: 350px; white-space: normal !important; word-break: break-word; }
+        .col-lokasi textarea, .col-lokasi input { white-space: normal !important; word-break: break-word; height: auto; min-height: 45px; }
     </style>
 </head>
 <body class="flex h-[100dvh] w-full overflow-hidden">
@@ -108,9 +126,8 @@
     <!-- Toast Notification -->
     <div id="toast-container" class="fixed bottom-6 right-6 z-[100] flex flex-col gap-2 pointer-events-none"></div>
 
-    <!-- MODEN LOADING OVERLAY (DENGAN SVG LORI AIR) -->
+    <!-- MODEN LOADING OVERLAY -->
     <div id="loading-overlay">
-        <!-- SVG Container -->
         <div class="w-full max-w-2xl px-4 relative flex justify-center items-center mb-6">
             <svg viewBox="0 0 800 400" class="w-full h-auto drop-shadow-xl max-h-[30vh]">
                 <defs>
@@ -120,12 +137,8 @@
                         <stop offset="100%" stop-color="#2563EB" />
                     </linearGradient>
                 </defs>
-
-                <!-- Background Elements -->
                 <line x1="0" y1="340" x2="800" y2="340" stroke="#CBD5E1" stroke-width="4" />
                 <rect x="0" y="342" width="800" height="60" fill="#F1F5F9" />
-
-                <!-- Station / Pipe System -->
                 <g id="station-group">
                     <rect x="50" y="310" width="60" height="30" fill="#94A3B8" rx="4" />
                     <rect x="70" y="80" width="20" height="230" fill="#64748B" />
@@ -139,37 +152,27 @@
                         <circle cx="140" cy="200" r="6" fill="#B91C1C" />
                     </g>
                 </g>
-
-                <!-- Water Stream -->
                 <line id="water-stream" x1="370" y1="130" x2="370" y2="160" stroke="#3B82F6" stroke-width="14" stroke-dasharray="10, 5" />
-
-                <!-- Truck Group -->
                 <g id="truck-group">
                     <rect x="250" y="270" width="410" height="15" fill="#334155" rx="5" />
                     <path d="M 290 320 A 30 30 0 0 1 350 320" fill="none" stroke="#334155" stroke-width="8" />
                     <path d="M 370 320 A 30 30 0 0 1 430 320" fill="none" stroke="#334155" stroke-width="8" />
                     <path d="M 580 320 A 30 30 0 0 1 640 320" fill="none" stroke="#334155" stroke-width="8" />
-
                     <path d="M 540 180 L 630 180 Q 660 180 660 210 L 660 270 L 540 270 Z" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="2" />
                     <path d="M 560 190 L 620 190 Q 640 190 645 210 L 645 230 L 560 230 Z" fill="#93C5FD" opacity="0.6" />
                     <line x1="590" y1="230" x2="590" y2="270" stroke="#CBD5E1" stroke-width="2" />
-                    
                     <rect x="290" y="150" width="220" height="130" rx="35" ry="35" fill="#FFFFFF" stroke="#94A3B8" stroke-width="4" />
                     <rect x="345" y="135" width="50" height="15" fill="#94A3B8" rx="4" />
                     <rect x="355" y="125" width="30" height="10" fill="#64748B" rx="2" />
-
                     <g clip-path="url(#tank-clip)">
                         <rect id="water-fill" class="water-surface" x="290" y="280" width="220" height="0" fill="url(#water-gradient)" opacity="0.9" />
                     </g>
-
                     <g id="wheel-1" class="wheel"><circle cx="320" cy="320" r="24" fill="#1E293B" /><circle cx="320" cy="320" r="14" fill="#94A3B8" /><line x1="320" y1="306" x2="320" y2="334" stroke="#475569" stroke-width="4" /><line x1="306" y1="320" x2="334" y2="320" stroke="#475569" stroke-width="4" /></g>
                     <g id="wheel-2" class="wheel"><circle cx="400" cy="320" r="24" fill="#1E293B" /><circle cx="400" cy="320" r="14" fill="#94A3B8" /><line x1="400" y1="306" x2="400" y2="334" stroke="#475569" stroke-width="4" /><line x1="386" y1="320" x2="414" y2="320" stroke="#475569" stroke-width="4" /></g>
                     <g id="wheel-3" class="wheel"><circle cx="610" cy="320" r="24" fill="#1E293B" /><circle cx="610" cy="320" r="14" fill="#94A3B8" /><line x1="610" y1="306" x2="610" y2="334" stroke="#475569" stroke-width="4" /><line x1="596" y1="320" x2="624" y2="320" stroke="#475569" stroke-width="4" /></g>
                 </g>
             </svg>
         </div>
-
-        <!-- Teks & Progress Bar -->
         <h2 id="loading-text" class="text-lg font-bold text-blue-400 tracking-wide mb-3">Memuat Data Sistem...</h2>
         <div class="w-72 sm:w-80 bg-slate-800 rounded-full h-3.5 p-0.5 border border-slate-700 shadow-inner overflow-hidden flex items-center">
             <div id="loading-progress-bar" class="bg-gradient-to-r from-blue-600 to-emerald-500 h-full rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
@@ -187,6 +190,9 @@
             </button>
             <button id="nav-update" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="Pengurusan Data">
                 <i class="fa-solid fa-database w-6 text-center"></i> <span class="sidebar-text ml-3 font-medium">Pengurusan Data</span>
+            </button>
+            <button id="nav-cro" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="CRO Key In">
+                <i class="fa-solid fa-table-cells w-6 text-center"></i> <span class="sidebar-text ml-3 font-medium">CRO Key In</span>
             </button>
             <button id="nav-daily" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="Laporan Harian">
                 <i class="fa-solid fa-calendar-day w-6 text-center"></i> <span class="sidebar-text ml-3 font-medium">Laporan Harian</span>
@@ -262,7 +268,7 @@
                 </div>
             </section>
 
-            <!-- KPI CARDS -->
+            <!-- KPI CARDS & CHARTS -->
             <section class="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
                 <div class="dashboard-card p-4"><p class="text-sm text-slate-500 dark:text-gray-400">Jumlah Kes</p><h3 id="kpi-total" class="text-3xl font-bold text-slate-900 dark:text-white mt-1">0</h3></div>
                 <div class="dashboard-card p-4"><p class="text-sm text-slate-500 dark:text-gray-400">DMA</p><h3 id="kpi-dma" class="text-3xl font-bold text-blue-600 dark:text-blue-400 mt-1">0</h3></div>
@@ -271,53 +277,30 @@
                 <div class="dashboard-card p-4"><p class="text-sm text-slate-500 dark:text-gray-400">Kerja Sivil</p><h3 id="kpi-civil" class="text-3xl font-bold text-amber-600 dark:text-amber-400 mt-1">0</h3></div>
             </section>
 
-            <!-- CHARTS MAIN -->
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <div class="dashboard-card p-4"><h3 class="font-semibold mb-2 text-slate-800 dark:text-white">Aduan Ikut Bulan</h3><div id="chart-month" class="h-64"></div></div>
                 <div class="dashboard-card p-4"><h3 class="font-semibold mb-2 text-slate-800 dark:text-white">Kes Mengikut DMA</h3><div id="chart-dma" class="h-64"></div></div>
-                
                 <div class="dashboard-card p-4 flex flex-col">
                     <h3 class="font-semibold mb-3 text-slate-800 dark:text-white">Kategori Kes</h3>
                     <div class="overflow-x-auto h-64 overflow-y-auto">
                         <table class="w-full text-sm text-left text-slate-700 dark:text-gray-300">
                             <thead class="text-xs uppercase bg-slate-100 dark:bg-gray-800 text-slate-600 dark:text-gray-400 sticky top-0">
-                                <tr>
-                                    <th class="p-2.5">Kategori Kes</th>
-                                    <th class="p-2.5 text-right">Jumlah</th>
-                                    <th class="p-2.5 text-right">Peratusan</th>
-                                </tr>
+                                <tr><th class="p-2.5">Kategori Kes</th><th class="p-2.5 text-right">Jumlah</th><th class="p-2.5 text-right">Peratusan</th></tr>
                             </thead>
                             <tbody id="table-category-body"></tbody>
                         </table>
                     </div>
                 </div>
-
                 <div class="dashboard-card p-4"><h3 class="font-semibold mb-2 text-slate-800 dark:text-white">Analisis Kerja Sivil</h3><div id="chart-civil-works" class="h-64"></div></div>
             </section>
 
-            <!-- SEPARATE CHART BOXES -->
             <div class="text-lg font-bold text-slate-800 dark:text-white mb-4"><i class="fa-solid fa-chart-pie mr-2 text-blue-500"></i> Analisis Terperinci Paip & Pembaikan</div>
             <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <div class="dashboard-card p-4">
-                    <h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-wrench text-amber-500"></i> KEROSAKAN PAIP: JENIS PAIP</h3>
-                    <div id="chart-jenis-paip" class="h-64"></div>
-                </div>
-                <div class="dashboard-card p-4">
-                    <h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-ruler-combined text-amber-500"></i> KEROSAKAN PAIP: SAIZ PAIP</h3>
-                    <div id="chart-saiz-paip" class="h-64"></div>
-                </div>
-                <div class="dashboard-card p-4">
-                    <h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-circle-plus text-emerald-500"></i> PAIP BARU: JENIS PAIP BARU</h3>
-                    <div id="chart-jenis-baru" class="h-64"></div>
-                </div>
-                <div class="dashboard-card p-4">
-                    <h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-arrows-split-up-and-left text-emerald-500"></i> PAIP BARU: SAIZ</h3>
-                    <div id="chart-saiz-baru" class="h-64"></div>
-                </div>
-                <div class="dashboard-card p-4 md:col-span-2 lg:col-span-1">
-                    <h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-column text-purple-500"></i> PAIP BARU: PANJANG PAIP (M)</h3>
-                    <div id="chart-panjang-paip" class="h-64"></div>
-                </div>
+                <div class="dashboard-card p-4"><h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-wrench text-amber-500"></i> KEROSAKAN PAIP: JENIS PAIP</h3><div id="chart-jenis-paip" class="h-64"></div></div>
+                <div class="dashboard-card p-4"><h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-ruler-combined text-amber-500"></i> KEROSAKAN PAIP: SAIZ PAIP</h3><div id="chart-saiz-paip" class="h-64"></div></div>
+                <div class="dashboard-card p-4"><h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-circle-plus text-emerald-500"></i> PAIP BARU: JENIS PAIP BARU</h3><div id="chart-jenis-baru" class="h-64"></div></div>
+                <div class="dashboard-card p-4"><h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-arrows-split-up-and-left text-emerald-500"></i> PAIP BARU: SAIZ</h3><div id="chart-saiz-baru" class="h-64"></div></div>
+                <div class="dashboard-card p-4 md:col-span-2 lg:col-span-1"><h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-column text-purple-500"></i> PAIP BARU: PANJANG PAIP (M)</h3><div id="chart-panjang-paip" class="h-64"></div></div>
             </section>
 
             <!-- MAP -->
@@ -383,7 +366,73 @@
             </section>
         </div>
 
-        <!-- TAB 3: LAPORAN HARIAN & NOTA WHATSAPP -->
+        <!-- TAB 3: CRO KEY IN (EXCEL VIEW DENGAN FREEZE 2 KOLOM & WRAP LOKASI) -->
+        <div id="cro-content" class="hidden pb-2 h-full flex-col">
+            <header class="mb-4 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 shrink-0">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3"><i class="fa-solid fa-table-cells text-emerald-500"></i> CRO Key In (Excel View)</h2>
+                    <p class="text-slate-500 dark:text-gray-400 mt-1">Gunakan Anak Panah (Arrow Keys) untuk navigasi sel, tekan F2 atau taip untuk edit.</p>
+                </div>
+                <div class="flex items-center gap-4 flex-wrap">
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-600 dark:text-gray-400 uppercase">Carian:</label>
+                        <input type="text" id="cro-search" class="filter-select rounded px-3 py-1.5 text-sm w-48" autocomplete="off" placeholder="Cari rekod...">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-600 dark:text-gray-400 uppercase">Bulan:</label>
+                        <select id="cro-filter-bulan" class="filter-select rounded px-3 py-1.5 text-sm">
+                            <option value="">Semua Bulan</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-600 dark:text-gray-400 uppercase">Zoom:</label>
+                        <select id="cro-zoom-select" class="filter-select rounded px-3 py-1.5 text-sm">
+                            <option value="0.5">50%</option>
+			    <option value="0.75">75%</option>
+			    <option value="1">100%</option>
+                            <option value="1.25" selected>125%</option>
+                            <option value="1.5">150%</option>
+                            <option value="1.75">175%</option>
+                            <option value="2">200%</option>
+                        </select>
+                    </div>
+                    <button id="btn-cro-add" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-sm font-bold flex items-center gap-2 shadow-sm transition">
+                        <i class="fa-solid fa-plus"></i> Baris Baru
+                    </button>
+                </div>
+            </header>
+
+            <div class="dashboard-card flex-1 overflow-auto bg-slate-50 dark:bg-gray-900 relative flex flex-col">
+                <div id="cro-table-container" class="flex-1 overflow-auto" style="zoom: 1.25; transform-origin: top left;">
+                    <table class="excel-table w-full">
+                        <thead>
+                            <tr>
+                                <th class="col-1">Tindakan</th>
+                                <th class="col-2">No Aduan</th>
+                                <th>Zon</th>
+                                <th>DMA</th>
+                                <th>Kategori</th>
+                                <th class="col-lokasi">Lokasi / Tempat</th>
+                                <th>Kordinat</th>
+                                <th>Tarikh Terima</th>
+                                <th>Tarikh Tutup</th>
+                                <th>Jenis Paip (Lama)</th>
+                                <th>Saiz (Lama)</th>
+                                <th>Jenis Paip (Baru)</th>
+                                <th>Saiz (Baru)</th>
+                                <th>Panjang Paip (M)</th>
+                                <th>Kerja Sivil</th>
+                                <th>Pelaksana</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cro-tbody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: LAPORAN HARIAN & NOTA WHATSAPP -->
         <div id="daily-content" class="hidden pb-24">
             <header class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
@@ -400,7 +449,6 @@
                 </div>
             </header>
 
-            <!-- KOTAK PILIH KALENDER -->
             <section class="dashboard-card p-6 mb-6">
                 <div class="flex flex-col sm:flex-row items-center gap-4">
                     <div class="w-full sm:w-1/3">
@@ -415,18 +463,16 @@
                 </div>
             </section>
 
-            <!-- PREBIU KOTAK NOTA RASMI -->
             <section class="dashboard-card p-6 mb-6 border-2 border-blue-500/30">
                 <div class="flex justify-between items-center mb-3">
                     <h3 class="text-md font-bold text-slate-800 dark:text-gray-200 flex items-center gap-2">
-                        <i class="fa-solid fa-eye text-blue-500"></i> Prebiu Templat Laporan (Boleh edit manual jika perlu)
+                        <i class="fa-solid fa-eye text-blue-500"></i> Prebiu Templat Laporan
                     </h3>
                     <span class="text-xs text-slate-400 font-mono">Format Rasmi WhatsApp</span>
                 </div>
                 <textarea id="daily-whatsapp-preview" rows="16" class="form-input font-mono text-xs leading-relaxed resize-y bg-slate-900 text-slate-100 p-4 rounded-xl border border-slate-700" placeholder="Sila pilih tarikh dan klik 'Jana Laporan Tarikh Ini'..."></textarea>
             </section>
 
-            <!-- RUJUKAN KES HARIAN -->
             <section class="dashboard-card p-6">
                 <h3 class="text-lg font-semibold text-slate-800 dark:text-gray-200 mb-4">
                     Senarai Kes Terperinci Pada Tarikh: <span id="daily-label-date" class="text-blue-500 font-mono">-</span>
@@ -446,34 +492,25 @@
                 <i class="fa-solid fa-file-pen text-blue-500"></i> <span id="modalTitleText">Kemaskini Rekod</span>
             </h3>
 
-            <!-- Tambah autocomplete="off" di sini untuk hentikan paparan autofill history -->
+            <!-- Senarai Global Datalist -->
+            <datalist id="list-zon"></datalist>
+            <datalist id="list-dma"></datalist>
+            <datalist id="list-kategori"></datalist>
+            <datalist id="list-jenisPaip"></datalist>
+            <datalist id="list-saizPaip"></datalist>
+            <datalist id="list-jenisPaipBaru"></datalist>
+            <datalist id="list-saiz"></datalist>
+            <datalist id="list-sivilWorks"></datalist>
+            <datalist id="list-dilaksanakanOleh"></datalist>
+
             <form id="form-mutation" class="space-y-6" autocomplete="off">
                 <div class="bg-slate-50 dark:bg-gray-800/40 p-4 rounded-lg border border-slate-200 dark:border-gray-700/50">
                     <h4 class="text-sm font-bold text-cyan-500 dark:text-cyan-400 mb-4 flex items-center gap-2"><i class="fa-solid fa-location-dot"></i> Maklumat Asas & Lokasi</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div><label class="form-label">No Aduan <span class="text-red-500">*</span></label><input type="text" id="m-noAduan" class="form-input" autocomplete="off" required></div>
-                        
-                        <!-- ZON (Searchable Input + Datalist) -->
-                        <div>
-                            <label class="form-label">Zon</label>
-                            <input type="text" id="m-zon" class="form-input" list="list-zon" autocomplete="off" placeholder="Pilih atau taip...">
-                            <datalist id="list-zon"></datalist>
-                        </div>
-
-                        <!-- DMA (Searchable Input + Datalist) -->
-                        <div>
-                            <label class="form-label">DMA</label>
-                            <input type="text" id="m-dma" class="form-input" list="list-dma" autocomplete="off" placeholder="Pilih atau taip...">
-                            <datalist id="list-dma"></datalist>
-                        </div>
-
-                        <!-- KATEGORI (Searchable Input + Datalist) -->
-                        <div>
-                            <label class="form-label">Kategori</label>
-                            <input type="text" id="m-kategori" class="form-input" list="list-kategori" autocomplete="off" placeholder="Pilih atau taip...">
-                            <datalist id="list-kategori"></datalist>
-                        </div>
-
+                        <div><label class="form-label">Zon</label><input type="text" id="m-zon" class="form-input" list="list-zon" autocomplete="off" placeholder="Pilih atau taip..."></div>
+                        <div><label class="form-label">DMA</label><input type="text" id="m-dma" class="form-input" list="list-dma" autocomplete="off" placeholder="Pilih atau taip..."></div>
+                        <div><label class="form-label">Kategori</label><input type="text" id="m-kategori" class="form-input" list="list-kategori" autocomplete="off" placeholder="Pilih atau taip..."></div>
                         <div class="md:col-span-2"><label class="form-label">Lokasi / Tempat</label><input type="text" id="m-lokasi" class="form-input" autocomplete="off"></div>
                         <div class="md:col-span-3"><label class="form-label">Kordinat</label><input type="text" id="m-kordinat" class="form-input" autocomplete="off" placeholder="2.538748, 101.797395"></div>
                     </div>
@@ -484,80 +521,31 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div><label class="form-label">Tarikh & Masa Terima</label><input type="datetime-local" id="m-tarikhTerima" class="form-input" autocomplete="off"></div>
                         <div><label class="form-label">Tarikh Tutup Aduan</label><input type="datetime-local" id="m-tarikhTutup" class="form-input" autocomplete="off"></div>
-                        <div class="md:col-span-2">
-                            <label class="form-label">KPI Masa Tutup (Auto dari Sheet)</label>
-                            <input type="text" id="m-kpiMasaTutup" class="form-input" readonly autocomplete="off">
-                        </div>
+                        <div class="md:col-span-2"><label class="form-label">KPI Masa Tutup (Auto dari Sheet)</label><input type="text" id="m-kpiMasaTutup" class="form-input" readonly autocomplete="off"></div>
                     </div>
                 </div>
 
                 <div class="bg-slate-50 dark:bg-gray-800/40 p-4 rounded-lg border border-slate-200 dark:border-gray-700/50">
                     <h4 class="text-sm font-bold text-amber-500 dark:text-amber-400 mb-4 flex items-center gap-2"><i class="fa-solid fa-screwdriver-wrench"></i> Spesifikasi Paip & Pembaikan</h4>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        
-                        <!-- JENIS PAIP LAMA (Searchable Input + Datalist) -->
-                        <div>
-                            <label class="form-label">Jenis Paip (Lama)</label>
-                            <input type="text" id="m-jenisPaip" class="form-input" list="list-jenisPaip" autocomplete="off" placeholder="Pilih atau taip...">
-                            <datalist id="list-jenisPaip"></datalist>
-                        </div>
-
-                        <!-- SAIZ PAIP LAMA (Searchable Input + Datalist) -->
-                        <div>
-                            <label class="form-label">Saiz (Lama)</label>
-                            <input type="text" id="m-saizPaip" class="form-input" list="list-saizPaip" autocomplete="off" placeholder="Pilih atau taip...">
-                            <datalist id="list-saizPaip"></datalist>
-                        </div>
-
-                        <!-- JENIS PAIP BARU (Searchable Input + Datalist) -->
-                        <div>
-                            <label class="form-label">Jenis Paip (Baru)</label>
-                            <input type="text" id="m-jenisPaipBaru" class="form-input" list="list-jenisPaipBaru" autocomplete="off" placeholder="Pilih atau taip...">
-                            <datalist id="list-jenisPaipBaru"></datalist>
-                        </div>
-
-                        <!-- SAIZ BARU (Searchable Input + Datalist) -->
-                        <div>
-                            <label class="form-label">Saiz (Baru)</label>
-                            <input type="text" id="m-saiz" class="form-input" list="list-saiz" autocomplete="off" placeholder="Pilih atau taip...">
-                            <datalist id="list-saiz"></datalist>
-                        </div>
-
-                        <div>
-                            <label class="form-label">PANJANG PAIP (M)</label>
+                        <div><label class="form-label">Jenis Paip (Lama)</label><input type="text" id="m-jenisPaip" class="form-input" list="list-jenisPaip" autocomplete="off" placeholder="Pilih atau taip..."></div>
+                        <div><label class="form-label">Saiz (Lama)</label><input type="text" id="m-saizPaip" class="form-input" list="list-saizPaip" autocomplete="off" placeholder="Pilih atau taip..."></div>
+                        <div><label class="form-label">Jenis Paip (Baru)</label><input type="text" id="m-jenisPaipBaru" class="form-input" list="list-jenisPaipBaru" autocomplete="off" placeholder="Pilih atau taip..."></div>
+                        <div><label class="form-label">Saiz (Baru)</label><input type="text" id="m-saiz" class="form-input" list="list-saiz" autocomplete="off" placeholder="Pilih atau taip..."></div>
+                        <div><label class="form-label">PANJANG PAIP (M)</label>
                             <div class="flex gap-2">
                                 <input type="number" step="any" id="m-panjangPaip" class="form-input" autocomplete="off" placeholder="Nilai">
-                                <select id="m-unitPaip" class="form-input" style="max-width: 110px;">
-                                    <option value="Meter">Meter</option>
-                                    <option value="Nos">Nos</option>
-                                    <option value="m2">m2</option>
-                                    <option value="m3">m3</option>
-                                </select>
+                                <select id="m-unitPaip" class="form-input" style="max-width: 110px;"><option value="Meter">Meter</option><option value="Nos">Nos</option><option value="m2">m2</option><option value="m3">m3</option></select>
                             </div>
                         </div>
-
-                        <!-- KERJA SIVIL (Searchable Input + Datalist) -->
-                        <div>
-                            <label class="form-label">Kerja Sivil</label>
-                            <input type="text" id="m-sivilWorks" class="form-input" list="list-sivilWorks" autocomplete="off" placeholder="Pilih atau taip...">
-                            <datalist id="list-sivilWorks"></datalist>
-                        </div>
-
-                        <!-- DILAKSANAKAN OLEH (Searchable Input + Datalist) -->
-                        <div class="md:col-span-2">
-                            <label class="form-label">Dilaksanakan Oleh</label>
-                            <input type="text" id="m-dilaksanakanOleh" class="form-input" list="list-dilaksanakanOleh" autocomplete="off" placeholder="Pilih atau taip...">
-                            <datalist id="list-dilaksanakanOleh"></datalist>
-                        </div>
-
+                        <div><label class="form-label">Kerja Sivil</label><input type="text" id="m-sivilWorks" class="form-input" list="list-sivilWorks" autocomplete="off" placeholder="Pilih atau taip..."></div>
+                        <div class="md:col-span-2"><label class="form-label">Dilaksanakan Oleh</label><input type="text" id="m-dilaksanakanOleh" class="form-input" list="list-dilaksanakanOleh" autocomplete="off" placeholder="Pilih atau taip..."></div>
                     </div>
                 </div>
 
                 <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-gray-700">
                     <button type="button" id="closeModalBtn" class="px-4 py-2 bg-slate-200 dark:bg-gray-700 hover:bg-slate-300 dark:hover:bg-gray-600 rounded text-slate-800 dark:text-white text-sm font-medium">Batal</button>
-                    <button type="submit" id="modalSubmitBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold text-sm flex items-center gap-2">
-                        <i class="fa-solid fa-save"></i> Simpan Rekod
-                    </button>
+                    <button type="submit" id="modalSubmitBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-save"></i> Simpan Rekod</button>
                 </div>
             </form>
         </div>
@@ -567,52 +555,33 @@
     <div id="deleteModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] hidden flex items-center justify-center p-4">
         <div class="dashboard-card w-full max-w-md p-6 relative border-t-4 border-t-red-500">
             <button type="button" id="closeDeleteModal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-100 text-xl"><i class="fa-solid fa-xmark"></i></button>
-            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-                <i class="fa-solid fa-trash-can text-red-500"></i> Padam Rekod Laporan
-            </h3>
-            <p class="text-xs text-slate-500 dark:text-gray-400 mb-4">Masukkan No Aduan yang ingin dipadam sepenuhnya dari pangkalan data.</p>
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-trash-can text-red-500"></i> Padam Rekod Laporan</h3>
+            <p class="text-xs text-slate-500 dark:text-gray-400 mb-4">Masukkan No Aduan yang ingin dipadam sepenuhnya.</p>
             <div class="space-y-4">
-                <div>
-                    <label class="form-label text-red-500">No Aduan <span class="text-red-500">*</span></label>
-                    <input type="text" id="del-noAduan" class="form-input" autocomplete="off" placeholder="Cth: AD2026102">
-                </div>
-                <button type="button" id="confirmDeleteBtn" class="w-full py-2.5 bg-red-600 hover:bg-red-500 rounded text-white font-bold text-sm transition flex justify-center items-center gap-2">
-                    <i class="fa-solid fa-triangle-exclamation"></i> Padam Rekod Ini
-                </button>
+                <div><label class="form-label text-red-500">No Aduan <span class="text-red-500">*</span></label><input type="text" id="del-noAduan" class="form-input" autocomplete="off" placeholder="Cth: AD2026102"></div>
+                <button type="button" id="confirmDeleteBtn" class="w-full py-2.5 bg-red-600 hover:bg-red-500 rounded text-white font-bold text-sm transition flex justify-center items-center gap-2"><i class="fa-solid fa-triangle-exclamation"></i> Padam Rekod Ini</button>
             </div>
         </div>
     </div>
 
     <!-- SCRIPT UTAMA -->
     <script>
-        // Serta-merta halang cache browser back button jika belum log masuk
-        if (localStorage.getItem('sainsLoggedIn') !== 'true') {
-            window.location.replace('index.html');
-        }
+        if (localStorage.getItem('sainsLoggedIn') !== 'true') { window.location.replace('index.html'); }
         window.addEventListener('pageshow', function(event) {
             if (event.persisted || (performance.getEntriesByType("navigation")[0] && performance.getEntriesByType("navigation")[0].type === 'back_forward')) {
-                if (localStorage.getItem('sainsLoggedIn') !== 'true') {
-                    window.location.replace('index.html');
-                }
+                if (localStorage.getItem('sainsLoggedIn') !== 'true') { window.location.replace('index.html'); }
             }
         });
 
         const WORKER_URL = 'https://laporanpembaikan.sainspdwater.workers.dev/';
 
-        let rawData = [];
-        let filteredData = [];
-        let dropdownOptions = {};
-        let charts = {};
-        let map, markerClusterGroup, heatLayer = null;
-        let isHeatmapMode = false, dataTable, managementTable;
-        let currentMode = 'add';
+        let rawData = [], filteredData = [], dropdownOptions = {}, charts = {};
+        let map, markerClusterGroup, heatLayer = null, isHeatmapMode = false, dataTable, managementTable, currentMode = 'add';
+        let croCurrentPage = 1;
+        const croRowsPerPage = 50;
 
         document.addEventListener('DOMContentLoaded', () => {
-            if(localStorage.getItem('sainsLoggedIn') !== 'true') {
-                window.location.replace('index.html');
-                return;
-            }
-
+            if(localStorage.getItem('sainsLoggedIn') !== 'true') { window.location.replace('index.html'); return; }
             initSessionTimeouts();
 
             if(localStorage.getItem('sainsTheme') === 'dark') {
@@ -626,7 +595,9 @@
             const userLevel = localStorage.getItem('sainsUserLevel');
             if(userLevel === 'GUEST') {
                 const adminButtons = document.getElementById('admin-action-buttons');
+                const croButton = document.getElementById('nav-cro');
                 if(adminButtons) adminButtons.style.display = 'none';
+                if(croButton) croButton.style.display = 'none';
             }
             
             startLiveClock();
@@ -649,9 +620,8 @@
                     if(!charts.month) initCharts();
                     updateDashboard();
                     updateManagementTable();
-                } catch(e) {
-                    console.error("Ralat baca cache tempatan:", e);
-                }
+                    updateCroTable();
+                } catch(e) { console.error("Ralat baca cache tempatan:", e); }
             }
 
             window.addEventListener('online', () => {
@@ -678,6 +648,7 @@
             window.location.replace('index.html');
         }
 
+        // --- PENYESUAIAN IDLE TIME (2 Jam) & MAXIMUM SESSION (8 Jam) ---
         function initSessionTimeouts() {
             const now = Date.now();
             let sessionStart = localStorage.getItem('sainsSessionStart');
@@ -686,15 +657,15 @@
             if (!sessionStart) { localStorage.setItem('sainsSessionStart', now); sessionStart = now; }
             if (!lastActivity) { localStorage.setItem('sainsLastActivity', now); lastActivity = now; }
 
-            const absoluteLimit = 2 * 60 * 60 * 1000; 
+            const absoluteLimit = 8 * 60 * 60 * 1000; // 8 jam maksimum sesi
             if (now - parseInt(sessionStart) > absoluteLimit) {
-                safeLogout("Sesi anda telah tamat selepas mencapai had masa 2 jam.");
+                safeLogout("Sesi anda telah tamat selepas mencapai had masa 8 jam.");
                 return;
             }
 
-            const idleLimit = 60 * 60 * 1000; 
+            const idleLimit = 2 * 60 * 60 * 1000; // 2 jam masa terbiar (idle)
             if (now - parseInt(lastActivity) > idleLimit) {
-                safeLogout("Sesi anda ditamatkan kerana terbiar (idle) melebihi 1 jam.");
+                safeLogout("Sesi anda ditamatkan kerana terbiar (idle) melebihi 2 jam.");
                 return;
             }
 
@@ -709,9 +680,9 @@
                 const active = parseInt(localStorage.getItem('sainsLastActivity') || currentTime);
 
                 if (currentTime - start > absoluteLimit) {
-                    safeLogout("Sesi anda telah tamat selepas 2 jam.");
+                    safeLogout("Sesi anda telah tamat selepas 8 jam.");
                 } else if (currentTime - active > idleLimit) {
-                    safeLogout("Sesi anda ditamatkan kerana terbiar (idle) melebihi 1 jam.");
+                    safeLogout("Sesi anda ditamatkan kerana terbiar (idle) melebihi 2 jam.");
                 }
             }, 30000);
         }
@@ -729,8 +700,7 @@
             const elWheels = document.querySelectorAll('.wheel');
 
             if (show) {
-                overlay.style.display = 'flex';
-                overlay.style.opacity = "1";
+                overlay.style.display = 'flex'; overlay.style.opacity = "1";
                 if (bar) bar.style.width = percent + '%';
                 if (pct) pct.innerText = percent + '%';
                 if (txt) txt.innerText = text;
@@ -741,36 +711,23 @@
                     if(elValveWheel) elValveWheel.style.transform = "rotate(0deg)";
                     if(elWaterStream) elWaterStream.style.opacity = "0";
                     if(elWaterFill) { elWaterFill.setAttribute('y', 280); elWaterFill.setAttribute('height', 0); }
-                } 
-                else if (percent > 40 && percent < 80) {
+                } else if (percent > 40 && percent < 80) {
                     let fillRatio = (percent - 40) / 40;
                     let waterHeight = fillRatio * 130;
                     let waterY = 280 - waterHeight;
-                    
                     if(elWaterStream) elWaterStream.style.opacity = "1";
-                    if(elWaterFill) {
-                        elWaterFill.setAttribute('y', waterY);
-                        elWaterFill.setAttribute('height', waterHeight);
-                    }
-                } 
-                else if (percent >= 80 && percent < 95) {
-                    if(elWaterFill) {
-                        elWaterFill.setAttribute('y', 150);
-                        elWaterFill.setAttribute('height', 130);
-                    }
+                    if(elWaterFill) { elWaterFill.setAttribute('y', waterY); elWaterFill.setAttribute('height', waterHeight); }
+                } else if (percent >= 80 && percent < 95) {
+                    if(elWaterFill) { elWaterFill.setAttribute('y', 150); elWaterFill.setAttribute('height', 130); }
                     if(elWaterStream) elWaterStream.style.opacity = "0";
                     if(percent >= 90 && elValveWheel) elValveWheel.style.transform = "rotate(0deg)";
-                } 
-                else if (percent >= 95) {
+                } else if (percent >= 95) {
                     if(elTruckGroup) elTruckGroup.style.transform = "translateX(500px)";
                     if(elWheels) elWheels.forEach(w => w.style.transform = "rotate(720deg)");
                 }
             } else {
                 overlay.style.opacity = "0";
-                setTimeout(() => { 
-                    overlay.style.display = 'none'; 
-                    overlay.style.opacity = "1";
-                }, 600);
+                setTimeout(() => { overlay.style.display = 'none'; overlay.style.opacity = "1"; }, 600);
             }
         }
 
@@ -783,11 +740,9 @@
                 const clockEl = document.getElementById('clock-text');
                 if(clockEl) { clockEl.innerText = `${dateStr} • ${timeStr}`; }
             };
-            updateClock();
-            setInterval(updateClock, 1000);
+            updateClock(); setInterval(updateClock, 1000);
         }
 
-        // --- FUNGSI MENGISI DATALIST INPUT (SEARCHABLE DROPDOWN) ---
         function populateModalDropdowns() {
             const options = dropdownOptions.zon ? dropdownOptions : {
                 zon: ['1', '2', '3'],
@@ -799,28 +754,24 @@
                 pelaksana: ['IU Legacy', 'NJA Prisma', 'Kaza Berkat', 'CTIU', 'Rynzaty', 'IR Vision', 'Namiio Waja', 'ZNA ENT', 'SAINS']
             };
 
-            const fillDatalist = (inputId, listId, list) => {
-                const inputEl = document.getElementById(inputId);
+            const fillDatalist = (listId, list) => {
                 const listEl = document.getElementById(listId);
                 if(!listEl) return;
-                
                 listEl.innerHTML = '';
                 if(list && Array.isArray(list)) {
-                    list.forEach(item => {
-                        listEl.innerHTML += `<option value="${item}">`;
-                    });
+                    list.forEach(item => { listEl.innerHTML += `<option value="${item}">`; });
                 }
             };
 
-            fillDatalist('m-zon', 'list-zon', options.zon);
-            fillDatalist('m-dma', 'list-dma', options.dma);
-            fillDatalist('m-kategori', 'list-kategori', options.kategori);
-            fillDatalist('m-jenisPaip', 'list-jenisPaip', options.jenisPaip);
-            fillDatalist('m-saizPaip', 'list-saizPaip', options.saiz);
-            fillDatalist('m-jenisPaipBaru', 'list-jenisPaipBaru', options.jenisPaip);
-            fillDatalist('m-saiz', 'list-saiz', options.saiz);
-            fillDatalist('m-sivilWorks', 'list-sivilWorks', options.sivil);
-            fillDatalist('m-dilaksanakanOleh', 'list-dilaksanakanOleh', options.pelaksana);
+            fillDatalist('list-zon', options.zon);
+            fillDatalist('list-dma', options.dma);
+            fillDatalist('list-kategori', options.kategori);
+            fillDatalist('list-jenisPaip', options.jenisPaip);
+            fillDatalist('list-saizPaip', options.saiz);
+            fillDatalist('list-jenisPaipBaru', options.jenisPaip);
+            fillDatalist('list-saiz', options.saiz);
+            fillDatalist('list-sivilWorks', options.sivil);
+            fillDatalist('list-dilaksanakanOleh', options.pelaksana);
         }
 
         function setInputValue(id, val) {
@@ -836,7 +787,9 @@
             if(str.includes('/')) {
                 const parts = str.split(/[\s/:\-]/);
                 if(parts.length >= 3) {
-                    return new Date(parts[2], parseInt(parts[1])-1, parts[0], parts[3]||0, parts[4]||0);
+                    let yr = parseInt(parts[2], 10);
+                    if(yr < 100) yr += 2000;
+                    return new Date(yr, parseInt(parts[1])-1, parts[0], parts[3]||0, parts[4]||0);
                 }
             }
             return new Date(str);
@@ -852,8 +805,7 @@
                 let hours = d.getHours();
                 const min = String(d.getMinutes()).padStart(2, '0');
                 const ampm = hours >= 12 ? 'pm' : 'am';
-                hours = hours % 12;
-                hours = hours ? hours : 12;
+                hours = hours % 12; hours = hours ? hours : 12;
                 const hh = String(hours).padStart(2, '0');
                 return `${dd}/${mm}/${yy} ${hh}:${min} ${ampm}`;
             }
@@ -862,6 +814,17 @@
 
         function formatForDateTimeInput(val) {
             if(!val || val === '-') return '';
+            let str = String(val).trim();
+            let parts = str.split(/[\s/:\-]/);
+            if(parts.length >= 3) {
+                let dd = String(parts[0]).padStart(2, '0');
+                let mm = String(parts[1]).padStart(2, '0');
+                let yy = parseInt(parts[2], 10);
+                if(yy < 100) yy += 2000;
+                let hh = String(parts[3] || '00').padStart(2, '0');
+                let min = String(parts[4] || '00').padStart(2, '0');
+                return `${yy}-${mm}-${dd}T${hh}:${min}`;
+            }
             const d = parseCustomDate(val);
             if (!isNaN(d.getTime()) && d.getTime() > 0) {
                 const yyyy = d.getFullYear();
@@ -875,15 +838,19 @@
         }
 
         function convertToDDMMYYYYHHMM(datetimeLocalVal) {
-            if(!datetimeLocalVal) return '';
-            const parts = datetimeLocalVal.split('T');
+    	    if(!datetimeLocalVal) return '';
+    	    const parts = datetimeLocalVal.split('T');
             if(parts.length === 2) {
-                const dateParts = parts[0].split('-');
-                if(dateParts.length === 3) {
-                    return `${dateParts[2]}/${dateParts[1]}/${dateParts[0]} ${parts[1]}`;
+        	const dateParts = parts[0].split('-');
+        	if(dateParts.length === 3) {
+            	    const yy = dateParts[0]; // Pastikan mengambil 4 digit tahun (YYYY)
+                    const mm = dateParts[1]; // 2 digit bulan
+                    const dd = dateParts[2]; // 2 digit hari
+                    const timePart = parts[1].length >= 5 ? parts[1].substring(0, 5) : parts[1];
+                    return `${dd}/${mm}/${yy} ${timePart}`;
                 }
-            }
-            return datetimeLocalVal;
+    	    }
+    	    return datetimeLocalVal;
         }
 
         function getFormData() {
@@ -929,12 +896,9 @@
         function sortMonths(arr) {
             const monthMap = { 'Jan':1, 'Feb':2, 'Mar':3, 'Apr':4, 'May':5, 'Jun':6, 'Jul':7, 'Aug':8, 'Sep':9, 'Oct':10, 'Nov':11, 'Dec':12 };
             return arr.sort((a, b) => {
-                const partsA = a.split('-');
-                const partsB = b.split('-');
-                const mNumA = monthMap[partsA[0]] || 0;
-                const mNumB = monthMap[partsB[0]] || 0;
-                const yNumA = partsA[1] ? parseInt('20' + partsA[1]) : 0;
-                const yNumB = partsB[1] ? parseInt('20' + partsB[1]) : 0;
+                const partsA = a.split('-'); const partsB = b.split('-');
+                const mNumA = monthMap[partsA[0]] || 0; const mNumB = monthMap[partsB[0]] || 0;
+                const yNumA = partsA[1] ? parseInt('20' + partsA[1]) : 0; const yNumB = partsB[1] ? parseInt('20' + partsB[1]) : 0;
                 if (yNumA !== yNumB) return yNumA - yNumB;
                 return mNumA - mNumB;
             });
@@ -942,8 +906,7 @@
 
         function sortNumeric(arr) {
             return arr.sort((a, b) => {
-                const numA = parseFloat(a);
-                const numB = parseFloat(b);
+                const numA = parseFloat(a); const numB = parseFloat(b);
                 if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
                 return String(a).localeCompare(String(b));
             });
@@ -978,11 +941,7 @@
         }
 
         async function fetchFreshData(isManualRefresh = false) {
-            if(isManualRefresh) {
-                showLoading(true, 20, "Menyegar data baharu...");
-                showToast("Memuat data baharu...");
-            }
-
+            if(isManualRefresh) { showLoading(true, 20, "Menyegar data baharu..."); showToast("Memuat data baharu..."); }
             try {
                 if(isManualRefresh) showLoading(true, 50, "Memuat turun dari pelayan...");
                 const res = await fetch(`${WORKER_URL}?fetch=all&t=${new Date().getTime()}`);
@@ -991,9 +950,8 @@
                 if(isManualRefresh) showLoading(true, 80, "Memproses fail JSON...");
                 const jsonRes = await res.json();
                 
-                if (Array.isArray(jsonRes)) {
-                    rawData = jsonRes;
-                } else {
+                if (Array.isArray(jsonRes)) { rawData = jsonRes; } 
+                else {
                     rawData = jsonRes.rawData || [];
                     if (jsonRes.dropdowns) {
                         dropdownOptions = jsonRes.dropdowns;
@@ -1010,12 +968,9 @@
                 localStorage.setItem('sainsRawData', JSON.stringify(rawData));
                 filteredData = [...rawData];
 
-                populateModalDropdowns();
-                populateFilters();
-                if(!map) initMap();
-                if(!charts.month) initCharts();
-                updateDashboard();
-                updateManagementTable();
+                populateModalDropdowns(); populateFilters();
+                if(!map) initMap(); if(!charts.month) initCharts();
+                updateDashboard(); updateManagementTable(); updateCroTable();
                 
                 if(isManualRefresh) {
                     showLoading(true, 100, "Selesai!");
@@ -1030,14 +985,11 @@
             }
         }
 
-        // --- BACKGROUND SYNC MUTATION FUNCTION ---
         async function sendMutation(actionType, payloadData) {
             const noAduan = payloadData['NO ADUAN'] || payloadData.noAduan;
             
-            // 1. Kemaskini UI tempatan serta-merta (Optimistic Update)
-            if(actionType === 'addData') {
-                rawData.unshift(payloadData);
-            } else if(actionType === 'updateData') {
+            if(actionType === 'addData') { rawData.unshift(payloadData); } 
+            else if(actionType === 'updateData') {
                 const idx = rawData.findIndex(item => String(item['NO ADUAN']).trim() === String(noAduan).trim());
                 if(idx !== -1) { rawData[idx] = { ...rawData[idx], ...payloadData }; }
             } else if(actionType === 'deleteData') {
@@ -1046,17 +998,14 @@
             
             localStorage.setItem('sainsRawData', JSON.stringify(rawData));
             filteredData = [...rawData];
-            updateDashboard();
-            updateManagementTable();
-            closeModals(); // Modal terus tutup serta-merta tanpa tunggu pelayan
+            updateDashboard(); updateManagementTable(); updateCroTable();
+            closeModals(); 
 
             showToast("Perubahan disimpan. Menyelaras dengan pelayan...", "success");
 
-            // 2. Hantar ke pelayan di latar belakang (Background Sync)
             try {
                 const res = await fetch(WORKER_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
+                    method: 'POST', headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify({ action: actionType, data: payloadData, noAduan: noAduan })
                 });
                 const result = await res.json();
@@ -1064,9 +1013,7 @@
                 if(result.status === 'success') {
                     showToast(result.message || "Data berjaya diselaraskan dengan pelayan!", "success");
                     fetchFreshData(false);
-                } else {
-                    throw new Error(result.message || "Ralat operasi pelayan");
-                }
+                } else { throw new Error(result.message || "Ralat operasi pelayan"); }
             } catch(err) {
                 let queue = JSON.parse(localStorage.getItem('sainsOfflineQueue') || '[]');
                 queue.push({ action: actionType, data: payloadData, noAduan: noAduan });
@@ -1082,8 +1029,7 @@
             for(let item of queue) {
                 try {
                     const res = await fetch(WORKER_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'text/plain' },
+                        method: 'POST', headers: { 'Content-Type': 'text/plain' },
                         body: JSON.stringify({ action: item.action, data: item.data, noAduan: item.noAduan })
                     });
                     const result = await res.json();
@@ -1097,6 +1043,275 @@
             }
         }
 
+        // --- FUNGSI TAB CRO KEY IN (DENGAN PAGINATION & AUTO BULAN SEMASA) ---
+        function updateCroTable() {
+            const tbody = document.getElementById('cro-tbody');
+            if(!tbody) return;
+
+            const sBulan = document.getElementById('cro-filter-bulan').value;
+            const sSearch = document.getElementById('cro-search').value.toLowerCase();
+            
+            let displayData = rawData.filter(row => {
+                if (sBulan && row['BULAN'] !== sBulan) return false;
+                if (sSearch && !Object.values(row).join(' ').toLowerCase().includes(sSearch)) return false;
+                return true;
+            });
+
+            // Pengiraan Pagination
+            const totalPages = Math.ceil(displayData.length / croRowsPerPage) || 1;
+            if (croCurrentPage > totalPages) croCurrentPage = totalPages;
+            if (croCurrentPage < 1) croCurrentPage = 1;
+
+            const startIndex = (croCurrentPage - 1) * croRowsPerPage;
+            const paginatedData = displayData.slice(startIndex, startIndex + croRowsPerPage);
+
+            let html = '';
+            paginatedData.forEach(row => {
+                const noAduan = row['NO ADUAN'] || '';
+                const tarikhTerimaVal = row['TARIKH & MASA TERIMA  ADUAN'] || row['TARIKH TERIMA'] || '';
+                const tarikhTutupVal = row['TARIKH  TUTUP ADUAN'] || row['TARIKH TUTUP'] || '';
+                const lokasiVal = row['LOKASI / TEMPAT'] || row['LOKASI'] || '';
+
+                html += `
+                    <tr>
+                        <td class="col-1 text-center p-1 whitespace-nowrap" tabindex="-1">
+                            <button type="button" onclick="saveCroRow(this)" class="text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded text-xs mx-0.5 transition font-bold shadow-sm" title="Simpan"><i class="fa-solid fa-save"></i> SIMPAN</button>
+                            <button type="button" onclick="confirmDeleteCro('${noAduan}')" class="text-red-600 hover:text-red-800 bg-red-100 hover:bg-red-200 px-2 py-1 rounded text-xs mx-0.5 transition shadow-sm" title="Padam"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                        <td class="col-2" tabindex="0"><input type="text" class="excel-input cro-noAduan font-bold" value="${noAduan}" readonly autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-zon" list="list-zon" value="${row['ZON']||''}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-dma" list="list-dma" value="${row['DMA']||''}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-kategori" list="list-kategori" value="${row['KATEGORI']||''}" autocomplete="off"></td>
+                        <td class="col-lokasi" tabindex="0"><textarea class="excel-input cro-lokasi" autocomplete="off">${lokasiVal}</textarea></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-kordinat" value="${row['KORDINAT']||''}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="datetime-local" class="excel-input cro-terima" value="${formatForDateTimeInput(tarikhTerimaVal)}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="datetime-local" class="excel-input cro-tutup" value="${formatForDateTimeInput(tarikhTutupVal)}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-jenis" list="list-jenisPaip" value="${row['JENIS PAIP']||''}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-saiz" list="list-saizPaip" value="${row['SAIZ PAIP']||''}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-jenisBaru" list="list-jenisPaipBaru" value="${row['JENIS PAIP BARU']||''}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-saizBaru" list="list-saiz" value="${row['SAIZ']||''}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-panjang" value="${row['PANJANG PAIP (M)']||''}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-sivil" list="list-sivilWorks" value="${row['SIVIL WORKS']||''}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-pelaksana" list="list-dilaksanakanOleh" value="${row['DILAKSANAKAN OLEH']||''}" autocomplete="off"></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+            renderCroPagination(totalPages, displayData.length);
+            initExcelGridNavigation();
+        }
+
+        function renderCroPagination(totalPages, totalRows) {
+            let pagerEl = document.getElementById('cro-pagination-bar');
+            if (!pagerEl) {
+                pagerEl = document.createElement('div');
+                pagerEl.id = 'cro-pagination-bar';
+                pagerEl.className = 'flex justify-between items-center p-3 bg-slate-100 dark:bg-gray-800 border-t border-slate-200 dark:border-gray-700 text-xs shrink-0';
+                document.getElementById('cro-content').appendChild(pagerEl);
+            }
+            pagerEl.innerHTML = `
+                <span class="text-slate-600 dark:text-gray-400">Jumlah Rekod: <b>${totalRows}</b> | Muka Surat <b>${croCurrentPage}</b> dari <b>${totalPages}</b></span>
+                <div class="flex gap-2">
+                    <button onclick="changeCroPage(-1)" class="px-3 py-1 bg-slate-200 dark:bg-gray-700 hover:bg-blue-600 hover:text-white rounded transition ${croCurrentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}">Sebelumnya</button>
+                    <button onclick="changeCroPage(1)" class="px-3 py-1 bg-slate-200 dark:bg-gray-700 hover:bg-blue-600 hover:text-white rounded transition ${croCurrentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}">Seterusnya</button>
+                </div>
+            `;
+        }
+
+        window.changeCroPage = function(direction) {
+            croCurrentPage += direction;
+            updateCroTable();
+        }
+
+        window.addCroBlankRow = function() {
+            const tbody = document.getElementById('cro-tbody');
+            const html = `
+                <tr class="new-row bg-emerald-50 dark:bg-emerald-900/20">
+                    <td class="col-1 text-center p-1 whitespace-nowrap" tabindex="-1">
+                        <button type="button" onclick="saveCroRow(this)" class="text-emerald-600 hover:text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-2 py-1 rounded text-xs mx-0.5 transition font-bold shadow-sm" title="Simpan"><i class="fa-solid fa-save"></i> SIMPAN</button>
+                        <button type="button" onclick="this.closest('tr').remove()" class="text-red-600 hover:text-red-800 bg-red-100 hover:bg-red-200 px-2 py-1 rounded text-xs mx-0.5 transition shadow-sm" title="Batal"><i class="fa-solid fa-times"></i></button>
+                    </td>
+                    <td class="col-2" tabindex="0"><input type="text" class="excel-input cro-noAduan font-bold text-blue-600 placeholder:text-gray-400" placeholder="NO ADUAN BARU" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-zon" list="list-zon" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-dma" list="list-dma" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-kategori" list="list-kategori" autocomplete="off"></td>
+                    <td class="col-lokasi" tabindex="0"><textarea class="excel-input cro-lokasi" autocomplete="off" placeholder="Masukkan lokasi..."></textarea></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-kordinat" autocomplete="off"></td>
+                    <td tabindex="0"><input type="datetime-local" class="excel-input cro-terima" autocomplete="off"></td>
+                    <td tabindex="0"><input type="datetime-local" class="excel-input cro-tutup" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-jenis" list="list-jenisPaip" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-saiz" list="list-saizPaip" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-jenisBaru" list="list-jenisPaipBaru" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-saizBaru" list="list-saiz" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-panjang" placeholder="Cth: 10 Meter" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-sivil" list="list-sivilWorks" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-pelaksana" list="list-dilaksanakanOleh" autocomplete="off"></td>
+                </tr>
+            `;
+            tbody.insertAdjacentHTML('afterbegin', html);
+            initExcelGridNavigation();
+        }
+
+        // --- EXCEL NAVIGATION LOGIC ---
+        function initExcelGridNavigation() {
+            const table = document.querySelector('.excel-table');
+            if(!table) return;
+
+            const cells = table.querySelectorAll('tbody td[tabindex="0"]');
+
+            cells.forEach(td => {
+                const inputOrTextarea = td.querySelector('.excel-input');
+                if(!inputOrTextarea) return;
+
+                td.addEventListener('click', (e) => {
+                    if(td.classList.contains('editing')) return;
+                    cells.forEach(c => {
+                        if(c !== td) {
+                            c.classList.remove('editing');
+                            c.querySelector('.excel-input').blur();
+                        }
+                    });
+                });
+
+                td.addEventListener('dblclick', () => {
+                    enableEditMode(td, inputOrTextarea);
+                });
+
+                td.addEventListener('keydown', (e) => {
+                    const isEditing = td.classList.contains('editing');
+
+                    if(!isEditing) {
+                        if(e.key === 'F2') {
+                            e.preventDefault();
+                            enableEditMode(td, inputOrTextarea);
+                            return;
+                        }
+
+                        if(e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+                            enableEditMode(td, inputOrTextarea, true);
+                            return;
+                        }
+
+                        let targetTd = null;
+                        const tr = td.parentElement;
+                        const tdIndex = Array.from(tr.children).indexOf(td);
+
+                        if(e.key === 'ArrowRight' || e.key === 'Tab') {
+                            e.preventDefault();
+                            targetTd = td.nextElementSibling;
+                            if(targetTd && targetTd.getAttribute('tabindex') === '0') targetTd.focus();
+                        } else if(e.key === 'ArrowLeft') {
+                            e.preventDefault();
+                            targetTd = td.previousElementSibling;
+                            if(targetTd && targetTd.getAttribute('tabindex') === '0') targetTd.focus();
+                        } else if(e.key === 'ArrowDown' || e.key === 'Enter') {
+                            e.preventDefault();
+                            const nextTr = tr.nextElementSibling;
+                            if(nextTr) {
+                                targetTd = nextTr.children[tdIndex];
+                                if(targetTd && targetTd.getAttribute('tabindex') === '0') targetTd.focus();
+                            }
+                        } else if(e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            const prevTr = tr.previousElementSibling;
+                            if(prevTr) {
+                                targetTd = prevTr.children[tdIndex];
+                                if(targetTd && targetTd.getAttribute('tabindex') === '0') targetTd.focus();
+                            }
+                        }
+                    } else {
+                        if(e.key === 'Enter' && inputOrTextarea.tagName !== 'TEXTAREA') {
+                            e.preventDefault();
+                            disableEditMode(td, inputOrTextarea);
+                            const tr = td.parentElement;
+                            const tdIndex = Array.from(tr.children).indexOf(td);
+                            const nextTr = tr.nextElementSibling;
+                            if(nextTr) {
+                                const targetTd = nextTr.children[tdIndex];
+                                if(targetTd && targetTd.getAttribute('tabindex') === '0') targetTd.focus();
+                            }
+                        } else if(e.key === 'Escape') {
+                            e.preventDefault();
+                            disableEditMode(td, inputOrTextarea);
+                            td.focus();
+                        }
+                    }
+                });
+
+                inputOrTextarea.addEventListener('blur', () => {
+                    if(td.classList.contains('editing')) {
+                        disableEditMode(td, inputOrTextarea);
+                    }
+                });
+            });
+        }
+
+        function enableEditMode(td, inputOrTextarea, clear = false) {
+            td.classList.add('editing');
+            inputOrTextarea.focus();
+            if(clear && inputOrTextarea.tagName !== 'TEXTAREA') {
+                inputOrTextarea.value = '';
+            } else if(inputOrTextarea.setSelectionRange) {
+                inputOrTextarea.setSelectionRange(inputOrTextarea.value.length, inputOrTextarea.value.length);
+            }
+        }
+
+        function disableEditMode(td, inputOrTextarea) {
+            td.classList.remove('editing');
+            inputOrTextarea.blur();
+        }
+
+        window.saveCroRow = function(btn) {
+            const tr = btn.closest('tr');
+            const noAduan = tr.querySelector('.cro-noAduan').value.trim();
+            if(!noAduan) { alert("Sila masukkan No Aduan"); return; }
+
+            const payloadData = {
+                "NO ADUAN": noAduan, "noAduan": noAduan, "No Aduan": noAduan,
+                "ZON": tr.querySelector('.cro-zon').value,
+                "DMA": tr.querySelector('.cro-dma').value,
+                "KATEGORI": tr.querySelector('.cro-kategori').value,
+                "LOKASI / TEMPAT": tr.querySelector('.cro-lokasi').value,
+                "KORDINAT": tr.querySelector('.cro-kordinat').value,
+                "TARIKH & MASA TERIMA  ADUAN": convertToDDMMYYYYHHMM(tr.querySelector('.cro-terima').value),
+                "TARIKH  TUTUP ADUAN": convertToDDMMYYYYHHMM(tr.querySelector('.cro-tutup').value),
+                "JENIS PAIP": tr.querySelector('.cro-jenis').value,
+                "SAIZ PAIP": tr.querySelector('.cro-saiz').value,
+                "JENIS PAIP BARU": tr.querySelector('.cro-jenisBaru').value,
+                "SAIZ": tr.querySelector('.cro-saizBaru').value,
+                "PANJANG PAIP (M)": tr.querySelector('.cro-panjang').value,
+                "SIVIL WORKS": tr.querySelector('.cro-sivil').value,
+                "DILAKSANAKAN OLEH": tr.querySelector('.cro-pelaksana').value
+            };
+
+            const isNew = tr.classList.contains('new-row');
+            const exists = rawData.some(r => String(r['NO ADUAN']).trim() === String(noAduan).trim());
+            const action = exists && !isNew ? 'updateData' : (exists && isNew ? 'updateData' : 'addData');
+            
+            sendMutation(action, payloadData);
+            
+            if (isNew) {
+                tr.classList.remove('new-row', 'bg-emerald-50', 'dark:bg-emerald-900/20');
+                tr.querySelector('.cro-noAduan').classList.add('bg-slate-100');
+                tr.querySelector('.cro-noAduan').setAttribute('readonly', 'true');
+            }
+            
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = `<i class="fa-solid fa-check"></i>`;
+            btn.classList.replace('text-blue-600', 'text-emerald-600');
+            setTimeout(() => {
+                btn.innerHTML = originalHtml;
+                btn.classList.replace('text-emerald-600', 'text-blue-600');
+            }, 2000);
+        }
+
+        window.confirmDeleteCro = function(noAduan) {
+            if(confirm(`Adakah anda pasti mahu memadam rekod ${noAduan}?`)) {
+                sendMutation('deleteData', { noAduan: noAduan });
+            }
+        }
+
+        // --- EVENTS PENGURUSAN TAB ---
         const recordModal = document.getElementById('recordModal');
         const deleteModal = document.getElementById('deleteModal');
 
@@ -1106,17 +1321,12 @@
             document.getElementById('modalSubmitBtn').innerHTML = `<i class="fa-solid fa-folder-plus"></i> Tambah Rekod`;
             document.getElementById('form-mutation').reset();
             document.getElementById('m-noAduan').removeAttribute('readonly');
-            document.getElementById('m-unitPaip').value = 'Meter';
-            populateModalDropdowns();
             recordModal.classList.remove('hidden');
         });
 
         document.getElementById('btn-open-delete').addEventListener('click', () => { deleteModal.classList.remove('hidden'); });
 
-        function closeModals() {
-            recordModal.classList.add('hidden');
-            deleteModal.classList.add('hidden');
-        }
+        function closeModals() { recordModal.classList.add('hidden'); deleteModal.classList.add('hidden'); }
 
         document.getElementById('closeModal').addEventListener('click', closeModals);
         document.getElementById('closeModalBtn').addEventListener('click', closeModals);
@@ -1130,7 +1340,6 @@
             document.getElementById('modalTitleText').innerText = "Kemaskini Rekod: " + noAduan;
             document.getElementById('modalSubmitBtn').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan`;
             
-            populateModalDropdowns();
             document.getElementById('m-noAduan').value = rowData['NO ADUAN'] || '';
             document.getElementById('m-noAduan').setAttribute('readonly', true);
             
@@ -1173,23 +1382,23 @@
         document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
             const noAduan = document.getElementById('del-noAduan').value.trim();
             if(!noAduan) { alert('Sila masukkan No Aduan'); return; }
-            if(confirm(`Adakah anda pasti mahu memadam rekod ${noAduan}?`)) {
-                sendMutation('deleteData', { noAduan: noAduan });
-            }
+            if(confirm(`Adakah anda pasti mahu memadam rekod ${noAduan}?`)) { sendMutation('deleteData', { noAduan: noAduan }); }
         });
 
         function setupEvents() {
             const navD = document.getElementById('nav-dash');
             const navU = document.getElementById('nav-update');
+            const navCro = document.getElementById('nav-cro');
             const navDaily = document.getElementById('nav-daily');
 
             const hideAllTabs = () => {
                 document.getElementById('dashboard-content').style.display = 'none';
                 document.getElementById('update-content').style.display = 'none';
+                document.getElementById('cro-content').style.display = 'none';
                 document.getElementById('daily-content').style.display = 'none';
-                navD.className = "w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 transition-colors";
-                navU.className = "w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 transition-colors";
-                navDaily.className = "w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 transition-colors";
+                
+                const inactiveClass = "w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 transition-colors";
+                navD.className = inactiveClass; navU.className = inactiveClass; navCro.className = inactiveClass; navDaily.className = inactiveClass;
             };
 
             navD.addEventListener('click', () => {
@@ -1206,6 +1415,13 @@
                 if(managementTable) managementTable.columns.adjust();
             });
 
+            navCro.addEventListener('click', () => {
+                hideAllTabs();
+                document.getElementById('cro-content').style.display = 'flex';
+                navCro.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
+                updateCroTable();
+            });
+
             navDaily.addEventListener('click', () => {
                 hideAllTabs();
                 document.getElementById('daily-content').style.display = 'block';
@@ -1215,18 +1431,15 @@
             });
 
             document.getElementById('nav-logout').addEventListener('click', () => {
-                localStorage.clear();
-                window.location.replace('index.html');
+                localStorage.clear(); window.location.replace('index.html');
             });
 
             document.getElementById('btn-refresh-data').addEventListener('click', () => fetchFreshData(true));
             document.getElementById('btn-mgmt-refresh').addEventListener('click', () => fetchFreshData(true));
             
             document.getElementById('btn-reset').addEventListener('click', () => {
-                document.getElementById('filter-search').value = '';
-                document.getElementById('filter-bulan').value = '';
-                document.getElementById('filter-kategori').value = '';
-                document.getElementById('filter-jenis-paip').value = '';
+                document.getElementById('filter-search').value = ''; document.getElementById('filter-bulan').value = '';
+                document.getElementById('filter-kategori').value = ''; document.getElementById('filter-jenis-paip').value = '';
                 document.getElementById('filter-saiz-paip').value = '';
                 document.querySelectorAll('.zon-checkbox').forEach(cb => cb.checked = false);
                 applyFilters();
@@ -1242,16 +1455,21 @@
             });
 
             document.getElementById('btn-toggle-map').addEventListener('click', () => {
-                isHeatmapMode = !isHeatmapMode;
-                updateMapMarkers();
+                isHeatmapMode = !isHeatmapMode; updateMapMarkers();
             });
+
+            // CRO Event Listeners dengan Reset Pagination Page ke 1
+            document.getElementById('cro-filter-bulan').addEventListener('change', () => { croCurrentPage = 1; updateCroTable(); });
+            document.getElementById('cro-search').addEventListener('input', () => { croCurrentPage = 1; updateCroTable(); });
+            document.getElementById('cro-zoom-select').addEventListener('change', (e) => {
+                document.getElementById('cro-table-container').style.zoom = e.target.value;
+            });
+            document.getElementById('btn-cro-add').addEventListener('click', addCroBlankRow);
         }
 
         function formatKategori(val) {
             if(!val) return '-';
-            if(val.toLowerCase().includes('pecah')) {
-                return `<span class="text-red-600 font-bold dark:text-red-400">${val}</span>`;
-            }
+            if(val.toLowerCase().includes('pecah')) { return `<span class="text-red-600 font-bold dark:text-red-400">${val}</span>`; }
             return val;
         }
 
@@ -1270,6 +1488,20 @@
             populateSel('filter-jenis-paip', uniqueValues('JENIS PAIP').sort());
             populateSel('filter-saiz-paip', sortNumeric(uniqueValues('SAIZ PAIP')));
             populateSel('mgmt-filter-bulan', sortedMonths);
+            populateSel('cro-filter-bulan', sortedMonths);
+
+            // Auto-pilih bulan semasa untuk CRO
+            const now = new Date();
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const currentMonthStr = `${monthNames[now.getMonth()]}-${String(now.getFullYear()).slice(-2)}`;
+            const croFilterBulan = document.getElementById('cro-filter-bulan');
+            if (croFilterBulan) {
+                if (sortedMonths.includes(currentMonthStr)) {
+                    croFilterBulan.value = currentMonthStr;
+                } else if (sortedMonths.length > 0) {
+                    croFilterBulan.value = sortedMonths[sortedMonths.length - 1];
+                }
+            }
 
             const dmas = uniqueValues('DMA').sort();
             const zonContainer = document.getElementById('filter-zon-container');
@@ -1297,8 +1529,13 @@
             const sSaizPaip = document.getElementById('filter-saiz-paip').value;
             const checkedDmas = Array.from(document.querySelectorAll('.zon-checkbox:checked')).map(cb => cb.value);
 
+            const allMonths = sortMonths([...new Set(rawData.map(i => i['BULAN']).filter(Boolean))]);
+            const latestThreeMonths = allMonths.slice(-3); 
+
             filteredData = rawData.filter(row => {
-                if(sBulan && row['BULAN'] !== sBulan) return false;
+                if (!sBulan) { if (!latestThreeMonths.includes(row['BULAN'])) return false; } 
+                else { if (row['BULAN'] !== sBulan) return false; }
+
                 if(sCat && row['KATEGORI'] !== sCat) return false;
                 if(sJenisPaip && row['JENIS PAIP'] !== sJenisPaip) return false;
                 if(sSaizPaip && row['SAIZ PAIP'] !== sSaizPaip) return false;
@@ -1330,8 +1567,7 @@
         function initMap() {
             map = L.map('map').setView([4.2105, 101.9758], 7);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
-            markerClusterGroup = L.markerClusterGroup();
-            map.addLayer(markerClusterGroup);
+            markerClusterGroup = L.markerClusterGroup(); map.addLayer(markerClusterGroup);
         }
 
         function updateDashboard() {
@@ -1361,12 +1597,10 @@
             filteredData.forEach(r => { let v = r['BULAN']||'Tiada'; dMonthCounts[v] = (dMonthCounts[v]||0)+1; });
             let sortedMonthKeys = sortMonths(Object.keys(dMonthCounts));
             let dMonth = sortedMonthKeys.map(m => [m, dMonthCounts[m]]);
-            charts.month.updateSeries([{name: 'Kes', data: dMonth.map(d=>d[1])}]);
-            charts.month.updateOptions({xaxis: {categories: dMonth.map(d=>d[0])}});
+            charts.month.updateSeries([{name: 'Kes', data: dMonth.map(d=>d[1])}]); charts.month.updateOptions({xaxis: {categories: dMonth.map(d=>d[0])}});
             
             const dDma = countBy('DMA').slice(0,10);
-            charts.dma.updateSeries([{name: 'Kes', data: dDma.map(d=>d[1])}]);
-            charts.dma.updateOptions({xaxis: {categories: dDma.map(d=>d[0])}});
+            charts.dma.updateSeries([{name: 'Kes', data: dDma.map(d=>d[1])}]); charts.dma.updateOptions({xaxis: {categories: dDma.map(d=>d[0])}});
 
             const dCat = countBy('KATEGORI');
             const categoryPriority = { 'PECAH': 1, 'Bocor': 2 };
@@ -1385,8 +1619,7 @@
             document.getElementById('table-category-body').innerHTML = catTableHtml || '<tr><td colspan="3" class="p-4 text-center text-gray-500">Tiada Data</td></tr>';
 
             const dCivil = countBy('SIVIL WORKS').slice(0,5);
-            charts.civilWorks.updateSeries([{name: 'Jumlah', data: dCivil.map(d=>d[1])}]);
-            charts.civilWorks.updateOptions({xaxis: {categories: dCivil.map(d=>d[0])}});
+            charts.civilWorks.updateSeries([{name: 'Jumlah', data: dCivil.map(d=>d[1])}]); charts.civilWorks.updateOptions({xaxis: {categories: dCivil.map(d=>d[0])}});
 
             const dJenisPaip = countBy('JENIS PAIP').slice(0,5);
             charts.jenisPaip.updateSeries(dJenisPaip.map(d=>d[1])); charts.jenisPaip.updateOptions({labels: dJenisPaip.map(d=>d[0])});
@@ -1403,8 +1636,7 @@
             const dPanjang = countBy('PANJANG PAIP (M)').slice(0,5);
             charts.panjangPaip.updateSeries([{name: 'Nilai', data: dPanjang.map(d=>d[1])}]); charts.panjangPaip.updateOptions({xaxis: {categories: dPanjang.map(d=>d[0])}});
 
-            updateMapMarkers();
-            updateTable();
+            updateMapMarkers(); updateTable();
         }
 
         function updateMapMarkers() {
@@ -1421,9 +1653,7 @@
             });
             if(isHeatmapMode) {
                 heatLayer = L.heatLayer(heatPts, {radius: 25, blur: 15, gradient:{0.4:'blue',0.65:'lime',1:'red'}}).addTo(map);
-            } else {
-                markerClusterGroup.addLayers(markers);
-            }
+            } else { markerClusterGroup.addLayers(markers); }
         }
 
         function updateTable() {
@@ -1431,11 +1661,8 @@
                 const linkMaps = r['LINK MAPS'] ? `<a href="${r['LINK MAPS']}" target="_blank" class="text-blue-500"><i class="fa-solid fa-map-location-dot"></i></a>` : '-';
                 return [r['NO ADUAN']||'-', r['KPI ADUAN']||'-', (r['LOKASI / TEMPAT']||r['LOKASI']||'-').substring(0,30), r['DMA']||'-', formatKategori(r['KATEGORI']), linkMaps, r['KORDINAT']||'-'];
             });
-            if($.fn.DataTable.isDataTable('#dataTable')) {
-                dataTable.clear().rows.add(tbData).draw();
-            } else {
-                dataTable = $('#dataTable').DataTable({ data: tbData, pageLength: 5, responsive: true, dom: 'Bfrtip', buttons: ['excel', 'pdf', 'print'] });
-            }
+            if($.fn.DataTable.isDataTable('#dataTable')) { dataTable.clear().rows.add(tbData).draw(); } 
+            else { dataTable = $('#dataTable').DataTable({ data: tbData, pageLength: 5, responsive: true, dom: 'Bfrtip', buttons: ['excel', 'pdf', 'print'] }); }
         }
 
         function updateManagementTable() {
@@ -1453,57 +1680,35 @@
                 ];
             });
 
-            if($.fn.DataTable.isDataTable('#managementTable')) {
-                managementTable.clear().rows.add(mgmtData).draw();
-            } else {
-                managementTable = $('#managementTable').DataTable({ data: mgmtData, pageLength: 10, scrollX: true, order: [[4, 'desc']], dom: 'Bfrtip', buttons: ['excel', 'pdf', 'print'] });
-            }
+            if($.fn.DataTable.isDataTable('#managementTable')) { managementTable.clear().rows.add(mgmtData).draw(); } 
+            else { managementTable = $('#managementTable').DataTable({ data: mgmtData, pageLength: 10, scrollX: true, order: [[4, 'desc']], dom: 'Bfrtip', buttons: ['excel', 'pdf', 'print'] }); }
         }
 
         // ==============================================================================
         // LOGIK TEMPLAT LAPORAN HARIAN & PENGESANAN TARIKH TEPAT
         // ==============================================================================
         document.getElementById('btn-load-daily').addEventListener('click', () => {
-            const selectedDate = document.getElementById('daily-date-picker').value; // Format: YYYY-MM-DD
-            if (!selectedDate) {
-                showToast("Sila pilih tarikh terlebih dahulu!", "error");
-                return;
-            }
+            const selectedDate = document.getElementById('daily-date-picker').value; 
+            if (!selectedDate) { showToast("Sila pilih tarikh terlebih dahulu!", "error"); return; }
 
             const [targetYear, targetMonth, targetDay] = selectedDate.split('-').map(Number);
             const targetDDMMYYYY = `${String(targetDay).padStart(2, '0')}/${String(targetMonth).padStart(2, '0')}/${targetYear}`;
             document.getElementById('daily-label-date').innerText = targetDDMMYYYY;
 
             const parseRowDate = (val) => {
-                if (!val) return null;
-                let str = String(val).trim();
-                
+                if (!val) return null; let str = String(val).trim();
                 let isoMatch = str.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
-                if (isoMatch) {
-                    return { y: parseInt(isoMatch[1], 10), m: parseInt(isoMatch[2], 10), d: parseInt(isoMatch[3], 10) };
-                }
-
+                if (isoMatch) { return { y: parseInt(isoMatch[1], 10), m: parseInt(isoMatch[2], 10), d: parseInt(isoMatch[3], 10) }; }
                 let dmyMatch = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
-                if (dmyMatch) {
-                    return { d: parseInt(dmyMatch[1], 10), m: parseInt(dmyMatch[2], 10), y: parseInt(dmyMatch[3], 10) };
-                }
-
+                if (dmyMatch) { return { d: parseInt(dmyMatch[1], 10), m: parseInt(dmyMatch[2], 10), y: parseInt(dmyMatch[3], 10) }; }
                 let shortDmyMatch = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2})(?!\d)/);
-                if (shortDmyMatch) {
-                    let yy = parseInt(shortDmyMatch[3], 10);
-                    return { d: parseInt(shortDmyMatch[1], 10), m: parseInt(shortDmyMatch[2], 10), y: yy < 100 ? 2000 + yy : yy };
-                }
-
+                if (shortDmyMatch) { let yy = parseInt(shortDmyMatch[3], 10); return { d: parseInt(shortDmyMatch[1], 10), m: parseInt(shortDmyMatch[2], 10), y: yy < 100 ? 2000 + yy : yy }; }
                 let nums = str.match(/\d+/g);
                 if (nums && nums.length >= 3) {
-                    let n0 = parseInt(nums[0], 10);
-                    let n1 = parseInt(nums[1], 10);
-                    let n2 = parseInt(nums[2], 10);
-                    if (n0 > 1000) return { y: n0, m: n1, d: n2 };
-                    if (n2 > 1000) return { d: n0, m: n1, y: n2 };
+                    let n0 = parseInt(nums[0], 10); let n1 = parseInt(nums[1], 10); let n2 = parseInt(nums[2], 10);
+                    if (n0 > 1000) return { y: n0, m: n1, d: n2 }; if (n2 > 1000) return { d: n0, m: n1, y: n2 };
                     if (n2 < 100) return { d: n0, m: n1, y: 2000 + n2 };
                 }
-
                 return null;
             };
 
@@ -1512,16 +1717,11 @@
                 for (let key in row) {
                     const uKey = key.toUpperCase();
                     if ((uKey.includes('TERIMA') && !uKey.includes('TUTUP')) || uKey.includes('TARIKH')) {
-                        if (row[key]) {
-                            rawDateVal = row[key];
-                            break;
-                        }
+                        if (row[key]) { rawDateVal = row[key]; break; }
                     }
                 }
-
                 const parsed = parseRowDate(rawDateVal);
                 if (!parsed) return false;
-
                 return parsed.y === targetYear && parsed.m === targetMonth && parsed.d === targetDay;
             });
 
@@ -1531,53 +1731,28 @@
             const tYear = nowObj.getFullYear();
             const tarikhKemaskini = `${tDay}/${tMonth}/${tYear}`;
             
-            const kesPecah = matchedCases.filter(r => {
-                const cat = String(r['KATEGORI'] || r['kategori'] || '').toUpperCase();
-                return cat.includes('PECAH');
-            });
-
-            const kesBocor = matchedCases.filter(r => {
-                const cat = String(r['KATEGORI'] || r['kategori'] || '').toUpperCase();
-                return cat.includes('BOCOR');
-            });
-
+            const kesPecah = matchedCases.filter(r => String(r['KATEGORI'] || r['kategori'] || '').toUpperCase().includes('PECAH'));
+            const kesBocor = matchedCases.filter(r => String(r['KATEGORI'] || r['kategori'] || '').toUpperCase().includes('BOCOR'));
             const totalPecahBocor = kesPecah.length + kesBocor.length;
-
-            const sainsCases = matchedCases.filter(r => {
-                const pelaksana = String(r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh'] || '').toUpperCase();
-                return pelaksana.includes('SAINS');
-            });
+            const sainsCases = matchedCases.filter(r => String(r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh'] || '').toUpperCase().includes('SAINS'));
             const sainsText = sainsCases.length > 0 ? sainsCases.map(r => `${r['NO ADUAN'] || r['noAduan']} - ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}`).join(', ') : 'TIADA';
-
-            const kesTurap = matchedCases.filter(r => {
-                const sivil = String(r['SIVIL WORKS'] || r['sivilWorks'] || r['Kerja Sivil'] || '').toUpperCase();
-                return sivil.includes('TURAP');
-            });
+            const kesTurap = matchedCases.filter(r => String(r['SIVIL WORKS'] || r['sivilWorks'] || r['Kerja Sivil'] || '').toUpperCase().includes('TURAP'));
 
             const extractTimeWithAmPm = (val) => {
                 if (!val || val === '-') return 'HH:MM am/pm';
-                const str = String(val).trim();
-                const timeMatch = str.match(/(\d{2}):(\d{2})/);
+                const str = String(val).trim(); const timeMatch = str.match(/(\d{2}):(\d{2})/);
                 if (timeMatch) {
-                    let hours = parseInt(timeMatch[1], 10);
-                    const minutes = timeMatch[2];
+                    let hours = parseInt(timeMatch[1], 10); const minutes = timeMatch[2];
                     const ampm = hours >= 12 ? 'pm' : 'am';
-                    hours = hours % 12;
-                    hours = hours ? hours : 12; 
-                    const formattedHours = String(hours).padStart(2, '0');
-                    return `${formattedHours}:${minutes} ${ampm}`;
+                    hours = hours % 12; hours = hours ? hours : 12; 
+                    return `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
                 }
                 return str;
             };
 
             let template = `*LAPORAN HARIAN OPERASI* :\n\n`;
-            template += `*Tarikh Laporan* : ${targetDDMMYYYY}\n`;
-            template += `*Tarikh Kemaskini* : ${tarikhKemaskini}\n`;
-            template += `*Daerah* : PORT DICKSON\n\n`;
-            
-            template += `*PAIP PECAH / BOCOR :*\n\n`;
-            template += `*GENG PEMBAIKAN SAINS & LOKASI² ADUAN :* ${sainsText}\n\n`;
-            template += `*KONTRAKTOR² & LOKASI² ADUAN:* ${totalPecahBocor} NOS\n`;
+            template += `*Tarikh Laporan* : ${targetDDMMYYYY}\n*Tarikh Kemaskini* : ${tarikhKemaskini}\n*Daerah* : PORT DICKSON\n\n`;
+            template += `*PAIP PECAH / BOCOR :*\n\n*GENG PEMBAIKAN SAINS & LOKASI² ADUAN :* ${sainsText}\n\n*KONTRAKTOR² & LOKASI² ADUAN:* ${totalPecahBocor} NOS\n`;
             
             if (matchedCases.length > 0) {
                 matchedCases.forEach((r, i) => {
@@ -1585,52 +1760,25 @@
                     const lokasi = r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi'] || '-';
                     const saiz = r['SAIZ PAIP'] || r['saizPaip'] || '-';
                     const jenisPaip = r['JENIS PAIP'] || r['jenisPaip'] || '-';
-                    
                     const tTerima = extractTimeWithAmPm(r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA']);
                     const rawTutup = r['TARIKH  TUTUP ADUAN'] || r['TARIKH TUTUP'] || r['tarikhTutup'];
                     const tTutup = rawTutup ? extractTimeWithAmPm(rawTutup) : 'DALAM TINDAKAN';
-                    
                     const pelaksana = r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh'] || '-';
-                    
                     template += `${i + 1}. ${noAduan} - ${lokasi} – ${saiz}'' - ${jenisPaip} - ${tTerima} hingga ${tTutup} - ${pelaksana}\n`;
                 });
-            } else {
-                template += `TIADA\n`;
-            }
+            } else { template += `TIADA\n`; }
 
             template += `\n*KAWASAN² TERLIBAT GANGGUAN AIR KES PAIP PECAH :* ${kesPecah.length} NOS\n`;
-            if (kesPecah.length > 0) {
-                kesPecah.forEach((r, i) => {
-                    template += `${i + 1}. ${r['NO ADUAN'] || r['noAduan']} – ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}\n`;
-                });
-            } else {
-                template += `TIADA\n`;
-            }
-
-            template += `\n*UKZ² & LOKASI² ADUAN :* TIADA\n\n`;
-            template += `*JUMLAH PECAH :* ${kesPecah.length}\n`;
-            template += `*JUMLAH BOCOR :* ${kesBocor.length}\n\n`;
-
-            template += `*NO². ADUAN KERJA LIBAT JALAN :* ${kesTurap.length} NOS\n`;
-            if (kesTurap.length > 0) {
-                kesTurap.forEach((r, i) => {
-                    template += `${i + 1}. ${r['NO ADUAN'] || r['noAduan']}, Turap\n`;
-                });
-            } else {
-                template += `TIADA\n`;
-            }
-
-            template += `\n*GANGGUAN BEKALAN AIR LAIN² HAL :* TIADA\n`;
-            template += `*PENGHANTARAN AIR MELALUI LORI TANGKI :* TIADA\n`;
-            template += `*KOLAM KRITIKAL (PARAS RENDAH) :* TIADA\n`;
-            template += `*LAIN-LAIN HAL :* TIADA`;
+            if (kesPecah.length > 0) { kesPecah.forEach((r, i) => { template += `${i + 1}. ${r['NO ADUAN'] || r['noAduan']} – ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}\n`; }); } else { template += `TIADA\n`; }
+            template += `\n*UKZ² & LOKASI² ADUAN :* TIADA\n\n*JUMLAH PECAH :* ${kesPecah.length}\n*JUMLAH BOCOR :* ${kesBocor.length}\n\n*NO². ADUAN KERJA LIBAT JALAN :* ${kesTurap.length} NOS\n`;
+            if (kesTurap.length > 0) { kesTurap.forEach((r, i) => { template += `${i + 1}. ${r['NO ADUAN'] || r['noAduan']}, Turap\n`; }); } else { template += `TIADA\n`; }
+            template += `\n*GANGGUAN BEKALAN AIR LAIN² HAL :* TIADA\n*PENGHANTARAN AIR MELALUI LORI TANGKI :* TIADA\n*KOLAM KRITIKAL (PARAS RENDAH) :* TIADA\n*LAIN-LAIN HAL :* TIADA`;
 
             document.getElementById('daily-whatsapp-preview').value = template;
 
             const container = document.getElementById('daily-cases-list');
             if (matchedCases.length === 0) {
-                container.innerHTML = `<p class="text-sm text-slate-500 text-center py-8">Tiada rekod kes ditemui pada tarikh ${targetDDMMYYYY}.</p>`;
-                return;
+                container.innerHTML = `<p class="text-sm text-slate-500 text-center py-8">Tiada rekod kes ditemui pada tarikh ${targetDDMMYYYY}.</p>`; return;
             }
 
             let html = '';
@@ -1638,8 +1786,7 @@
                 html += `
                     <div class="p-4 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800/50 shadow-sm flex flex-col gap-2 text-xs">
                         <div class="flex justify-between font-bold text-blue-600 dark:text-blue-400 text-sm">
-                            <span>${r['NO ADUAN'] || r['noAduan']} (${r['KATEGORI'] || r['kategori']})</span>
-                            <span>DMA: ${r['DMA'] || r['dma']}</span>
+                            <span>${r['NO ADUAN'] || r['noAduan']} (${r['KATEGORI'] || r['kategori']})</span><span>DMA: ${r['DMA'] || r['dma']}</span>
                         </div>
                         <div><b>Lokasi:</b> ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}</div>
                         <div><b>Pelaksana:</b> ${r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh']} | <b>Sivil:</b> ${r['SIVIL WORKS'] || r['sivilWorks'] || 'Tiada'}</div>
@@ -1651,27 +1798,15 @@
 
         document.getElementById('btn-copy-daily-whatsapp').addEventListener('click', () => {
             const previewBox = document.getElementById('daily-whatsapp-preview');
-            if (!previewBox.value) {
-                showToast("Sila jana laporan harian terlebih dahulu!", "error");
-                return;
-            }
-            previewBox.select();
-            navigator.clipboard.writeText(previewBox.value).then(() => {
-                showToast("Teks laporan berjaya disalin!", "success");
-            }).catch(() => {
-                showToast("Gagal menyalin teks.", "error");
-            });
+            if (!previewBox.value) { showToast("Sila jana laporan harian terlebih dahulu!", "error"); return; }
+            previewBox.select(); navigator.clipboard.writeText(previewBox.value).then(() => { showToast("Teks laporan berjaya disalin!", "success"); }).catch(() => { showToast("Gagal menyalin teks.", "error"); });
         });
 
         document.getElementById('btn-open-whatsapp-link').addEventListener('click', () => {
             const previewBox = document.getElementById('daily-whatsapp-preview');
-            if (!previewBox.value) {
-                showToast("Sila salin atau jana laporan harian terlebih dahulu!", "error");
-                return;
-            }
+            if (!previewBox.value) { showToast("Sila salin atau jana laporan harian terlebih dahulu!", "error"); return; }
             const encodedText = encodeURIComponent(previewBox.value);
-            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`;
-            window.open(whatsappUrl, '_blank');
+            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`; window.open(whatsappUrl, '_blank');
         });
     </script>
 </body>
