@@ -90,7 +90,7 @@
         @keyframes subtleWave { 0% { transform: translateY(0); } 50% { transform: translateY(-2px); } 100% { transform: translateY(0); } }
         .water-surface { animation: subtleWave 2s infinite ease-in-out; }
 
-        /* CRO Excel Spreadsheet Style & Freezing Kolom 1 & 2 */
+        /* CRO Excel Spreadsheet Style & Freezing Kolom 1 & 2 (Header & Data) */
         .excel-table { border-collapse: collapse; min-width: 100%; font-size: 0.85rem; }
         .excel-table th, .excel-table td { box-sizing: border-box; }
         .excel-table th { position: sticky; top: 0; background: #cbd5e1; border: 1px solid #94a3b8; padding: 6px 10px; z-index: 20; color: #1e293b; white-space: nowrap; box-shadow: inset 0 -1px 0 #94a3b8; }
@@ -104,17 +104,19 @@
         td.editing .excel-input { pointer-events: auto; background: #ffffff; }
         .dark td.editing .excel-input { background: #0f172a; }
         
-        /* Freeze Kolom 1: Tindakan (Lebar diselaraskan kepada 145px) */
-        .col-1 { position: sticky; left: 0; z-index: 25; width: 145px; min-width: 145px; max-width: 145px; background: #cbd5e1; }
-        td.col-1 { z-index: 15; background: #f8fafc; }
-        .dark th.col-1 { background: #334155; }
-        .dark td.col-1 { background: #1e293b; }
+        /* Freeze Keseluruhan Lajur 1: Tindakan (Header & Data) dengan Background Kukuh & Sempadan */
+        .col-1 { position: sticky !important; left: 0; z-index: 25; width: 145px; min-width: 145px; max-width: 145px; }
+        th.col-1 { background: #cbd5e1 !important; z-index: 25; }
+        td.col-1 { background: #f8fafc !important; z-index: 15; box-shadow: 2px 0 0 0 #cbd5e1; }
+        .dark th.col-1 { background: #334155 !important; }
+        .dark td.col-1 { background: #1e293b !important; box-shadow: 2px 0 0 0 #475569; }
 
-        /* Freeze Kolom 2: No Aduan (Bermula tepat pada left: 145px, lebar 130px) */
-        .col-2 { position: sticky; left: 0px; z-index: 25; width: 115px; min-width: 115px; max-width: 115px; background: #cbd5e1; }
-        td.col-2 { z-index: 15; background: #ffffff; }
-        .dark th.col-2 { background: #334155; }
-        .dark td.col-2 { background: #1e293b; }
+        /* Freeze Keseluruhan Lajur 2: No Aduan (Header & Data - bermula pada left: 145px) dengan Background Kukuh & Sempadan */
+        .col-2 { position: sticky !important; left: 145px; z-index: 25; width: 115px; min-width: 115px; max-width: 115px; }
+        th.col-2 { background: #cbd5e1 !important; z-index: 25; }
+        td.col-2 { background: #ffffff !important; z-index: 15; box-shadow: 2px 0 0 0 #cbd5e1; }
+        .dark th.col-2 { background: #334155 !important; }
+        .dark td.col-2 { background: #1e293b !important; box-shadow: 2px 0 0 0 #475569; }
 
         /* Lokasi / Tempat Wrap Text Styling */
         .col-lokasi { min-width: 280px; max-width: 350px; white-space: normal !important; word-break: break-word; }
@@ -843,7 +845,7 @@
             if(parts.length === 2) {
         	const dateParts = parts[0].split('-');
         	if(dateParts.length === 3) {
-            	    const yy = dateParts[0]; // Pastikan mengambil 4 digit tahun (YYYY)
+            	    const yy = dateParts[0]; // 4 digit tahun (YYYY)
                     const mm = dateParts[1]; // 2 digit bulan
                     const dd = dateParts[2]; // 2 digit hari
                     const timePart = parts[1].length >= 5 ? parts[1].substring(0, 5) : parts[1];
@@ -1152,11 +1154,12 @@
             initExcelGridNavigation();
         }
 
-        // --- EXCEL NAVIGATION LOGIC ---
+        // --- EXCEL NAVIGATION LOGIC (EXCEL-LIKE SMOOTH PANNING) ---
         function initExcelGridNavigation() {
             const table = document.querySelector('.excel-table');
             if(!table) return;
 
+            const container = document.getElementById('cro-table-container');
             const cells = table.querySelectorAll('tbody td[tabindex="0"]');
 
             cells.forEach(td => {
@@ -1199,24 +1202,36 @@
                         if(e.key === 'ArrowRight' || e.key === 'Tab') {
                             e.preventDefault();
                             targetTd = td.nextElementSibling;
-                            if(targetTd && targetTd.getAttribute('tabindex') === '0') targetTd.focus();
+                            if(targetTd && targetTd.getAttribute('tabindex') === '0') {
+                                targetTd.focus();
+                                if(container) scrollToEnsureVisible(container, targetTd);
+                            }
                         } else if(e.key === 'ArrowLeft') {
                             e.preventDefault();
                             targetTd = td.previousElementSibling;
-                            if(targetTd && targetTd.getAttribute('tabindex') === '0') targetTd.focus();
+                            if(targetTd && targetTd.getAttribute('tabindex') === '0') {
+                                targetTd.focus();
+                                if(container) scrollToEnsureVisible(container, targetTd);
+                            }
                         } else if(e.key === 'ArrowDown' || e.key === 'Enter') {
                             e.preventDefault();
                             const nextTr = tr.nextElementSibling;
                             if(nextTr) {
                                 targetTd = nextTr.children[tdIndex];
-                                if(targetTd && targetTd.getAttribute('tabindex') === '0') targetTd.focus();
+                                if(targetTd && targetTd.getAttribute('tabindex') === '0') {
+                                    targetTd.focus();
+                                    targetTd.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                                }
                             }
                         } else if(e.key === 'ArrowUp') {
                             e.preventDefault();
                             const prevTr = tr.previousElementSibling;
                             if(prevTr) {
                                 targetTd = prevTr.children[tdIndex];
-                                if(targetTd && targetTd.getAttribute('tabindex') === '0') targetTd.focus();
+                                if(targetTd && targetTd.getAttribute('tabindex') === '0') {
+                                    targetTd.focus();
+                                    targetTd.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                                }
                             }
                         }
                     } else {
@@ -1228,7 +1243,10 @@
                             const nextTr = tr.nextElementSibling;
                             if(nextTr) {
                                 const targetTd = nextTr.children[tdIndex];
-                                if(targetTd && targetTd.getAttribute('tabindex') === '0') targetTd.focus();
+                                if(targetTd && targetTd.getAttribute('tabindex') === '0') {
+                                    targetTd.focus();
+                                    targetTd.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                                }
                             }
                         } else if(e.key === 'Escape') {
                             e.preventDefault();
@@ -1244,6 +1262,27 @@
                     }
                 });
             });
+        }
+
+        function scrollToEnsureVisible(container, td) {
+            const tr = td.parentElement;
+            const tdIndex = Array.from(tr.children).indexOf(td);
+
+            // Jika sampai ke kolum kiri sekali (Tindakan atau No Aduan), terus scroll full ke kiri (0)
+            if (tdIndex <= 1 || td.classList.contains('col-1') || td.classList.contains('col-2')) {
+                container.scrollTo({ left: 0, behavior: 'smooth' });
+                return;
+            }
+
+            const containerRect = container.getBoundingClientRect();
+            const tdRect = td.getBoundingClientRect();
+            const leftStickyWidth = 260; 
+
+            if (tdRect.right > containerRect.right - 20) {
+                container.scrollBy({ left: tdRect.right - containerRect.right + 80, behavior: 'smooth' });
+            } else if (tdRect.left < containerRect.left + leftStickyWidth) {
+                container.scrollBy({ left: tdRect.left - containerRect.left - leftStickyWidth - 20, behavior: 'smooth' });
+            }
         }
 
         function enableEditMode(td, inputOrTextarea, clear = false) {
