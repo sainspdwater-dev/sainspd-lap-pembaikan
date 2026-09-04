@@ -20,12 +20,13 @@
         }
     </script>
 
-    <!-- Leaflet & ApexCharts & DataTables -->
+    <!-- Leaflet & ApexCharts & DataTables & Turf.js -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js"></script>
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
     
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
@@ -76,7 +77,6 @@
         .sidebar-text { display: none; white-space: nowrap; }
         #sidebar:hover .sidebar-text { display: inline-block; }
 
-        /* Animasi Loading SVG */
         #valve-wheel { transform-origin: 140px 200px; transition: transform 1s ease-in-out; }
         #water-stream { transition: opacity 0.3s ease-in; opacity: 0; transform-origin: top; animation: flowDown 0.5s infinite linear; }
         #truck-group { transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1); }
@@ -90,7 +90,6 @@
         @keyframes subtleWave { 0% { transform: translateY(0); } 50% { transform: translateY(-2px); } 100% { transform: translateY(0); } }
         .water-surface { animation: subtleWave 2s infinite ease-in-out; }
 
-        /* CRO Excel Spreadsheet Style & Freezing Kolom 1 & 2 (Header & Data) */
         .excel-table { border-collapse: collapse; min-width: 100%; font-size: 0.85rem; }
         .excel-table th, .excel-table td { box-sizing: border-box; }
         .excel-table th { position: sticky; top: 0; background: #cbd5e1; border: 1px solid #94a3b8; padding: 6px 10px; z-index: 20; color: #1e293b; white-space: nowrap; box-shadow: inset 0 -1px 0 #94a3b8; }
@@ -104,21 +103,18 @@
         td.editing .excel-input { pointer-events: auto; background: #ffffff; }
         .dark td.editing .excel-input { background: #0f172a; }
         
-        /* Freeze Keseluruhan Lajur 1: Tindakan (Header & Data) dengan Background Kukuh & Sempadan */
         .col-1 { position: sticky !important; left: 0; z-index: 25; width: 145px; min-width: 145px; max-width: 145px; }
         th.col-1 { background: #cbd5e1 !important; z-index: 25; }
         td.col-1 { background: #f8fafc !important; z-index: 15; box-shadow: 2px 0 0 0 #cbd5e1; }
         .dark th.col-1 { background: #334155 !important; }
         .dark td.col-1 { background: #1e293b !important; box-shadow: 2px 0 0 0 #475569; }
 
-        /* Freeze Keseluruhan Lajur 2: No Aduan (Header & Data - bermula pada left: 145px) dengan Background Kukuh & Sempadan */
         .col-2 { position: sticky !important; left: 145px; z-index: 25; width: 115px; min-width: 115px; max-width: 115px; }
         th.col-2 { background: #cbd5e1 !important; z-index: 25; }
         td.col-2 { background: #ffffff !important; z-index: 15; box-shadow: 2px 0 0 0 #cbd5e1; }
         .dark th.col-2 { background: #334155 !important; }
         .dark td.col-2 { background: #1e293b !important; box-shadow: 2px 0 0 0 #475569; }
 
-        /* Lokasi / Tempat Wrap Text Styling */
         .col-lokasi { min-width: 280px; max-width: 350px; white-space: normal !important; word-break: break-word; }
         .col-lokasi textarea, .col-lokasi input { white-space: normal !important; word-break: break-word; height: auto; min-height: 45px; }
     </style>
@@ -214,7 +210,7 @@
     <!-- MAIN CONTENT -->
     <main class="flex-1 overflow-y-auto relative p-4 md:p-6 lg:p-8">
 
-        <!-- TOP BAR: TARIKH & WAKTU LANGSUNG -->
+        <!-- TOP BAR -->
         <div class="dashboard-card p-4 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-blue-900/10 via-slate-100 to-slate-100 dark:from-blue-950/40 dark:via-gray-800 dark:to-gray-800">
             <div>
                 <h1 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><i class="fa-solid fa-water text-blue-500"></i> Sistem Pemantauan Laporan Pembaikan SAINS PD</h1>
@@ -241,9 +237,16 @@
                     <button id="btn-reset" class="px-3 py-1.5 bg-red-500/10 text-red-500 dark:text-red-400 border border-red-500/20 rounded text-sm hover:bg-red-500/20"><i class="fa-solid fa-rotate-right"></i> Reset</button>
                 </div>
                 
+                <!-- FILTER 1: DMA ASAL -->
                 <div class="mb-4 pb-4 border-b border-slate-200 dark:border-gray-700">
-                    <label class="text-xs font-bold text-slate-700 dark:text-gray-300 mb-3 block uppercase tracking-wider">Pilih DMA</label>
+                    <label class="text-xs font-bold text-slate-700 dark:text-gray-300 mb-3 block uppercase tracking-wider">Pilih DMA (Asal)</label>
                     <div id="filter-zon-container" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+                </div>
+
+                <!-- FILTER 2: DISTRICT METERED AREA (MAIN & SUB IKUT MAP) -->
+                <div class="mb-4 pb-4 border-b border-slate-200 dark:border-gray-700">
+                    <label class="text-xs font-bold text-slate-700 dark:text-gray-300 mb-3 block uppercase tracking-wider">Pilih District Metered Area (Main & Sub ikut Map)</label>
+                    <div id="filter-district-container" class="grid grid-cols-1 lg:grid-cols-3 gap-4"></div>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -253,7 +256,7 @@
                     </div>
                     <div>
                         <label class="text-xs font-bold text-slate-600 dark:text-gray-400 mb-1 block uppercase">Bulan</label>
-                        <select id="filter-bulan" class="filter-select w-full rounded px-3 py-2 text-sm"><option value="">Bulan (Semua)</option></select>
+                        <select id="filter-bulan" class="filter-select w-full rounded px-3 py-2 text-sm"><option value="">Semua</option></select>
                     </div>
                     <div>
                         <label class="text-xs font-bold text-slate-600 dark:text-gray-400 mb-1 block uppercase">Kategori</label>
@@ -308,7 +311,7 @@
             <!-- MAP -->
             <section class="mb-6 dashboard-card overflow-hidden">
                 <div class="p-4 bg-slate-100 dark:bg-gray-800 flex justify-between items-center border-b border-slate-200 dark:border-gray-700">
-                    <h3 class="font-semibold flex items-center gap-2 text-slate-800 dark:text-white"><i class="fa-solid fa-map-location-dot text-blue-500"></i>Peta Lokasi</h3>
+                    <h3 class="font-semibold flex items-center gap-2 text-slate-800 dark:text-white"><i class="fa-solid fa-map-location-dot text-blue-500"></i>Peta Lokasi & Sempadan DMZ</h3>
                     <button id="btn-toggle-map" class="text-sm bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded text-white transition"><i class="fa-solid fa-fire"></i> Toggle Heatmap</button>
                 </div>
                 <div id="map" class="w-full h-[500px]"></div>
@@ -336,7 +339,7 @@
                     <div class="flex items-center gap-2">
                         <label class="text-xs font-bold text-slate-600 dark:text-gray-400 uppercase">Tapis Bulan:</label>
                         <select id="mgmt-filter-bulan" class="filter-select rounded px-3 py-1.5 text-sm">
-                            <option value="">Semua Bulan</option>
+                            <option value="">Semua</option>
                         </select>
                     </div>
                     <button id="btn-mgmt-refresh" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-bold flex items-center gap-2 shadow-sm transition">
@@ -359,7 +362,7 @@
                         <tr>
                             <th class="text-center">Tindakan</th>
                             <th>No Aduan</th><th>Zon</th><th>Bulan</th><th>Tarikh Terima</th><th>Tarikh Tutup</th><th>KPI Masa Tutup</th><th>KPI Aduan</th>
-                            <th>Lokasi</th><th>DMA</th><th>Kategori</th><th>Jenis Paip</th><th>Saiz Paip</th><th>Jenis Paip Baru</th>
+                            <th>Lokasi</th><th>DMA</th><th>District Metered Area</th><th>Kategori</th><th>Jenis Paip</th><th>Saiz Paip</th><th>Jenis Paip Baru</th>
                             <th>Saiz</th><th>Panjang Paip</th><th>Sivil Works</th><th>Tarikh Pembaikan</th><th>Dilaksanakan Oleh</th><th>Maps Link</th><th>Kordinat</th>
                         </tr>
                     </thead>
@@ -368,7 +371,7 @@
             </section>
         </div>
 
-        <!-- TAB 3: CRO KEY IN (EXCEL VIEW DENGAN FREEZE 2 KOLOM & WRAP LOKASI) -->
+        <!-- TAB 3: CRO KEY IN (EXCEL VIEW) -->
         <div id="cro-content" class="hidden pb-2 h-full flex-col">
             <header class="mb-4 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-4 shrink-0">
                 <div>
@@ -383,7 +386,7 @@
                     <div class="flex items-center gap-2">
                         <label class="text-xs font-bold text-slate-600 dark:text-gray-400 uppercase">Bulan:</label>
                         <select id="cro-filter-bulan" class="filter-select rounded px-3 py-1.5 text-sm">
-                            <option value="">Semua Bulan</option>
+                            <option value="">Semua</option>
                         </select>
                     </div>
                     <div class="flex items-center gap-2">
@@ -497,6 +500,7 @@
             <!-- Senarai Global Datalist -->
             <datalist id="list-zon"></datalist>
             <datalist id="list-dma"></datalist>
+            <datalist id="list-map-dma"></datalist>
             <datalist id="list-kategori"></datalist>
             <datalist id="list-jenisPaip"></datalist>
             <datalist id="list-saizPaip"></datalist>
@@ -512,6 +516,7 @@
                         <div><label class="form-label">No Aduan <span class="text-red-500">*</span></label><input type="text" id="m-noAduan" class="form-input" autocomplete="off" required></div>
                         <div><label class="form-label">Zon</label><input type="text" id="m-zon" class="form-input" list="list-zon" autocomplete="off" placeholder="Pilih atau taip..."></div>
                         <div><label class="form-label">DMA</label><input type="text" id="m-dma" class="form-input" list="list-dma" autocomplete="off" placeholder="Pilih atau taip..."></div>
+                        <div><label class="form-label">District Metered Area (Auto dari Kordinat)</label><input type="text" id="m-districtMeteredArea" class="form-input" readonly autocomplete="off" placeholder="Auto-deteksi peta..."></div>
                         <div><label class="form-label">Kategori</label><input type="text" id="m-kategori" class="form-input" list="list-kategori" autocomplete="off" placeholder="Pilih atau taip..."></div>
                         <div class="md:col-span-2"><label class="form-label">Lokasi / Tempat</label><input type="text" id="m-lokasi" class="form-input" autocomplete="off"></div>
                         <div class="md:col-span-3"><label class="form-label">Kordinat</label><input type="text" id="m-kordinat" class="form-input" autocomplete="off" placeholder="2.538748, 101.797395"></div>
@@ -553,15 +558,13 @@
         </div>
     </div>
 
-    <!-- MODAL: SEMAKAN SEMULA (PREVIEW DISPLAY SELEPAS SIMPAN) -->
+    <!-- MODAL: SEMAKAN SEMULA (PREVIEW DISPLAY) -->
     <div id="previewModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[250] hidden flex items-center justify-center p-4">
         <div class="dashboard-card w-full max-w-2xl p-6 relative border-t-4 border-t-emerald-500">
             <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-500"></i> Semakan Semula Rekod</h3>
             <p class="text-xs text-slate-500 dark:text-gray-400 mb-4">Berikut adalah maklumat yang telah berjaya disimpan. Sila semak butiran di bawah.</p>
             
-            <div id="preview-content-box" class="space-y-3 bg-slate-50 dark:bg-gray-800/60 p-4 rounded-xl border border-slate-200 dark:border-gray-700 text-xs font-mono max-h-[50vh] overflow-y-auto">
-                <!-- Dijana Dinamik -->
-            </div>
+            <div id="preview-content-box" class="space-y-3 bg-slate-50 dark:bg-gray-800/60 p-4 rounded-xl border border-slate-200 dark:border-gray-700 text-xs font-mono max-h-[50vh] overflow-y-auto"></div>
 
             <div class="mt-6 flex justify-end">
                 <button type="button" id="closePreviewBtn" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-sm shadow transition flex items-center gap-2"><i class="fa-solid fa-check"></i> Tutup & Berpuas Hati</button>
@@ -584,6 +587,14 @@
 
     <!-- SCRIPT UTAMA -->
     <script>
+        // PELINDUNG XSS (Sanitizer)
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>'"]/g, match => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[match]));
+        }
+
         if (localStorage.getItem('sainsLoggedIn') !== 'true') { window.location.replace('index.html'); }
         window.addEventListener('pageshow', function(event) {
             if (event.persisted || (performance.getEntriesByType("navigation")[0] && performance.getEntriesByType("navigation")[0].type === 'back_forward')) {
@@ -597,6 +608,214 @@
         let map, markerClusterGroup, heatLayer = null, isHeatmapMode = false, dataTable, managementTable, currentMode = 'add';
         let croCurrentPage = 1;
         const croRowsPerPage = 50;
+
+        // --- HIERARKI DISTRICT METERED AREA (MAIN & SUB IKUT MAP) ---
+        const districtHierarchy = {
+            "Loji Linggi": [
+                "300mm Sirusa 3 Desa Permai",
+                "350mm Bukit Tunggal",
+                "375MM Sirusa 2 Pekan",
+                "375mm Sirusa 2 Sunggala",
+                "450mm Sirusa 3 Jalan Pantai",
+                "600mm Sirusa 4",
+                "900mm Sirusa 2",
+                "900mm Sirusa 5"
+            ],
+            "Sawah Raja": [
+                "200mm Kolam Linggi",
+                "250mm PRV Pengkalan Kempas",
+                "300mm Bukit Kuau Baru",
+                "300mm Bukit Kuau lama",
+                "300mm Telok Kemang Ke Pasir Panjang",
+                "300mm Telok Kemang Ke PD",
+                "500mm Sunggala Boundry"
+            ],
+            "Seremban Barat": [
+                "Seremban Barat"
+            ]
+        };
+
+        const parentFolders = ['loji linggi', 'sawah raja', 'seremban barat'];
+
+        window.koleksiPoligonDMZ = [];
+
+        function getFeatureName(p) {
+            if (!p) return 'Kawasan DMZ';
+            const keys = Object.keys(p);
+            for (let k of keys) {
+                if (k === '_fileName') continue;
+                let lowerK = k.toLowerCase();
+                if (lowerK.includes('name') || lowerK.includes('dmz') || lowerK.includes('dma') || lowerK.includes('zone') || lowerK.includes('district') || lowerK.includes('title') || lowerK.includes('label')) {
+                    if (p[k] && typeof p[k] === 'string' && p[k].trim() !== '') {
+                        let val = p[k].trim();
+                        if (!parentFolders.includes(val.toLowerCase())) return val;
+                    }
+                }
+            }
+            for (let k of keys) {
+                if (k === '_fileName') continue;
+                if (p[k] && typeof p[k] === 'string' && p[k].trim() !== '') {
+                    let val = p[k].trim();
+                    if (!parentFolders.includes(val.toLowerCase())) return val;
+                }
+            }
+            if (p._fileName && !parentFolders.includes(p._fileName.toLowerCase())) return p._fileName;
+            return 'Kawasan DMZ';
+        }
+
+        async function muatSemuaDMZ() {
+            const senaraiFail = [
+                'map polygon/Loji Linggi/300mm Sirusa 3 Desa Permai.geojson',
+                'map polygon/Loji Linggi/350mm Bukit Tunggal.geojson',
+                'map polygon/Loji Linggi/375MM Sirusa 2 Pekan.geojson',
+                'map polygon/Loji Linggi/375mm Sirusa 2 Sunggala.geojson',
+                'map polygon/Loji Linggi/450mm Sirusa 3 Jalan Pantai.geojson',
+                'map polygon/Loji Linggi/600mm Sirusa 4.geojson',
+                'map polygon/Loji Linggi/900mm Sirusa 2.geojson',
+                'map polygon/Loji Linggi/900mm Sirusa 5.geojson',
+                'map polygon/Sawah Raja/200mm Kolam Linggi.geojson',
+                'map polygon/Sawah Raja/250mm PRV Pengkalan Kempas.geojson',
+                'map polygon/Sawah Raja/300mm Bukit Kuau Baru.geojson',
+                'map polygon/Sawah Raja/300mm Bukit Kuau lama.geojson',
+                'map polygon/Sawah Raja/300mm Telok Kemang Ke Pasir Panjang.geojson',
+                'map polygon/Sawah Raja/300mm Telok Kemang Ke PD.geojson',
+                'map polygon/Sawah Raja/500mm Sunggala Boundry.geojson',
+                'map polygon/Seremban Barat/Seremban Barat.geojson'
+            ];
+
+            window.koleksiPoligonDMZ = [];
+
+            for (let fail of senaraiFail) {
+                try {
+                    let res = await fetch(fail);
+                    let data = await res.json();
+                    
+                    let cleanFileName = fail.split('/').pop().replace('.geojson', '');
+                    let mainArea = fail.split('/')[1];
+
+                    let processFeature = (feature) => {
+                        if (!feature.properties) feature.properties = {};
+                        feature.properties._fileName = cleanFileName;
+                        feature.properties._mainArea = mainArea;
+                        window.koleksiPoligonDMZ.push(feature);
+                    };
+
+                    if (data.type === 'FeatureCollection' && Array.isArray(data.features)) {
+                        data.features.forEach(processFeature);
+                    } else if (data.type === 'Feature') {
+                        processFeature(data);
+                    } else if (data.geometry) {
+                        processFeature({ type: 'Feature', properties: data.properties || {}, geometry: data.geometry });
+                    }
+
+                    if (typeof map !== 'undefined') {
+                        L.geoJSON(data, {
+                            style: { color: '#10b981', weight: 2, dashArray: '4,4', fillOpacity: 0.15 },
+                            onEachFeature: (f, layer) => {
+                                f.properties = f.properties || {};
+                                f.properties._fileName = cleanFileName;
+                                f.properties._mainArea = mainArea;
+                                let nama = getFeatureName(f.properties);
+                                layer.bindPopup(`<b>DMA (${mainArea}):</b> ${escapeHTML(nama)}`);
+                            }
+                        }).addTo(map);
+                    }
+                } catch(e) {
+                    console.error("Gagal muat fail GeoJSON:", fail, e);
+                }
+            }
+
+            updateDmaDatalistFromMap();
+        }
+
+        function updateDmaDatalistFromMap() {
+            let mapNames = new Set();
+            window.koleksiPoligonDMZ.forEach(f => {
+                let nama = f.properties._fileName || getFeatureName(f.properties);
+                if (nama && nama !== 'Kawasan DMZ' && !parentFolders.includes(nama.toLowerCase())) {
+                    mapNames.add(nama);
+                }
+            });
+
+            if (mapNames.size > 0) {
+                const listEl = document.getElementById('list-map-dma');
+                if (listEl) {
+                    let html = '';
+                    Array.from(mapNames).sort().forEach(item => {
+                        html += `<option value="${escapeHTML(item)}">`;
+                    });
+                    listEl.innerHTML = html;
+                }
+            }
+        }
+
+        function semakPointInDMZ(lat, lng) {
+            let point = turf.point([lng, lat]);
+            for (let feature of window.koleksiPoligonDMZ) {
+                try {
+                    if (feature && feature.geometry) {
+                        let isInside = turf.booleanPointInPolygon(point, feature);
+                        if (isInside) {
+                            let subName = feature.properties._fileName || getFeatureName(feature.properties);
+                            if (parentFolders.includes(subName.toLowerCase())) {
+                                subName = '';
+                            }
+                            return { zone: subName, mainArea: feature.properties._mainArea || '', fileName: subName };
+                        }
+                    }
+                } catch (err) {}
+            }
+            return { zone: "", mainArea: "", fileName: "" };
+        }
+
+        function getMatchedDistrictSub(row) {
+            let districtVal = String(row['District Metered Area'] || row['DISTRICT METERED AREA'] || row['districtMeteredArea'] || '').trim();
+            if (parentFolders.includes(districtVal.toLowerCase())) {
+                districtVal = '';
+            }
+            let kord = row['KORDINAT'] || '';
+            let parts = kord.split(',');
+            if(parts.length === 2) {
+                let lat = parseFloat(parts[0].trim());
+                let lng = parseFloat(parts[1].trim());
+                if(!isNaN(lat) && !isNaN(lng)) {
+                    let res = semakPointInDMZ(lat, lng);
+                    if(res.fileName && !parentFolders.includes(res.fileName.toLowerCase())) return { main: res.mainArea, sub: res.fileName };
+                }
+            }
+            for (let main in districtHierarchy) {
+                for (let sub of districtHierarchy[main]) {
+                    if(districtVal.toLowerCase().includes(sub.toLowerCase()) || sub.toLowerCase().includes(districtVal.toLowerCase())) {
+                        return { main: main, sub: sub };
+                    }
+                }
+            }
+            return { main: 'Loji Linggi', sub: '' };
+        }
+
+        document.addEventListener('input', function(e) {
+            if (e.target.classList.contains('cro-kordinat') || e.target.id === 'm-kordinat') {
+                let val = e.target.value;
+                let parts = val.split(',');
+                
+                if (parts.length === 2) {
+                    let lat = parseFloat(parts[0].trim());
+                    let lng = parseFloat(parts[1].trim());
+
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        let resultDMZ = semakPointInDMZ(lat, lng);
+                        let row = e.target.closest('tr') || e.target.closest('form');
+                        if (row) {
+                            let inputDistrict = row.querySelector('.cro-district-metered-area, #m-districtMeteredArea');
+                            if (inputDistrict && resultDMZ.zone && !parentFolders.includes(resultDMZ.zone.toLowerCase())) {
+                                inputDistrict.value = resultDMZ.zone;
+                                inputDistrict.dispatchEvent(new Event('input', { bubbles: true }));
+                            }
+                        }
+                    }
+                }
+            }
+        });
 
         document.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('sainsLoggedIn') !== 'true') { window.location.replace('index.html'); return; }
@@ -636,10 +855,10 @@
                     populateFilters();
                     if(!map) initMap();
                     if(!charts.month) initCharts();
-                    updateDashboard();
+                    applyFilters();
                     updateManagementTable();
                     updateCroTable();
-                } catch(e) { console.error("Ralat baca cache tempatan:", e); }
+                } catch(e) {}
             }
 
             window.addEventListener('online', () => {
@@ -663,10 +882,10 @@
             localStorage.removeItem('sainsUserLevel');
             localStorage.removeItem('sainsSessionStart');
             localStorage.removeItem('sainsLastActivity');
+            localStorage.removeItem('sainsToken');
             window.location.replace('index.html');
         }
 
-        // --- PENYESUAIAN IDLE TIME (2 Jam) & MAXIMUM SESSION (8 Jam) ---
         function initSessionTimeouts() {
             const now = Date.now();
             let sessionStart = localStorage.getItem('sainsSessionStart');
@@ -675,13 +894,13 @@
             if (!sessionStart) { localStorage.setItem('sainsSessionStart', now); sessionStart = now; }
             if (!lastActivity) { localStorage.setItem('sainsLastActivity', now); lastActivity = now; }
 
-            const absoluteLimit = 8 * 60 * 60 * 1000; // 8 jam maksimum sesi
+            const absoluteLimit = 8 * 60 * 60 * 1000;
             if (now - parseInt(sessionStart) > absoluteLimit) {
                 safeLogout("Sesi anda telah tamat selepas mencapai had masa 8 jam.");
                 return;
             }
 
-            const idleLimit = 2 * 60 * 60 * 1000; // 2 jam masa terbiar (idle)
+            const idleLimit = 2 * 60 * 60 * 1000;
             if (now - parseInt(lastActivity) > idleLimit) {
                 safeLogout("Sesi anda ditamatkan kerana terbiar (idle) melebihi 2 jam.");
                 return;
@@ -777,7 +996,7 @@
                 if(!listEl) return;
                 listEl.innerHTML = '';
                 if(list && Array.isArray(list)) {
-                    list.forEach(item => { listEl.innerHTML += `<option value="${item}">`; });
+                    list.forEach(item => { listEl.innerHTML += `<option value="${escapeHTML(item)}">`; });
                 }
             };
 
@@ -795,7 +1014,11 @@
         function setInputValue(id, val) {
             const inputEl = document.getElementById(id);
             if(!inputEl) return;
-            inputEl.value = val || '';
+            let cleanVal = val || '';
+            if (parentFolders.includes(String(cleanVal).trim().toLowerCase())) {
+                cleanVal = '';
+            }
+            inputEl.value = cleanVal;
         }
 
         function parseCustomDate(val) {
@@ -878,6 +1101,25 @@
             const tarikhTutup = convertToDDMMYYYYHHMM(document.getElementById('m-tarikhTutup').value);
             const lokasi = document.getElementById('m-lokasi').value;
             const dma = document.getElementById('m-dma').value;
+            
+            let districtMeteredArea = document.getElementById('m-districtMeteredArea').value;
+            if (parentFolders.includes(districtMeteredArea.trim().toLowerCase())) districtMeteredArea = '';
+
+            const kordinat = document.getElementById('m-kordinat').value;
+            if (!districtMeteredArea && kordinat) {
+                let parts = kordinat.split(',');
+                if (parts.length === 2) {
+                    let lat = parseFloat(parts[0].trim());
+                    let lng = parseFloat(parts[1].trim());
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        let resDMZ = semakPointInDMZ(lat, lng);
+                        if (resDMZ.zone && !parentFolders.includes(resDMZ.zone.toLowerCase())) {
+                            districtMeteredArea = resDMZ.zone;
+                        }
+                    }
+                }
+            }
+
             const kategori = document.getElementById('m-kategori').value;
             const jenisPaip = document.getElementById('m-jenisPaip').value;
             const saizPaip = document.getElementById('m-saizPaip').value;
@@ -890,7 +1132,6 @@
 
             const sivilWorks = document.getElementById('m-sivilWorks').value;
             const dilaksanakanOleh = document.getElementById('m-dilaksanakanOleh').value;
-            const kordinat = document.getElementById('m-kordinat').value;
 
             return {
                 "NO ADUAN": noAduan, "noAduan": noAduan, "No Aduan": noAduan,
@@ -899,6 +1140,9 @@
                 "TARIKH  TUTUP ADUAN": tarikhTutup, "TARIKH TUTUP ADUAN": tarikhTutup, "TARIKH TUTUP": tarikhTutup, "tarikhTutup": tarikhTutup,
                 "LOKASI / TEMPAT": lokasi, "LOKASI": lokasi, "lokasi": lokasi,
                 "DMA": dma, "dma": dma,
+                "District Metered Area": districtMeteredArea,
+                "DISTRICT METERED AREA": districtMeteredArea,
+                "districtMeteredArea": districtMeteredArea,
                 "KATEGORI": kategori, "kategori": kategori,
                 "JENIS PAIP": jenisPaip, "jenisPaip": jenisPaip,
                 "SAIZ PAIP": saizPaip, "saizPaip": saizPaip,
@@ -953,7 +1197,7 @@
             const container = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `p-3 rounded shadow-lg text-sm text-white ${type==='success'?'bg-emerald-600':'bg-red-600'} pointer-events-auto transition`;
-            toast.innerHTML = `<i class="fa-solid fa-circle-info mr-2"></i>${msg}`;
+            toast.innerHTML = `<i class="fa-solid fa-circle-info mr-2"></i>${escapeHTML(msg)}`;
             container.appendChild(toast);
             setTimeout(() => toast.remove(), 4000);
         }
@@ -962,7 +1206,12 @@
             if(isManualRefresh) { showLoading(true, 20, "Menyegar data baharu..."); showToast("Memuat data baharu..."); }
             try {
                 if(isManualRefresh) showLoading(true, 50, "Memuat turun dari pelayan...");
-                const res = await fetch(`${WORKER_URL}?fetch=all&t=${new Date().getTime()}`);
+                const res = await fetch(`${WORKER_URL}?fetch=all&t=${new Date().getTime()}`, {
+                    method: 'GET',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('sainsToken')}` }
+                });
+                
+                if(res.status === 401) return safeLogout("Sesi log masuk tidak sah atau tamat tempoh. Sila log masuk semula.");
                 if(!res.ok) throw new Error("Gagal mengambil data dari pelayan.");
 
                 if(isManualRefresh) showLoading(true, 80, "Memproses fail JSON...");
@@ -977,6 +1226,30 @@
                     }
                 }
 
+                rawData.forEach(row => {
+                    let dmaArea = row['District Metered Area'] || row['DISTRICT METERED AREA'] || row['districtMeteredArea'];
+                    if (dmaArea && parentFolders.includes(String(dmaArea).trim().toLowerCase())) {
+                        row['District Metered Area'] = '';
+                        row['DISTRICT METERED AREA'] = '';
+                        row['districtMeteredArea'] = '';
+                    }
+                    if (!row['District Metered Area'] && row['KORDINAT']) {
+                        let parts = String(row['KORDINAT']).split(',');
+                        if (parts.length === 2) {
+                            let lat = parseFloat(parts[0].trim());
+                            let lng = parseFloat(parts[1].trim());
+                            if (!isNaN(lat) && !isNaN(lng)) {
+                                let resDMZ = semakPointInDMZ(lat, lng);
+                                if (resDMZ.zone && !parentFolders.includes(resDMZ.zone.toLowerCase())) {
+                                    row['District Metered Area'] = resDMZ.zone;
+                                    row['DISTRICT METERED AREA'] = resDMZ.zone;
+                                    row['districtMeteredArea'] = resDMZ.zone;
+                                }
+                            }
+                        }
+                    }
+                });
+
                 rawData.sort((a, b) => {
                     const dateA = parseCustomDate(a['TARIKH & MASA TERIMA  ADUAN'] || a['TARIKH TERIMA'] || 0);
                     const dateB = parseCustomDate(b['TARIKH & MASA TERIMA  ADUAN'] || b['TARIKH TERIMA'] || 0);
@@ -988,7 +1261,7 @@
 
                 populateModalDropdowns(); populateFilters();
                 if(!map) initMap(); if(!charts.month) initCharts();
-                updateDashboard(); updateManagementTable(); updateCroTable();
+                applyFilters(); updateManagementTable(); updateCroTable();
                 
                 if(isManualRefresh) {
                     showLoading(true, 100, "Selesai!");
@@ -1016,19 +1289,24 @@
             
             localStorage.setItem('sainsRawData', JSON.stringify(rawData));
             filteredData = [...rawData];
-            updateDashboard(); updateManagementTable(); updateCroTable();
+            applyFilters(); updateManagementTable(); updateCroTable();
             closeModals(); 
 
-            // Tunjuk Paparan Semakan Semula (Preview Display) selepas Tambah / Kemaskini
             showPreviewModal(payloadData);
-
             showToast("Perubahan disimpan. Menyelaras dengan pelayan...", "success");
 
             try {
                 const res = await fetch(WORKER_URL, {
-                    method: 'POST', headers: { 'Content-Type': 'text/plain' },
+                    method: 'POST', 
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('sainsToken')}`
+                    },
                     body: JSON.stringify({ action: actionType, data: payloadData, noAduan: noAduan })
                 });
+                
+                if(res.status === 401) return safeLogout("Sesi log masuk tamat tempoh.");
+                
                 const result = await res.json();
                 
                 if(result.status === 'success') {
@@ -1045,9 +1323,8 @@
 
         function showPreviewModal(data) {
             const box = document.getElementById('preview-content-box');
-            // Senarai kekunci utama yang bersih dan unik (mengelakkan duplikasi alias kecil/besar)
             const primaryKeys = [
-                "NO ADUAN", "ZON", "DMA", "KATEGORI", "LOKASI / TEMPAT", "KORDINAT",
+                "NO ADUAN", "ZON", "DMA", "District Metered Area", "KATEGORI", "LOKASI / TEMPAT", "KORDINAT",
                 "TARIKH & MASA TERIMA  ADUAN", "TARIKH  TUTUP ADUAN", 
                 "JENIS PAIP", "SAIZ PAIP", "JENIS PAIP BARU", "SAIZ", 
                 "PANJANG PAIP (M)", "SIVIL WORKS", "DILAKSANAKAN OLEH"
@@ -1057,7 +1334,7 @@
             primaryKeys.forEach(key => {
                 const val = data[key];
                 if(val) {
-                    html += `<div class="flex justify-between border-b border-slate-200 dark:border-gray-700/60 py-1.5"><span class="font-bold text-slate-500 dark:text-gray-400">${key}:</span><span class="text-slate-800 dark:text-gray-200 text-right">${val}</span></div>`;
+                    html += `<div class="flex justify-between border-b border-slate-200 dark:border-gray-700/60 py-1.5"><span class="font-bold text-slate-500 dark:text-gray-400">${escapeHTML(key)}:</span><span class="text-slate-800 dark:text-gray-200 text-right">${escapeHTML(val)}</span></div>`;
                 }
             });
             box.innerHTML = html || '<p class="text-center text-gray-500">Tiada maklumat.</p>';
@@ -1075,9 +1352,15 @@
             for(let item of queue) {
                 try {
                     const res = await fetch(WORKER_URL, {
-                        method: 'POST', headers: { 'Content-Type': 'text/plain' },
+                        method: 'POST', 
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('sainsToken')}`
+                        },
                         body: JSON.stringify({ action: item.action, data: item.data, noAduan: item.noAduan })
                     });
+                    if(res.status === 401) return safeLogout("Sesi log masuk tamat tempoh.");
+                    
                     const result = await res.json();
                     if(result.status !== 'success') remainingQueue.push(item);
                 } catch(e) { remainingQueue.push(item); }
@@ -1089,7 +1372,6 @@
             }
         }
 
-        // --- FUNGSI TAB CRO KEY IN (DENGAN PAGINATION & AUTO BULAN SEMASA) ---
         function updateCroTable() {
             const tbody = document.getElementById('cro-tbody');
             if(!tbody) return;
@@ -1122,23 +1404,23 @@
                     <tr>
                         <td class="col-1 text-center p-1 whitespace-nowrap" tabindex="-1">
                             <button type="button" onclick="saveCroRow(this)" class="text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded text-xs mx-0.5 transition font-bold shadow-sm" title="Simpan"><i class="fa-solid fa-save"></i> SIMPAN</button>
-                            <button type="button" onclick="confirmDeleteCro('${noAduan}')" class="text-red-600 hover:text-red-800 bg-red-100 hover:bg-red-200 px-2 py-1 rounded text-xs mx-0.5 transition shadow-sm" title="Padam"><i class="fa-solid fa-trash"></i></button>
+                            <button type="button" onclick="confirmDeleteCro('${escapeHTML(noAduan)}')" class="text-red-600 hover:text-red-800 bg-red-100 hover:bg-red-200 px-2 py-1 rounded text-xs mx-0.5 transition shadow-sm" title="Padam"><i class="fa-solid fa-trash"></i></button>
                         </td>
-                        <td class="col-2" tabindex="0"><input type="text" class="excel-input cro-noAduan font-bold" value="${noAduan}" readonly autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-zon" list="list-zon" value="${row['ZON']||''}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-dma" list="list-dma" value="${row['DMA']||''}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-kategori" list="list-kategori" value="${row['KATEGORI']||''}" autocomplete="off"></td>
-                        <td class="col-lokasi" tabindex="0"><textarea class="excel-input cro-lokasi" autocomplete="off">${lokasiVal}</textarea></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-kordinat" value="${kordinatVal}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="datetime-local" class="excel-input cro-terima" value="${formatForDateTimeInput(tarikhTerimaVal)}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="datetime-local" class="excel-input cro-tutup" value="${formatForDateTimeInput(tarikhTutupVal)}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-jenis" list="list-jenisPaip" value="${row['JENIS PAIP']||''}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-saiz" list="list-saizPaip" value="${row['SAIZ PAIP']||''}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-jenisBaru" list="list-jenisPaipBaru" value="${row['JENIS PAIP BARU']||''}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-saizBaru" list="list-saiz" value="${row['SAIZ']||''}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-panjang" value="${row['PANJANG PAIP (M)']||''}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-sivil" list="list-sivilWorks" value="${row['SIVIL WORKS']||''}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-pelaksana" list="list-dilaksanakanOleh" value="${row['DILAKSANAKAN OLEH']||''}" autocomplete="off"></td>
+                        <td class="col-2" tabindex="0"><input type="text" class="excel-input cro-noAduan font-bold" value="${escapeHTML(noAduan)}" readonly autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-zon" list="list-zon" value="${escapeHTML(row['ZON']||'')}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-dma" list="list-dma" value="${escapeHTML(row['DMA']||'')}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-kategori" list="list-kategori" value="${escapeHTML(row['KATEGORI']||'')}" autocomplete="off"></td>
+                        <td class="col-lokasi" tabindex="0"><textarea class="excel-input cro-lokasi" autocomplete="off">${escapeHTML(lokasiVal)}</textarea></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-kordinat" value="${escapeHTML(kordinatVal)}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="datetime-local" class="excel-input cro-terima" value="${escapeHTML(formatForDateTimeInput(tarikhTerimaVal))}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="datetime-local" class="excel-input cro-tutup" value="${escapeHTML(formatForDateTimeInput(tarikhTutupVal))}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-jenis" list="list-jenisPaip" value="${escapeHTML(row['JENIS PAIP']||'')}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-saiz" list="list-saizPaip" value="${escapeHTML(row['SAIZ PAIP']||'')}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-jenisBaru" list="list-jenisPaipBaru" value="${escapeHTML(row['JENIS PAIP BARU']||'')}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-saizBaru" list="list-saiz" value="${escapeHTML(row['SAIZ']||'')}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-panjang" value="${escapeHTML(row['PANJANG PAIP (M)']||'')}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-sivil" list="list-sivilWorks" value="${escapeHTML(row['SIVIL WORKS']||'')}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-pelaksana" list="list-dilaksanakanOleh" value="${escapeHTML(row['DILAKSANAKAN OLEH']||'')}" autocomplete="off"></td>
                     </tr>
                 `;
             });
@@ -1198,7 +1480,6 @@
             initExcelGridNavigation();
         }
 
-        // --- EXCEL NAVIGATION & DIRECT PASTE LOGIC (LOKASI & KORDINAT) ---
         function initExcelGridNavigation() {
             const table = document.querySelector('.excel-table');
             if(!table) return;
@@ -1226,7 +1507,6 @@
                     enableEditMode(td, inputOrTextarea);
                 });
 
-                // Sokongan Direct Paste (Ctrl+V / Right-Click Paste) khusus untuk Lokasi dan Kordinat
                 if(isLokasiOrKordinat) {
                     td.addEventListener('paste', async (e) => {
                         e.preventDefault();
@@ -1368,13 +1648,32 @@
             const noAduan = tr.querySelector('.cro-noAduan').value.trim();
             if(!noAduan) { alert("Sila masukkan No Aduan"); return; }
 
+            const kordinat = tr.querySelector('.cro-kordinat').value.trim();
+            let districtAreaVal = '';
+            if (kordinat) {
+                let parts = kordinat.split(',');
+                if (parts.length === 2) {
+                    let lat = parseFloat(parts[0].trim());
+                    let lng = parseFloat(parts[1].trim());
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        let resDMZ = semakPointInDMZ(lat, lng);
+                        if (resDMZ.zone && !parentFolders.includes(resDMZ.zone.toLowerCase())) {
+                            districtAreaVal = resDMZ.zone;
+                        }
+                    }
+                }
+            }
+
             const payloadData = {
                 "NO ADUAN": noAduan, "noAduan": noAduan, "No Aduan": noAduan,
                 "ZON": tr.querySelector('.cro-zon').value,
                 "DMA": tr.querySelector('.cro-dma').value,
+                "District Metered Area": districtAreaVal,
+                "DISTRICT METERED AREA": districtAreaVal,
+                "districtMeteredArea": districtAreaVal,
                 "KATEGORI": tr.querySelector('.cro-kategori').value,
                 "LOKASI / TEMPAT": tr.querySelector('.cro-lokasi').value,
-                "KORDINAT": tr.querySelector('.cro-kordinat').value,
+                "KORDINAT": kordinat,
                 "TARIKH & MASA TERIMA  ADUAN": convertToDDMMYYYYHHMM(tr.querySelector('.cro-terima').value),
                 "TARIKH  TUTUP ADUAN": convertToDDMMYYYYHHMM(tr.querySelector('.cro-tutup').value),
                 "JENIS PAIP": tr.querySelector('.cro-jenis').value,
@@ -1413,7 +1712,6 @@
             }
         }
 
-        // --- EVENTS PENGURUSAN TAB ---
         const recordModal = document.getElementById('recordModal');
         const deleteModal = document.getElementById('deleteModal');
 
@@ -1439,7 +1737,7 @@
             if(!rowData) return;
 
             currentMode = 'update';
-            document.getElementById('modalTitleText').innerText = "Kemaskini Rekod: " + noAduan;
+            document.getElementById('modalTitleText').innerText = "Kemaskini Rekod: " + escapeHTML(noAduan);
             document.getElementById('modalSubmitBtn').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan`;
             
             document.getElementById('m-noAduan').value = rowData['NO ADUAN'] || '';
@@ -1447,6 +1745,7 @@
             
             setInputValue('m-zon', rowData['ZON'] || '');
             setInputValue('m-dma', rowData['DMA'] || '');
+            setInputValue('m-districtMeteredArea', rowData['District Metered Area'] || rowData['DISTRICT METERED AREA'] || rowData['districtMeteredArea'] || '');
             setInputValue('m-kategori', rowData['KATEGORI'] || '');
             setInputValue('m-jenisPaip', rowData['JENIS PAIP'] || '');
             setInputValue('m-saizPaip', rowData['SAIZ PAIP'] || '');
@@ -1533,17 +1832,19 @@
             });
 
             document.getElementById('nav-logout').addEventListener('click', () => {
-                localStorage.clear(); window.location.replace('index.html');
+                safeLogout("Anda telah log keluar dengan jayanya.");
             });
 
             document.getElementById('btn-refresh-data').addEventListener('click', () => fetchFreshData(true));
             document.getElementById('btn-mgmt-refresh').addEventListener('click', () => fetchFreshData(true));
             
             document.getElementById('btn-reset').addEventListener('click', () => {
-                document.getElementById('filter-search').value = ''; document.getElementById('filter-bulan').value = '';
+                document.getElementById('filter-search').value = ''; 
+                const latestMonths = sortMonths([...new Set(rawData.map(i => i['BULAN']).filter(Boolean))]);
+                document.getElementById('filter-bulan').value = latestMonths.length > 0 ? latestMonths[latestMonths.length - 1] : '';
                 document.getElementById('filter-kategori').value = ''; document.getElementById('filter-jenis-paip').value = '';
                 document.getElementById('filter-saiz-paip').value = '';
-                document.querySelectorAll('.zon-checkbox').forEach(cb => cb.checked = false);
+                document.querySelectorAll('.zon-checkbox, .district-checkbox').forEach(cb => cb.checked = false);
                 applyFilters();
             });
 
@@ -1570,8 +1871,8 @@
 
         function formatKategori(val) {
             if(!val) return '-';
-            if(val.toLowerCase().includes('pecah')) { return `<span class="text-red-600 font-bold dark:text-red-400">${val}</span>`; }
-            return val;
+            if(val.toLowerCase().includes('pecah')) { return `<span class="text-red-600 font-bold dark:text-red-400">${escapeHTML(val)}</span>`; }
+            return escapeHTML(val);
         }
 
         function populateFilters() {
@@ -1580,7 +1881,7 @@
                 const sel = document.getElementById(id);
                 if(!sel) return;
                 sel.innerHTML = '<option value="">Semua</option>';
-                vals.forEach(v => sel.innerHTML += `<option value="${v}">${v}</option>`);
+                vals.forEach(v => sel.innerHTML += `<option value="${escapeHTML(v)}">${escapeHTML(v)}</option>`);
             };
 
             const sortedMonths = sortMonths(uniqueValues('BULAN'));
@@ -1591,17 +1892,16 @@
             populateSel('mgmt-filter-bulan', sortedMonths);
             populateSel('cro-filter-bulan', sortedMonths);
 
-            const now = new Date();
-            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            const currentMonthStr = `${monthNames[now.getMonth()]}-${String(now.getFullYear()).slice(-2)}`;
+            const latestMonth = sortedMonths.length > 0 ? sortedMonths[sortedMonths.length - 1] : '';
+
+            const filterBulanEl = document.getElementById('filter-bulan');
+            if (filterBulanEl && latestMonth) filterBulanEl.value = latestMonth;
+
+            const mgmtFilterBulanEl = document.getElementById('mgmt-filter-bulan');
+            if (mgmtFilterBulanEl && latestMonth) mgmtFilterBulanEl.value = latestMonth;
+
             const croFilterBulan = document.getElementById('cro-filter-bulan');
-            if (croFilterBulan) {
-                if (sortedMonths.includes(currentMonthStr)) {
-                    croFilterBulan.value = currentMonthStr;
-                } else if (sortedMonths.length > 0) {
-                    croFilterBulan.value = sortedMonths[sortedMonths.length - 1];
-                }
-            }
+            if (croFilterBulan && latestMonth) croFilterBulan.value = latestMonth;
 
             const dmas = uniqueValues('DMA').sort();
             const zonContainer = document.getElementById('filter-zon-container');
@@ -1609,16 +1909,74 @@
             dmas.forEach(d => {
                 if(!d.trim()) return;
                 zonContainer.innerHTML += `
-                    <label class="flex items-center gap-3 p-3.5 bg-slate-800/80 rounded-xl border border-slate-700 hover:border-emerald-500 cursor-pointer transition shadow-sm group">
-                        <input type="checkbox" value="${d}" class="zon-checkbox peer sr-only">
+                    <label class="flex items-center gap-3 p-3 bg-slate-800/85 rounded-xl border border-slate-700 hover:border-emerald-500 cursor-pointer transition shadow-sm group">
+                        <input type="checkbox" value="${escapeHTML(d)}" class="zon-checkbox peer sr-only">
                         <div class="w-5 h-5 rounded bg-slate-900 border border-slate-500 peer-checked:bg-emerald-600 peer-checked:border-emerald-600 flex items-center justify-center text-white transition shrink-0">
                             <svg class="w-3.5 h-3.5 opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
                         </div>
-                        <span class="font-semibold text-white text-xs tracking-wide whitespace-nowrap">${d}</span>
+                        <span class="font-semibold text-white text-xs tracking-wide whitespace-nowrap">${escapeHTML(d)}</span>
                     </label>
                 `;
             });
-            document.querySelectorAll('.zon-checkbox').forEach(cb => cb.addEventListener('change', applyFilters));
+
+            const districtContainer = document.getElementById('filter-district-container');
+            districtContainer.innerHTML = '';
+            for (let mainArea in districtHierarchy) {
+                let subHtml = '';
+                districtHierarchy[mainArea].forEach(sub => {
+                    subHtml += `
+                        <label class="flex items-center gap-2.5 p-2 bg-slate-900/60 rounded-lg border border-slate-700/60 hover:border-blue-500 cursor-pointer transition group">
+                            <input type="checkbox" value="${escapeHTML(sub)}" data-main="${escapeHTML(mainArea)}" class="district-checkbox peer sr-only">
+                            <div class="w-4 h-4 rounded bg-slate-900 border border-slate-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 flex items-center justify-center text-white transition shrink-0">
+                                <svg class="w-3 h-3 opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <span class="text-slate-300 text-xs font-medium">${escapeHTML(sub)}</span>
+                        </label>
+                    `;
+                });
+
+                districtContainer.innerHTML += `
+                    <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 flex flex-col gap-2 shadow-sm">
+                        <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+                            <span class="font-bold text-blue-400 text-xs uppercase tracking-wider">${escapeHTML(mainArea)}</span>
+                            <button type="button" onclick="toggleMainDistrict('${escapeHTML(mainArea)}', true)" class="text-[10px] text-slate-400 hover:text-white underline">Pilih Semua</button>
+                        </div>
+                        <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                            ${subHtml}
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.querySelectorAll('.zon-checkbox').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        document.querySelectorAll('.district-checkbox').forEach(dCb => dCb.checked = false);
+                    }
+                    applyFilters();
+                });
+            });
+
+            document.querySelectorAll('.district-checkbox').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        document.querySelectorAll('.zon-checkbox').forEach(zCb => zCb.checked = false);
+                    }
+                    applyFilters();
+                });
+            });
+        }
+
+        window.toggleMainDistrict = function(mainArea, selectAll) {
+            if (selectAll) {
+                document.querySelectorAll('.zon-checkbox').forEach(zCb => zCb.checked = false);
+            }
+            document.querySelectorAll(`.district-checkbox`).forEach(cb => {
+                if (cb.getAttribute('data-main') === mainArea) {
+                    cb.checked = selectAll;
+                }
+            });
+            applyFilters();
         }
 
         function applyFilters() {
@@ -1627,19 +1985,24 @@
             const sCat = document.getElementById('filter-kategori').value;
             const sJenisPaip = document.getElementById('filter-jenis-paip').value;
             const sSaizPaip = document.getElementById('filter-saiz-paip').value;
+            
             const checkedDmas = Array.from(document.querySelectorAll('.zon-checkbox:checked')).map(cb => cb.value);
-
-            const allMonths = sortMonths([...new Set(rawData.map(i => i['BULAN']).filter(Boolean))]);
-            const latestThreeMonths = allMonths.slice(-3); 
+            const checkedDistricts = Array.from(document.querySelectorAll('.district-checkbox:checked')).map(cb => cb.value);
 
             filteredData = rawData.filter(row => {
-                if (!sBulan) { if (!latestThreeMonths.includes(row['BULAN'])) return false; } 
-                else { if (row['BULAN'] !== sBulan) return false; }
+                if (sBulan && row['BULAN'] !== sBulan) return false;
 
                 if(sCat && row['KATEGORI'] !== sCat) return false;
                 if(sJenisPaip && row['JENIS PAIP'] !== sJenisPaip) return false;
                 if(sSaizPaip && row['SAIZ PAIP'] !== sSaizPaip) return false;
+                
                 if(checkedDmas.length > 0 && !checkedDmas.includes(row['DMA'])) return false;
+
+                if(checkedDistricts.length > 0) {
+                    let matchedSub = getMatchedDistrictSub(row).sub;
+                    if(!checkedDistricts.includes(matchedSub)) return false;
+                }
+
                 if(sSearch) return Object.values(row).join(' ').toLowerCase().includes(sSearch);
                 return true;
             });
@@ -1665,9 +2028,11 @@
         }
 
         function initMap() {
-            map = L.map('map').setView([4.2105, 101.9758], 7);
+            map = L.map('map').setView([2.5225, 101.7946], 12);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
             markerClusterGroup = L.markerClusterGroup(); map.addLayer(markerClusterGroup);
+            
+            muatSemuaDMZ();
         }
 
         function updateDashboard() {
@@ -1747,7 +2112,7 @@
                 const lat = parseFloat(r['LATITUDE']||r['LATITUTE']);
                 const lng = parseFloat(r['LONGITUDE']||r['LONGITUTE']);
                 if(!isNaN(lat) && !isNaN(lng)) {
-                    markers.push(L.marker([lat, lng]).bindPopup(`<b>${r['NO ADUAN']}</b><br>${r['LOKASI / TEMPAT']}`));
+                    markers.push(L.marker([lat, lng]).bindPopup(`<b>${escapeHTML(r['NO ADUAN'])}</b><br>${escapeHTML(r['LOKASI / TEMPAT'])}`));
                     heatPts.push([lat, lng, 1]);
                 }
             });
@@ -1758,8 +2123,8 @@
 
         function updateTable() {
             const tbData = filteredData.map(r => {
-                const linkMaps = r['LINK MAPS'] ? `<a href="${r['LINK MAPS']}" target="_blank" class="text-blue-500"><i class="fa-solid fa-map-location-dot"></i></a>` : '-';
-                return [r['NO ADUAN']||'-', r['KPI ADUAN']||'-', (r['LOKASI / TEMPAT']||r['LOKASI']||'-').substring(0,30), r['DMA']||'-', formatKategori(r['KATEGORI']), linkMaps, r['KORDINAT']||'-'];
+                const linkMaps = r['LINK MAPS'] ? `<a href="${escapeHTML(r['LINK MAPS'])}" target="_blank" class="text-blue-500"><i class="fa-solid fa-map-location-dot"></i></a>` : '-';
+                return [escapeHTML(r['NO ADUAN']||'-'), escapeHTML(r['KPI ADUAN']||'-'), escapeHTML((r['LOKASI / TEMPAT']||r['LOKASI']||'-').substring(0,30)), escapeHTML(r['DMA']||'-'), formatKategori(r['KATEGORI']), linkMaps, escapeHTML(r['KORDINAT']||'-')];
             });
             if($.fn.DataTable.isDataTable('#dataTable')) { dataTable.clear().rows.add(tbData).draw(); } 
             else { dataTable = $('#dataTable').DataTable({ data: tbData, pageLength: 5, responsive: true, dom: 'Bfrtip', buttons: ['excel', 'pdf', 'print'] }); }
@@ -1767,26 +2132,49 @@
 
         function updateManagementTable() {
             const userLevel = localStorage.getItem('sainsUserLevel');
+            
+            // 1. SIMPAN HALAMAN SEMASA SEBELUM JADUAL DIKEMASKINI
+            let currentPage = 0;
+            if ($.fn.DataTable.isDataTable('#managementTable')) {
+                currentPage = managementTable.page();
+            }
+
             const mgmtData = rawData.map(r => {
                 const noAduan = r['NO ADUAN'] || '';
-                const actionBtn = (userLevel === 'GUEST') ? `<span class="text-xs text-gray-400">View Only</span>` : `<button onclick="openEditModal('${noAduan}')" class="px-2.5 py-1 bg-blue-600 text-white rounded text-xs"><i class="fa-solid fa-pen-to-square"></i> Edit</button>`;
-                const linkMaps = r['LINK MAPS'] ? `<a href="${r['LINK MAPS']}" target="_blank" class="text-blue-500"><i class="fa-solid fa-map-location-dot"></i></a>` : '-';
+                const actionBtn = (userLevel === 'GUEST') ? `<span class="text-xs text-gray-400">View Only</span>` : `<button onclick="openEditModal('${escapeHTML(noAduan)}')" class="px-2.5 py-1 bg-blue-600 text-white rounded text-xs"><i class="fa-solid fa-pen-to-square"></i> Edit</button>`;
+                const linkMaps = r['LINK MAPS'] ? `<a href="${escapeHTML(r['LINK MAPS'])}" target="_blank" class="text-blue-500"><i class="fa-solid fa-map-location-dot"></i></a>` : '-';
+                let districtAreaVal = r['District Metered Area'] || r['DISTRICT METERED AREA'] || r['districtMeteredArea'] || '-';
+                if (parentFolders.includes(districtAreaVal.trim().toLowerCase())) districtAreaVal = '-';
                 return [
-                    actionBtn, noAduan, r['ZON']||'-', r['BULAN']||'-', formatDateToDDMMYYYY(r['TARIKH & MASA TERIMA  ADUAN']||r['TARIKH TERIMA']),
-                    formatDateToDDMMYYYY(r['TARIKH  TUTUP ADUAN']||r['TARIKH TUTUP']), r['KPI MASA TUTUP ADUAN']||'-', r['KPI Aduan']||r['KPI ADUAN']||'-',
-                    r['LOKASI / TEMPAT']||r['LOKASI']||'-', r['DMA']||'-', formatKategori(r['KATEGORI']), r['JENIS PAIP']||'-', r['SAIZ PAIP']||'-',
-                    r['JENIS PAIP BARU']||'-', r['SAIZ']||'-', r['PANJANG PAIP (M)']||'-', r['SIVIL WORKS']||'-', formatDateToDDMMYYYY(r['TARIKH']),
-                    r['DILAKSANAKAN OLEH']||'-', linkMaps, r['KORDINAT']||'-'
+                    actionBtn, escapeHTML(noAduan), escapeHTML(r['ZON']||'-'), escapeHTML(r['BULAN']||'-'), escapeHTML(formatDateToDDMMYYYY(r['TARIKH & MASA TERIMA  ADUAN']||r['TARIKH TERIMA'])),
+                    escapeHTML(formatDateToDDMMYYYY(r['TARIKH  TUTUP ADUAN']||r['TARIKH TUTUP'])), escapeHTML(r['KPI MASA TUTUP ADUAN']||'-'), escapeHTML(r['KPI Aduan']||r['KPI ADUAN']||'-'),
+                    escapeHTML(r['LOKASI / TEMPAT']||r['LOKASI']||'-'), escapeHTML(r['DMA']||'-'), escapeHTML(districtAreaVal), formatKategori(r['KATEGORI']), escapeHTML(r['JENIS PAIP']||'-'), escapeHTML(r['SAIZ PAIP']||'-'),
+                    escapeHTML(r['JENIS PAIP BARU']||'-'), escapeHTML(r['SAIZ']||'-'), escapeHTML(r['PANJANG PAIP (M)']||'-'), escapeHTML(r['SIVIL WORKS']||'-'), escapeHTML(formatDateToDDMMYYYY(r['TARIKH'])),
+                    escapeHTML(r['DILAKSANAKAN OLEH']||'-'), linkMaps, escapeHTML(r['KORDINAT']||'-')
                 ];
             });
 
-            if($.fn.DataTable.isDataTable('#managementTable')) { managementTable.clear().rows.add(mgmtData).draw(); } 
-            else { managementTable = $('#managementTable').DataTable({ data: mgmtData, pageLength: 10, scrollX: true, order: [[4, 'desc']], dom: 'Bfrtip', buttons: ['excel', 'pdf', 'print'] }); }
+            const initialMgmtBulan = document.getElementById('mgmt-filter-bulan') ? document.getElementById('mgmt-filter-bulan').value : '';
+
+            if($.fn.DataTable.isDataTable('#managementTable')) { 
+                managementTable.clear().rows.add(mgmtData).draw(false); 
+                // 2. KEKALKAN HALAMAN SEBELUM INI (false pada draw() mengekalkan posisi paging)
+                managementTable.page(currentPage).draw(false);
+            } else { 
+                managementTable = $('#managementTable').DataTable({ 
+                    data: mgmtData, 
+                    pageLength: 10, 
+                    scrollX: true, 
+                    order: [[4, 'desc']], 
+                    dom: 'Bfrtip', 
+                    buttons: ['excel', 'pdf', 'print'] 
+                }); 
+                if(initialMgmtBulan) {
+                    managementTable.column(3).search(initialMgmtBulan).draw();
+                }
+            }
         }
 
-        // ==============================================================================
-        // LOGIK TEMPLAT LAPORAN HARIAN & PENGESANAN TARIKH TEPAT
-        // ==============================================================================
         document.getElementById('btn-load-daily').addEventListener('click', () => {
             const selectedDate = document.getElementById('daily-date-picker').value; 
             if (!selectedDate) { showToast("Sila pilih tarikh terlebih dahulu!", "error"); return; }
@@ -1883,13 +2271,15 @@
 
             let html = '';
             matchedCases.forEach((r) => {
+                let districtAreaVal = r['District Metered Area'] || r['DISTRICT METERED AREA'] || r['districtMeteredArea'] || '-';
+                if (parentFolders.includes(districtAreaVal.trim().toLowerCase())) districtAreaVal = '-';
                 html += `
                     <div class="p-4 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800/50 shadow-sm flex flex-col gap-2 text-xs">
                         <div class="flex justify-between font-bold text-blue-600 dark:text-blue-400 text-sm">
-                            <span>${r['NO ADUAN'] || r['noAduan']} (${r['KATEGORI'] || r['kategori']})</span><span>DMA: ${r['DMA'] || r['dma']}</span>
+                            <span>${escapeHTML(r['NO ADUAN'] || r['noAduan'])} (${escapeHTML(r['KATEGORI'] || r['kategori'])})</span><span>District Metered Area: ${escapeHTML(districtAreaVal)}</span>
                         </div>
-                        <div><b>Lokasi:</b> ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}</div>
-                        <div><b>Pelaksana:</b> ${r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh']} | <b>Sivil:</b> ${r['SIVIL WORKS'] || r['sivilWorks'] || 'Tiada'}</div>
+                        <div><b>Lokasi:</b> ${escapeHTML(r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi'])}</div>
+                        <div><b>Pelaksana:</b> ${escapeHTML(r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh'])} | <b>Sivil:</b> ${escapeHTML(r['SIVIL WORKS'] || r['sivilWorks'] || 'Tiada')}</div>
                     </div>
                 `;
             });
