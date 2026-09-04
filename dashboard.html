@@ -553,6 +553,22 @@
         </div>
     </div>
 
+    <!-- MODAL: SEMAKAN SEMULA (PREVIEW DISPLAY SELEPAS SIMPAN) -->
+    <div id="previewModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[250] hidden flex items-center justify-center p-4">
+        <div class="dashboard-card w-full max-w-2xl p-6 relative border-t-4 border-t-emerald-500">
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-500"></i> Semakan Semula Rekod</h3>
+            <p class="text-xs text-slate-500 dark:text-gray-400 mb-4">Berikut adalah maklumat yang telah berjaya disimpan. Sila semak butiran di bawah.</p>
+            
+            <div id="preview-content-box" class="space-y-3 bg-slate-50 dark:bg-gray-800/60 p-4 rounded-xl border border-slate-200 dark:border-gray-700 text-xs font-mono max-h-[50vh] overflow-y-auto">
+                <!-- Dijana Dinamik -->
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button type="button" id="closePreviewBtn" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-sm shadow transition flex items-center gap-2"><i class="fa-solid fa-check"></i> Tutup & Berpuas Hati</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: PADAM REKOD -->
     <div id="deleteModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] hidden flex items-center justify-center p-4">
         <div class="dashboard-card w-full max-w-md p-6 relative border-t-4 border-t-red-500">
@@ -845,9 +861,9 @@
             if(parts.length === 2) {
         	const dateParts = parts[0].split('-');
         	if(dateParts.length === 3) {
-            	    const yy = dateParts[0]; // 4 digit tahun (YYYY)
-                    const mm = dateParts[1]; // 2 digit bulan
-                    const dd = dateParts[2]; // 2 digit hari
+            	    const yy = dateParts[0]; 
+                    const mm = dateParts[1]; 
+                    const dd = dateParts[2]; 
                     const timePart = parts[1].length >= 5 ? parts[1].substring(0, 5) : parts[1];
                     return `${dd}/${mm}/${yy} ${timePart}`;
                 }
@@ -1003,6 +1019,9 @@
             updateDashboard(); updateManagementTable(); updateCroTable();
             closeModals(); 
 
+            // Tunjuk Paparan Semakan Semula (Preview Display) selepas Tambah / Kemaskini
+            showPreviewModal(payloadData);
+
             showToast("Perubahan disimpan. Menyelaras dengan pelayan...", "success");
 
             try {
@@ -1023,6 +1042,31 @@
                 showToast("Pelayan sibuk. Disimpan dalam giliran latar belakang.", "error");
             }
         }
+
+        function showPreviewModal(data) {
+            const box = document.getElementById('preview-content-box');
+            // Senarai kekunci utama yang bersih dan unik (mengelakkan duplikasi alias kecil/besar)
+            const primaryKeys = [
+                "NO ADUAN", "ZON", "DMA", "KATEGORI", "LOKASI / TEMPAT", "KORDINAT",
+                "TARIKH & MASA TERIMA  ADUAN", "TARIKH  TUTUP ADUAN", 
+                "JENIS PAIP", "SAIZ PAIP", "JENIS PAIP BARU", "SAIZ", 
+                "PANJANG PAIP (M)", "SIVIL WORKS", "DILAKSANAKAN OLEH"
+            ];
+            
+            let html = '';
+            primaryKeys.forEach(key => {
+                const val = data[key];
+                if(val) {
+                    html += `<div class="flex justify-between border-b border-slate-200 dark:border-gray-700/60 py-1.5"><span class="font-bold text-slate-500 dark:text-gray-400">${key}:</span><span class="text-slate-800 dark:text-gray-200 text-right">${val}</span></div>`;
+                }
+            });
+            box.innerHTML = html || '<p class="text-center text-gray-500">Tiada maklumat.</p>';
+            document.getElementById('previewModal').classList.remove('hidden');
+        }
+
+        document.getElementById('closePreviewBtn').addEventListener('click', () => {
+            document.getElementById('previewModal').classList.add('hidden');
+        });
 
         async function processOfflineQueue() {
             let queue = JSON.parse(localStorage.getItem('sainsOfflineQueue') || '[]');
@@ -1059,7 +1103,6 @@
                 return true;
             });
 
-            // Pengiraan Pagination
             const totalPages = Math.ceil(displayData.length / croRowsPerPage) || 1;
             if (croCurrentPage > totalPages) croCurrentPage = totalPages;
             if (croCurrentPage < 1) croCurrentPage = 1;
@@ -1073,6 +1116,7 @@
                 const tarikhTerimaVal = row['TARIKH & MASA TERIMA  ADUAN'] || row['TARIKH TERIMA'] || '';
                 const tarikhTutupVal = row['TARIKH  TUTUP ADUAN'] || row['TARIKH TUTUP'] || '';
                 const lokasiVal = row['LOKASI / TEMPAT'] || row['LOKASI'] || '';
+                const kordinatVal = row['KORDINAT'] || '';
 
                 html += `
                     <tr>
@@ -1085,7 +1129,7 @@
                         <td tabindex="0"><input type="text" class="excel-input cro-dma" list="list-dma" value="${row['DMA']||''}" autocomplete="off"></td>
                         <td tabindex="0"><input type="text" class="excel-input cro-kategori" list="list-kategori" value="${row['KATEGORI']||''}" autocomplete="off"></td>
                         <td class="col-lokasi" tabindex="0"><textarea class="excel-input cro-lokasi" autocomplete="off">${lokasiVal}</textarea></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-kordinat" value="${row['KORDINAT']||''}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-kordinat" value="${kordinatVal}" autocomplete="off"></td>
                         <td tabindex="0"><input type="datetime-local" class="excel-input cro-terima" value="${formatForDateTimeInput(tarikhTerimaVal)}" autocomplete="off"></td>
                         <td tabindex="0"><input type="datetime-local" class="excel-input cro-tutup" value="${formatForDateTimeInput(tarikhTutupVal)}" autocomplete="off"></td>
                         <td tabindex="0"><input type="text" class="excel-input cro-jenis" list="list-jenisPaip" value="${row['JENIS PAIP']||''}" autocomplete="off"></td>
@@ -1154,7 +1198,7 @@
             initExcelGridNavigation();
         }
 
-        // --- EXCEL NAVIGATION LOGIC (EXCEL-LIKE SMOOTH PANNING) ---
+        // --- EXCEL NAVIGATION & DIRECT PASTE LOGIC (LOKASI & KORDINAT) ---
         function initExcelGridNavigation() {
             const table = document.querySelector('.excel-table');
             if(!table) return;
@@ -1165,6 +1209,8 @@
             cells.forEach(td => {
                 const inputOrTextarea = td.querySelector('.excel-input');
                 if(!inputOrTextarea) return;
+
+                const isLokasiOrKordinat = inputOrTextarea.classList.contains('cro-lokasi') || inputOrTextarea.classList.contains('cro-kordinat');
 
                 td.addEventListener('click', (e) => {
                     if(td.classList.contains('editing')) return;
@@ -1179,6 +1225,24 @@
                 td.addEventListener('dblclick', () => {
                     enableEditMode(td, inputOrTextarea);
                 });
+
+                // Sokongan Direct Paste (Ctrl+V / Right-Click Paste) khusus untuk Lokasi dan Kordinat
+                if(isLokasiOrKordinat) {
+                    td.addEventListener('paste', async (e) => {
+                        e.preventDefault();
+                        let pastedText = '';
+                        if (e.clipboardData) {
+                            pastedText = e.clipboardData.getData('text');
+                        } else if (window.clipboardData) {
+                            pastedText = window.clipboardData.getData('Text');
+                        }
+                        if (pastedText !== null) {
+                            enableEditMode(td, inputOrTextarea);
+                            inputOrTextarea.value = pastedText.trim();
+                            inputOrTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    });
+                }
 
                 td.addEventListener('keydown', (e) => {
                     const isEditing = td.classList.contains('editing');
@@ -1268,7 +1332,6 @@
             const tr = td.parentElement;
             const tdIndex = Array.from(tr.children).indexOf(td);
 
-            // Jika sampai ke kolum kiri sekali (Tindakan atau No Aduan), terus scroll full ke kiri (0)
             if (tdIndex <= 1 || td.classList.contains('col-1') || td.classList.contains('col-2')) {
                 container.scrollTo({ left: 0, behavior: 'smooth' });
                 return;
@@ -1497,7 +1560,6 @@
                 isHeatmapMode = !isHeatmapMode; updateMapMarkers();
             });
 
-            // CRO Event Listeners dengan Reset Pagination Page ke 1
             document.getElementById('cro-filter-bulan').addEventListener('change', () => { croCurrentPage = 1; updateCroTable(); });
             document.getElementById('cro-search').addEventListener('input', () => { croCurrentPage = 1; updateCroTable(); });
             document.getElementById('cro-zoom-select').addEventListener('change', (e) => {
@@ -1529,7 +1591,6 @@
             populateSel('mgmt-filter-bulan', sortedMonths);
             populateSel('cro-filter-bulan', sortedMonths);
 
-            // Auto-pilih bulan semasa untuk CRO
             const now = new Date();
             const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             const currentMonthStr = `${monthNames[now.getMonth()]}-${String(now.getFullYear()).slice(-2)}`;
