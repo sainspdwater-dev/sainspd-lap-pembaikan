@@ -116,7 +116,7 @@
                 const hashedPass = await hashSHA256(pass);
                 const res = await fetch(WORKER_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'text/plain' },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'login', username: user, passwordHash: hashedPass })
                 });
                 const data = await res.json();
@@ -126,6 +126,8 @@
                     document.getElementById('authTitle').innerText = "CONNECTED";
                     document.getElementById('authSub').innerText = "Memuatkan Papan Pemuka...";
                     
+                    // SIMPAN TOKEN JWT SELAMAT & ROLE
+                    localStorage.setItem('sainsToken', data.token);
                     localStorage.setItem('sainsUserLevel', data.level);
                     localStorage.setItem('sainsLoggedIn', 'true');
 
