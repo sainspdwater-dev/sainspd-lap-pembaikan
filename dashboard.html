@@ -20,7 +20,7 @@
         }
     </script>
 
-    <!-- Leaflet & ApexCharts & DataTables & Turf.js -->
+    <!-- Leaflet & ApexCharts & DataTables & FixedColumns & Turf.js -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -30,11 +30,14 @@
     
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/fixedcolumns/4.3.0/css/fixedColumns.dataTables.min.css" />
+
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/fixedcolumns/4.3.0/js/dataTables.fixedColumns.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
@@ -552,22 +555,23 @@
 
                 <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-gray-700">
                     <button type="button" id="closeModalBtn" class="px-4 py-2 bg-slate-200 dark:bg-gray-700 hover:bg-slate-300 dark:hover:bg-gray-600 rounded text-slate-800 dark:text-white text-sm font-medium">Batal</button>
-                    <button type="submit" id="modalSubmitBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-save"></i> Simpan Rekod</button>
+                    <button type="submit" id="modalSubmitBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-save"></i> Semak & Simpan</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- MODAL: SEMAKAN SEMULA (PREVIEW DISPLAY) -->
+    <!-- MODAL: SEMAKAN SEMULA & PREVIEW SEBELUM CONFIRM -->
     <div id="previewModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[250] hidden flex items-center justify-center p-4">
-        <div class="dashboard-card w-full max-w-2xl p-6 relative border-t-4 border-t-emerald-500">
-            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-circle-check text-emerald-500"></i> Semakan Semula Rekod</h3>
-            <p class="text-xs text-slate-500 dark:text-gray-400 mb-4">Berikut adalah maklumat yang telah berjaya disimpan. Sila semak butiran di bawah.</p>
+        <div class="dashboard-card w-full max-w-2xl p-6 relative border-t-4 border-t-blue-500">
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-circle-check text-blue-500"></i> Prebiu Ringkasan Rekod</h3>
+            <p class="text-xs text-slate-500 dark:text-gray-400 mb-4">Sila semak butiran di bawah sebelum anda mengesahkan simpanan rekod ini.</p>
             
-            <div id="preview-content-box" class="space-y-3 bg-slate-50 dark:bg-gray-800/60 p-4 rounded-xl border border-slate-200 dark:border-gray-700 text-xs font-mono max-h-[50vh] overflow-y-auto"></div>
+            <div id="preview-content-box" class="space-y-2 bg-slate-50 dark:bg-gray-800/60 p-4 rounded-xl border border-slate-200 dark:border-gray-700 text-xs font-mono max-h-[50vh] overflow-y-auto"></div>
 
-            <div class="mt-6 flex justify-end">
-                <button type="button" id="closePreviewBtn" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-sm shadow transition flex items-center gap-2"><i class="fa-solid fa-check"></i> Tutup & Berpuas Hati</button>
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" id="closePreviewBtn" class="px-4 py-2 bg-slate-300 dark:bg-gray-700 hover:bg-slate-400 dark:hover:bg-gray-600 rounded-lg font-bold text-sm text-slate-700 dark:text-gray-200 transition">Kembali / Edit Semula</button>
+                <button type="button" id="confirmActionBtn" class="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-bold text-sm shadow transition flex items-center gap-2"><i class="fa-solid fa-check"></i> Sahkan & Hantar</button>
             </div>
         </div>
     </div>
@@ -608,6 +612,9 @@
         let map, markerClusterGroup, heatLayer = null, isHeatmapMode = false, dataTable, managementTable, currentMode = 'add';
         let croCurrentPage = 1;
         const croRowsPerPage = 50;
+
+        let pendingMutationAction = null;
+        let pendingMutationData = null;
 
         // --- HIERARKI DISTRICT METERED AREA (MAIN & SUB IKUT MAP) ---
         const districtHierarchy = {
@@ -1276,6 +1283,50 @@
             }
         }
 
+        function triggerPreviewBeforeSave(actionType, payloadData) {
+            pendingMutationAction = actionType;
+            pendingMutationData = payloadData;
+            
+            recordModal.classList.add('hidden');
+            
+            const box = document.getElementById('preview-content-box');
+            const primaryKeys = [
+                "NO ADUAN", "ZON", "DMA", "District Metered Area", "KATEGORI", "LOKASI / TEMPAT", "KORDINAT",
+                "TARIKH & MASA TERIMA  ADUAN", "TARIKH  TUTUP ADUAN", 
+                "JENIS PAIP", "SAIZ PAIP", "JENIS PAIP BARU", "SAIZ", 
+                "PANJANG PAIP (M)", "SIVIL WORKS", "DILAKSANAKAN OLEH"
+            ];
+            
+            let html = '';
+            primaryKeys.forEach(key => {
+                const val = payloadData[key];
+                if(val) {
+                    html += `<div class="flex justify-between border-b border-slate-200 dark:border-gray-700/60 py-1"><span class="font-bold text-slate-500 dark:text-gray-400">${escapeHTML(key)}:</span><span class="text-slate-800 dark:text-gray-200 text-right">${escapeHTML(val)}</span></div>`;
+                }
+            });
+            box.innerHTML = html || '<p class="text-center text-gray-500">Tiada maklumat.</p>';
+            
+            document.getElementById('previewModal').classList.remove('hidden');
+        }
+
+        document.getElementById('confirmActionBtn').addEventListener('click', () => {
+            document.getElementById('previewModal').classList.add('hidden');
+            if (pendingMutationAction && pendingMutationData) {
+                sendMutation(pendingMutationAction, pendingMutationData);
+                pendingMutationAction = null;
+                pendingMutationData = null;
+            }
+        });
+
+        document.getElementById('closePreviewBtn').addEventListener('click', () => {
+            document.getElementById('previewModal').classList.add('hidden');
+            if (pendingMutationAction === 'addData' || pendingMutationAction === 'updateData') {
+                if (currentMode === 'update' || currentMode === 'add') {
+                    recordModal.classList.remove('hidden');
+                }
+            }
+        });
+
         async function sendMutation(actionType, payloadData) {
             const noAduan = payloadData['NO ADUAN'] || payloadData.noAduan;
             
@@ -1292,8 +1343,7 @@
             applyFilters(); updateManagementTable(); updateCroTable();
             closeModals(); 
 
-            showPreviewModal(payloadData);
-            showToast("Perubahan disimpan. Menyelaras dengan pelayan...", "success");
+            showToast("Perubahan disahkan & disimpan. Menyelaras dengan pelayan...", "success");
 
             try {
                 const res = await fetch(WORKER_URL, {
@@ -1320,30 +1370,6 @@
                 showToast("Pelayan sibuk. Disimpan dalam giliran latar belakang.", "error");
             }
         }
-
-        function showPreviewModal(data) {
-            const box = document.getElementById('preview-content-box');
-            const primaryKeys = [
-                "NO ADUAN", "ZON", "DMA", "District Metered Area", "KATEGORI", "LOKASI / TEMPAT", "KORDINAT",
-                "TARIKH & MASA TERIMA  ADUAN", "TARIKH  TUTUP ADUAN", 
-                "JENIS PAIP", "SAIZ PAIP", "JENIS PAIP BARU", "SAIZ", 
-                "PANJANG PAIP (M)", "SIVIL WORKS", "DILAKSANAKAN OLEH"
-            ];
-            
-            let html = '';
-            primaryKeys.forEach(key => {
-                const val = data[key];
-                if(val) {
-                    html += `<div class="flex justify-between border-b border-slate-200 dark:border-gray-700/60 py-1.5"><span class="font-bold text-slate-500 dark:text-gray-400">${escapeHTML(key)}:</span><span class="text-slate-800 dark:text-gray-200 text-right">${escapeHTML(val)}</span></div>`;
-                }
-            });
-            box.innerHTML = html || '<p class="text-center text-gray-500">Tiada maklumat.</p>';
-            document.getElementById('previewModal').classList.remove('hidden');
-        }
-
-        document.getElementById('closePreviewBtn').addEventListener('click', () => {
-            document.getElementById('previewModal').classList.add('hidden');
-        });
 
         async function processOfflineQueue() {
             let queue = JSON.parse(localStorage.getItem('sainsOfflineQueue') || '[]');
@@ -1689,21 +1715,13 @@
             const exists = rawData.some(r => String(r['NO ADUAN']).trim() === String(noAduan).trim());
             const action = exists && !isNew ? 'updateData' : (exists && isNew ? 'updateData' : 'addData');
             
-            sendMutation(action, payloadData);
+            triggerPreviewBeforeSave(action, payloadData);
             
             if (isNew) {
                 tr.classList.remove('new-row', 'bg-emerald-50', 'dark:bg-emerald-900/20');
                 tr.querySelector('.cro-noAduan').classList.add('bg-slate-100');
                 tr.querySelector('.cro-noAduan').setAttribute('readonly', 'true');
             }
-            
-            const originalHtml = btn.innerHTML;
-            btn.innerHTML = `<i class="fa-solid fa-check"></i>`;
-            btn.classList.replace('text-blue-600', 'text-emerald-600');
-            setTimeout(() => {
-                btn.innerHTML = originalHtml;
-                btn.classList.replace('text-emerald-600', 'text-blue-600');
-            }, 2000);
         }
 
         window.confirmDeleteCro = function(noAduan) {
@@ -1718,7 +1736,7 @@
         document.getElementById('btn-open-add').addEventListener('click', () => {
             currentMode = 'add';
             document.getElementById('modalTitleText').innerText = "Tambah Laporan Baru";
-            document.getElementById('modalSubmitBtn').innerHTML = `<i class="fa-solid fa-folder-plus"></i> Tambah Rekod`;
+            document.getElementById('modalSubmitBtn').innerHTML = `<i class="fa-solid fa-folder-plus"></i> Semak & Tambah`;
             document.getElementById('form-mutation').reset();
             document.getElementById('m-noAduan').removeAttribute('readonly');
             recordModal.classList.remove('hidden');
@@ -1738,7 +1756,7 @@
 
             currentMode = 'update';
             document.getElementById('modalTitleText').innerText = "Kemaskini Rekod: " + escapeHTML(noAduan);
-            document.getElementById('modalSubmitBtn').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan`;
+            document.getElementById('modalSubmitBtn').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Semak & Kemaskini`;
             
             document.getElementById('m-noAduan').value = rowData['NO ADUAN'] || '';
             document.getElementById('m-noAduan').setAttribute('readonly', true);
@@ -1777,7 +1795,7 @@
         document.getElementById('form-mutation').addEventListener('submit', (e) => {
             e.preventDefault();
             const action = currentMode === 'add' ? 'addData' : 'updateData';
-            sendMutation(action, getFormData());
+            triggerPreviewBeforeSave(action, getFormData());
         });
 
         document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
@@ -2133,7 +2151,6 @@
         function updateManagementTable() {
             const userLevel = localStorage.getItem('sainsUserLevel');
             
-            // 1. SIMPAN HALAMAN SEMASA SEBELUM JADUAL DIKEMASKINI
             let currentPage = 0;
             if ($.fn.DataTable.isDataTable('#managementTable')) {
                 currentPage = managementTable.page();
@@ -2158,13 +2175,17 @@
 
             if($.fn.DataTable.isDataTable('#managementTable')) { 
                 managementTable.clear().rows.add(mgmtData).draw(false); 
-                // 2. KEKALKAN HALAMAN SEBELUM INI (false pada draw() mengekalkan posisi paging)
                 managementTable.page(currentPage).draw(false);
             } else { 
                 managementTable = $('#managementTable').DataTable({ 
                     data: mgmtData, 
                     pageLength: 10, 
                     scrollX: true, 
+                    scrollY: '500px',
+                    scrollCollapse: true,
+                    fixedColumns: {
+                        left: 2
+                    },
                     order: [[4, 'desc']], 
                     dom: 'Bfrtip', 
                     buttons: ['excel', 'pdf', 'print'] 
