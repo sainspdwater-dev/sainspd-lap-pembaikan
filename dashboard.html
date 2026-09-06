@@ -198,6 +198,10 @@
             <button id="nav-daily" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="Laporan Harian">
                 <i class="fa-solid fa-calendar-day w-6 text-center"></i> <span class="sidebar-text ml-3 font-medium">Laporan Harian</span>
             </button>
+            <!-- TAB BARU: AI AGENT (KHAS ADMIN) -->
+            <button id="nav-ai" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="AI Agent">
+                <i class="fa-solid fa-robot w-6 text-center text-purple-500"></i> <span class="sidebar-text ml-3 font-medium">AI Agent</span>
+            </button>
         </nav>
 
         <div class="w-full px-3 mt-auto flex flex-col gap-3">
@@ -490,6 +494,49 @@
                 </div>
             </section>
         </div>
+
+        <!-- TAB 5: AI AGENT (KHAS ADMIN) -->
+        <div id="ai-agent-content" class="hidden pb-24 h-[calc(100vh-140px)] flex flex-col">
+            <header class="mb-4 flex justify-between items-center shrink-0">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3"><i class="fa-solid fa-user-tie text-purple-500"></i> AI Agent (Engineer & Planner)</h2>
+                    <p class="text-slate-500 dark:text-gray-400 mt-1">Pembantu analitikal operasi NRW. Jana rumusan, pemetaan automatik, dan cadangan aset.</p>
+                </div>
+            </header>
+            <div class="dashboard-card flex-1 flex flex-col lg:flex-row overflow-hidden p-0">
+                <!-- Chat Panel -->
+                <div class="w-full lg:w-2/5 flex flex-col border-r border-slate-200 dark:border-gray-700 h-full bg-slate-50 dark:bg-gray-900">
+                    <div id="ai-chat-messages" class="flex-1 p-4 overflow-y-auto space-y-4 text-sm">
+                        <div class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-slate-200 dark:border-gray-700 shadow-sm text-slate-800 dark:text-slate-200">
+                            <b class="text-purple-600 dark:text-purple-400"><i class="fa-solid fa-robot"></i> Sains AI Planner:</b> Selamat sejahtera. Saya sedia membantu menganalisis data operasi, merumus metrik bulanan, dan memberikan justifikasi teknikal (NRW & Aset) terus ke atas peta. Sila pilih analisis di bawah atau taip soalan anda.
+                        </div>
+                    </div>
+                    
+                    <!-- Prompt Chips -->
+                    <div class="px-3 py-2 bg-slate-100 dark:bg-gray-800 border-t border-slate-200 dark:border-gray-700 flex flex-wrap gap-2 overflow-x-auto shrink-0">
+                        <button onclick="setAiPrompt('Analisis kes bulanan mengikut kategori')" class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-xs font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300 transition shadow-sm"><i class="fa-solid fa-chart-column text-purple-500 mr-1"></i> Analisis Bulanan</button>
+                        <button onclick="setAiPrompt('Prestasi kontraktor paling tinggi')" class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-xs font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300 transition shadow-sm"><i class="fa-solid fa-hard-hat text-amber-500 mr-1"></i> Prestasi Kontraktor</button>
+                        <button onclick="setAiPrompt('Cadangan kawasan tukar paip (Heatmap)')" class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-xs font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300 transition shadow-sm"><i class="fa-solid fa-fire text-red-500 mr-1"></i> Cadangan Tukar Paip</button>
+                        <button onclick="setAiPrompt('Status kes kerja sivil tertunggak')" class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-xs font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300 transition shadow-sm"><i class="fa-solid fa-road text-slate-500 mr-1"></i> Status Kerja Sivil</button>
+                    </div>
+
+                    <div class="p-3 border-t border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
+                        <input type="text" id="ai-chat-input" class="form-input flex-1 text-sm bg-slate-50 dark:bg-gray-900" placeholder="Tanya soalan teknikal..." autocomplete="off">
+                        <button id="ai-send-btn" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-md text-sm font-bold flex items-center gap-1 transition shadow-sm">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+                <!-- Map Proof Panel -->
+                <div class="w-full lg:w-3/5 h-64 lg:h-full relative flex flex-col">
+                    <div class="p-2 bg-slate-100 dark:bg-gray-800 text-xs font-semibold text-slate-700 dark:text-gray-300 border-b border-slate-200 dark:border-gray-700 flex justify-between items-center">
+                        <span><i class="fa-solid fa-map-location-dot text-blue-500 mr-1"></i> Peta Analisis Visual AI</span>
+                        <span id="ai-map-status" class="text-slate-500 font-normal">Sedia...</span>
+                    </div>
+                    <div id="ai-agent-map" class="flex-1 w-full h-full min-h-[300px] z-10"></div>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- MODAL: TAMBAH / KEMASKINI REKOD -->
@@ -643,7 +690,7 @@
         const WORKER_URL = 'https://laporanpembaikan.sainspdwater.workers.dev/';
 
         let rawData = [], filteredData = [], dropdownOptions = {}, charts = {};
-        let map, markerClusterGroup, heatLayer = null, isHeatmapMode = false, dataTable, managementTable, currentMode = 'add';
+        let map, aiAgentMap, aiAgentClusterGroup = null, aiHeatLayer = null, markerClusterGroup, heatLayer = null, isHeatmapMode = false, dataTable, managementTable, currentMode = 'add';
         let croCurrentPage = 1;
         const croRowsPerPage = 50;
 
@@ -652,7 +699,7 @@
 
         // --- 1. LOGIK ZOOM MODAL (Sesi 4 Jam) ---
         let modalZoomTimer;
-        const MODAL_ZOOM_LIMIT = 4 * 60 * 60 * 1000; // 4 Jam
+        const MODAL_ZOOM_LIMIT = 4 * 60 * 60 * 1000;
 
         function applyModalZoom(level) {
             const formEl = document.getElementById('form-mutation');
@@ -718,7 +765,6 @@
             }
         });
 
-        // --- HIERARKI DISTRICT METERED AREA (MAIN & SUB IKUT MAP) ---
         const districtHierarchy = {
             "Loji Linggi": [
                 "300mm Sirusa 3 Desa Permai",
@@ -745,7 +791,6 @@
         };
 
         const parentFolders = ['loji linggi', 'sawah raja', 'seremban barat'];
-
         window.koleksiPoligonDMZ = [];
 
         function getFeatureName(p) {
@@ -829,11 +874,8 @@
                             }
                         }).addTo(map);
                     }
-                } catch(e) {
-                    console.error("Gagal muat fail GeoJSON:", fail, e);
-                }
+                } catch(e) {}
             }
-
             updateDmaDatalistFromMap();
         }
 
@@ -943,8 +985,10 @@
             if(userLevel === 'GUEST') {
                 const adminButtons = document.getElementById('admin-action-buttons');
                 const croButton = document.getElementById('nav-cro');
+                const aiButton = document.getElementById('nav-ai');
                 if(adminButtons) adminButtons.style.display = 'none';
                 if(croButton) croButton.style.display = 'none';
+                if(aiButton) aiButton.style.display = 'none';
             }
             
             startLiveClock();
@@ -1151,7 +1195,6 @@
                     let hh = parseInt(parts[3] || 0, 10);
                     let min = parseInt(parts[4] || 0, 10);
 
-                    // Laraskan jam mengikut AM / PM
                     if (isPm && hh < 12) hh += 12;
                     if (isAm && hh === 12) hh = 0;
 
@@ -1948,15 +1991,17 @@
             const navU = document.getElementById('nav-update');
             const navCro = document.getElementById('nav-cro');
             const navDaily = document.getElementById('nav-daily');
+            const navAi = document.getElementById('nav-ai');
 
             const hideAllTabs = () => {
                 document.getElementById('dashboard-content').style.display = 'none';
                 document.getElementById('update-content').style.display = 'none';
                 document.getElementById('cro-content').style.display = 'none';
                 document.getElementById('daily-content').style.display = 'none';
+                document.getElementById('ai-agent-content').style.display = 'none';
                 
                 const inactiveClass = "w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 transition-colors";
-                navD.className = inactiveClass; navU.className = inactiveClass; navCro.className = inactiveClass; navDaily.className = inactiveClass;
+                navD.className = inactiveClass; navU.className = inactiveClass; navCro.className = inactiveClass; navDaily.className = inactiveClass; if(navAi) navAi.className = inactiveClass;
             };
 
             navD.addEventListener('click', () => {
@@ -1987,6 +2032,16 @@
                 const picker = document.getElementById('daily-date-picker');
                 if(picker && !picker.value) picker.value = new Date().toISOString().split('T')[0];
             });
+
+            if(navAi) {
+                navAi.addEventListener('click', () => {
+                    hideAllTabs();
+                    document.getElementById('ai-agent-content').style.display = 'flex';
+                    navAi.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
+                    if(!aiAgentMap) initAiAgentMap();
+                    else setTimeout(() => aiAgentMap.invalidateSize(), 300);
+                });
+            }
 
             document.getElementById('nav-logout').addEventListener('click', () => {
                 safeLogout("Anda telah log keluar dengan jayanya.");
@@ -2024,6 +2079,149 @@
                 document.getElementById('cro-table-container').style.zoom = e.target.value;
             });
             document.getElementById('btn-cro-add').addEventListener('click', addCroBlankRow);
+
+            // Event Listener AI Agent Chat
+            const aiSendBtn = document.getElementById('ai-send-btn');
+            const aiInput = document.getElementById('ai-chat-input');
+            if(aiSendBtn && aiInput) {
+                aiSendBtn.addEventListener('click', sendAiMessage);
+                aiInput.addEventListener('keypress', (e) => {
+                    if(e.key === 'Enter') sendAiMessage();
+                });
+            }
+        }
+
+        window.setAiPrompt = function(text) {
+            document.getElementById('ai-chat-input').value = text;
+            sendAiMessage();
+        };
+
+        function initAiAgentMap() {
+            if (aiAgentMap) {
+                aiAgentMap.invalidateSize();
+                return;
+            }
+            
+            aiAgentMap = L.map('ai-agent-map').setView([2.5225, 101.7946], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+                maxZoom: 19, 
+                attribution: '&copy; OpenStreetMap' 
+            }).addTo(aiAgentMap);
+            
+            aiAgentClusterGroup = L.markerClusterGroup();
+            aiAgentMap.addLayer(aiAgentClusterGroup);
+
+            if (window.koleksiPoligonDMZ && window.koleksiPoligonDMZ.length > 0) {
+                window.koleksiPoligonDMZ.forEach(feature => {
+                    L.geoJSON(feature, {
+                        style: { color: '#10b981', weight: 2, dashArray: '4,4', fillOpacity: 0.15 },
+                        onEachFeature: (f, layer) => {
+                            let nama = f.properties._fileName || 'Kawasan DMZ';
+                            let mainArea = f.properties._mainArea || '';
+                            layer.bindPopup(`<b>DMA (${mainArea}):</b> ${escapeHTML(nama)}`);
+                        }
+                    }).addTo(aiAgentMap);
+                });
+            }
+        }
+
+        async function sendAiMessage() {
+            const inputEl = document.getElementById('ai-chat-input');
+            const messagesContainer = document.getElementById('ai-chat-messages');
+            const prompt = inputEl.value.trim();
+            if(!prompt) return;
+
+            messagesContainer.innerHTML += `
+                <div class="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg border border-purple-100 dark:border-purple-800 ml-6 text-slate-800 dark:text-slate-200 shadow-sm">
+                    <b class="text-purple-600 dark:text-purple-400">Anda:</b> ${escapeHTML(prompt)}
+                </div>
+            `;
+            inputEl.value = '';
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            const loadingId = 'ai-loading-' + Date.now();
+            messagesContainer.innerHTML += `
+                <div id="${loadingId}" class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-slate-200 dark:border-gray-700 text-slate-500 italic shadow-sm flex items-center gap-2">
+                    <i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Memproses data geospatial & metrik...
+                </div>
+            `;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+            const allRecordsForAi = (window.rawData || []).map(r => ({
+                noAduan: r['NO ADUAN'] || r['noAduan'] || '',
+                dma: r['DMA'] || r['dma'] || '',
+                kategori: r['KATEGORI'] || r['kategori'] || '',
+                jenisPaip: r['JENIS PAIP'] || r['jenisPaip'] || '',
+                lokasi: r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi'] || '',
+                kordinat: r['KORDINAT'] || r['kordinat'] || '',
+                tarikh: r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA'] || '',
+                bulan: r['BULAN'] || '',
+                pelaksana: r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || '',
+                sivil: r['SIVIL WORKS'] || r['sivilWorks'] || ''
+            }));
+
+            try {
+                const res = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('sainsToken')}` },
+                    body: JSON.stringify({ action: 'aiAgent', prompt: prompt, records: allRecordsForAi })
+                });
+
+                const data = await res.json();
+
+                if(res.ok && data.status === 'success') {
+                    document.getElementById(loadingId).remove();
+                    
+                    messagesContainer.innerHTML += `
+                        <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border-l-4 border-l-purple-500 border-y border-r border-slate-200 dark:border-gray-700 shadow-sm text-slate-800 dark:text-slate-200">
+                            <b class="text-purple-600 dark:text-purple-400 font-bold mb-2 block"><i class="fa-solid fa-robot"></i> Rumusan Analisis:</b>
+                            <div class="leading-relaxed whitespace-pre-wrap">${escapeHTML(data.reply).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')}</div>
+                        </div>
+                    `;
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+                    if (aiAgentMap) {
+                        if (aiAgentClusterGroup) aiAgentClusterGroup.clearLayers();
+                        if (aiHeatLayer) { aiAgentMap.removeLayer(aiHeatLayer); aiHeatLayer = null; }
+                        
+                        const bounds = [];
+                        const mapPts = data.mapData || [];
+
+                        document.getElementById('ai-map-status').innerText = `Menapis ${mapPts.length} lokasi...`;
+
+                        if (data.mapAction === 'heatmap' && typeof L.heatLayer !== 'undefined') {
+                            const heatCoords = [];
+                            mapPts.forEach(pt => {
+                                heatCoords.push([pt.lat, pt.lng, 1]);
+                                bounds.push([pt.lat, pt.lng]);
+                            });
+                            aiHeatLayer = L.heatLayer(heatCoords, { radius: 25, blur: 15, maxZoom: 14, gradient:{0.4:'blue',0.65:'lime',1:'red'} }).addTo(aiAgentMap);
+                            
+                        } else if (data.mapAction === 'markers') {
+                            mapPts.forEach(pt => {
+                                const m = L.marker([pt.lat, pt.lng]).bindPopup(`<b>${escapeHTML(pt.title || 'Info')}</b><br>${escapeHTML(pt.desc || '')}`);
+                                aiAgentClusterGroup.addLayer(m);
+                                bounds.push([pt.lat, pt.lng]);
+                            });
+                        }
+
+                        if (bounds.length > 0) {
+                            aiAgentMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+                        } else {
+                            document.getElementById('ai-map-status').innerText = "Tiada lokasi dijumpai.";
+                        }
+                    }
+                } else {
+                    throw new Error(data.message || 'Ralat pelayan AI');
+                }
+            } catch(err) {
+                document.getElementById(loadingId).remove();
+                messagesContainer.innerHTML += `
+                    <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 shadow-sm">
+                        <b>Ralat Analisis:</b> ${escapeHTML(err.message)}
+                    </div>
+                `;
+            }
         }
 
         function formatKategori(val) {
@@ -2288,79 +2486,76 @@
         }
 
         function updateManagementTable() {
-    const userLevel = localStorage.getItem('sainsUserLevel');
-    
-    let currentPage = 0;
-    if ($.fn.DataTable.isDataTable('#managementTable')) {
-        currentPage = managementTable.page();
-    }
+            const userLevel = localStorage.getItem('sainsUserLevel');
+            
+            let currentPage = 0;
+            if ($.fn.DataTable.isDataTable('#managementTable')) {
+                currentPage = managementTable.page();
+            }
 
-    const mgmtData = rawData.map(r => {
-        const noAduan = r['NO ADUAN'] || '';
-        const actionBtn = (userLevel === 'GUEST') ? `<span class="text-xs text-gray-400">View Only</span>` : `<button onclick="openEditModal('${escapeHTML(noAduan)}')" class="px-2.5 py-1 bg-blue-600 text-white rounded text-xs"><i class="fa-solid fa-pen-to-square"></i> Edit</button>`;
-        const linkMaps = r['LINK MAPS'] ? `<a href="${escapeHTML(r['LINK MAPS'])}" target="_blank" class="text-blue-500"><i class="fa-solid fa-map-location-dot"></i></a>` : '-';
-        let districtAreaVal = r['District Metered Area'] || r['DISTRICT METERED AREA'] || r['districtMeteredArea'] || '-';
-        if (parentFolders.includes(districtAreaVal.trim().toLowerCase())) districtAreaVal = '-';
-        
-        // Tukar tarikh kepada nilai timestamp nombor untuk sorting kronologi yang tepat
-        const rawTerima = r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA'];
-        const terimaTimestamp = parseCustomDate(rawTerima).getTime() || 0;
-        const terimaFormatted = formatDateToDDMMYYYY(rawTerima);
+            const mgmtData = rawData.map(r => {
+                const noAduan = r['NO ADUAN'] || '';
+                const actionBtn = (userLevel === 'GUEST') ? `<span class="text-xs text-gray-400">View Only</span>` : `<button onclick="openEditModal('${escapeHTML(noAduan)}')" class="px-2.5 py-1 bg-blue-600 text-white rounded text-xs"><i class="fa-solid fa-pen-to-square"></i> Edit</button>`;
+                const linkMaps = r['LINK MAPS'] ? `<a href="${escapeHTML(r['LINK MAPS'])}" target="_blank" class="text-blue-500"><i class="fa-solid fa-map-location-dot"></i></a>` : '-';
+                let districtAreaVal = r['District Metered Area'] || r['DISTRICT METERED AREA'] || r['districtMeteredArea'] || '-';
+                if (parentFolders.includes(districtAreaVal.trim().toLowerCase())) districtAreaVal = '-';
+                
+                const rawTerima = r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA'];
+                const terimaTimestamp = parseCustomDate(rawTerima).getTime() || 0;
+                const terimaFormatted = formatDateToDDMMYYYY(rawTerima);
 
-        const rawTutup = r['TARIKH  TUTUP ADUAN'] || r['TARIKH TUTUP'];
-        const tutupTimestamp = parseCustomDate(rawTutup).getTime() || 0;
-        const tutupFormatted = formatDateToDDMMYYYY(rawTutup);
+                const rawTutup = r['TARIKH  TUTUP ADUAN'] || r['TARIKH TUTUP'];
+                const tutupTimestamp = parseCustomDate(rawTutup).getTime() || 0;
+                const tutupFormatted = formatDateToDDMMYYYY(rawTutup);
 
-        return [
-            actionBtn, 
-            escapeHTML(noAduan), 
-            escapeHTML(r['ZON']||'-'), 
-            escapeHTML(r['BULAN']||'-'), 
-            `<span data-order="${terimaTimestamp}">${escapeHTML(terimaFormatted)}</span>`,
-            `<span data-order="${tutupTimestamp}">${escapeHTML(tutupFormatted)}</span>`,
-            escapeHTML(r['KPI MASA TUTUP ADUAN']||'-'), 
-            escapeHTML(r['KPI Aduan']||r['KPI ADUAN']||'-'),
-            escapeHTML(r['LOKASI / TEMPAT']||r['LOKASI']||'-'), 
-            escapeHTML(r['DMA']||'-'), 
-            escapeHTML(districtAreaVal), 
-            formatKategori(r['KATEGORI']), 
-            escapeHTML(r['JENIS PAIP']||'-'), 
-            escapeHTML(r['SAIZ PAIP']||'-'),
-            escapeHTML(r['JENIS PAIP BARU']||'-'), 
-            escapeHTML(r['SAIZ']||'-'), 
-            escapeHTML(r['PANJANG PAIP (M)']||'-'), 
-            escapeHTML(r['SIVIL WORKS']||'-'), 
-            escapeHTML(formatDateToDDMMYYYY(r['TARIKH'])),
-            escapeHTML(r['DILAKSANAKAN OLEH']||'-'), 
-            linkMaps, 
-            escapeHTML(r['KORDINAT']||'-')
-        ];
-    });
+                return [
+                    actionBtn, 
+                    escapeHTML(noAduan), 
+                    escapeHTML(r['ZON']||'-'), 
+                    escapeHTML(r['BULAN']||'-'), 
+                    `<span data-order="${terimaTimestamp}">${escapeHTML(terimaFormatted)}</span>`,
+                    `<span data-order="${tutupTimestamp}">${escapeHTML(tutupFormatted)}</span>`,
+                    escapeHTML(r['KPI MASA TUTUP ADUAN']||'-'), 
+                    escapeHTML(r['KPI Aduan']||r['KPI ADUAN']||'-'),
+                    escapeHTML(r['LOKASI / TEMPAT']||r['LOKASI']||'-'), 
+                    escapeHTML(r['DMA']||'-'), 
+                    escapeHTML(districtAreaVal), 
+                    formatKategori(r['KATEGORI']), 
+                    escapeHTML(r['JENIS PAIP']||'-'), 
+                    escapeHTML(r['SAIZ PAIP']||'-'),
+                    escapeHTML(r['JENIS PAIP BARU']||'-'), 
+                    escapeHTML(r['SAIZ']||'-'), 
+                    escapeHTML(r['PANJANG PAIP (M)']||'-'), 
+                    escapeHTML(r['SIVIL WORKS']||'-'), 
+                    escapeHTML(formatDateToDDMMYYYY(r['TARIKH'])),
+                    escapeHTML(r['DILAKSANAKAN OLEH']||'-'), 
+                    linkMaps, 
+                    escapeHTML(r['KORDINAT']||'-')
+                ];
+            });
 
-    const initialMgmtBulan = document.getElementById('mgmt-filter-bulan') ? document.getElementById('mgmt-filter-bulan').value : '';
+            const initialMgmtBulan = document.getElementById('mgmt-filter-bulan') ? document.getElementById('mgmt-filter-bulan').value : '';
 
-    if($.fn.DataTable.isDataTable('#managementTable')) { 
-        managementTable.clear().rows.add(mgmtData).order([4, 'desc']).draw(false); 
-        managementTable.page(currentPage).draw(false);
-    } else { 
-        managementTable = $('#managementTable').DataTable({ 
-            data: mgmtData, 
-            pageLength: 10, 
-            scrollX: true, 
-            scrollY: '500px',
-            scrollCollapse: true,
-            fixedColumns: {
-                left: 2
-            },
-            order: [[4, 'desc']], // Susun ikut Kolum 4 (Tarikh Terima) secara Descending (terbaru di atas)
-            dom: 'Bfrtip', 
-            buttons: ['excel', 'pdf', 'print'] 
-        }); 
-        if(initialMgmtBulan) {
-            managementTable.column(3).search(initialMgmtBulan).draw();
+            if($.fn.DataTable.isDataTable('#managementTable')) { 
+                managementTable.clear().rows.add(mgmtData).order([4, 'desc']).draw(false); 
+                managementTable.page(currentPage).draw(false);
+            } else { 
+                managementTable = $('#managementTable').DataTable({ 
+                    data: mgmtData, 
+                    pageLength: 10, 
+                    scrollX: true, 
+                    scrollY: '500px',
+                    scrollCollapse: true,
+                    fixedColumns: { left: 2 },
+                    order: [[4, 'desc']],
+                    dom: 'Bfrtip', 
+                    buttons: ['excel', 'pdf', 'print'] 
+                }); 
+                if(initialMgmtBulan) {
+                    managementTable.column(3).search(initialMgmtBulan).draw();
+                }
+            }
         }
-    }
-}
 
         document.getElementById('btn-load-daily').addEventListener('click', () => {
             const selectedDate = document.getElementById('daily-date-picker').value; 
@@ -2408,7 +2603,6 @@
             
             const kesPecah = matchedCases.filter(r => String(r['KATEGORI'] || r['kategori'] || '').toUpperCase().includes('PECAH'));
             const kesBocor = matchedCases.filter(r => String(r['KATEGORI'] || r['kategori'] || '').toUpperCase().includes('BOCOR'));
-            const totalPecahBocor = kesPecah.length + kesBocor.length;
             const sainsCases = matchedCases.filter(r => String(r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh'] || '').toUpperCase().includes('SAINS'));
             const sainsText = sainsCases.length > 0 ? sainsCases.map(r => `${r['NO ADUAN'] || r['noAduan']} - ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}`).join(', ') : 'TIADA';
             const kesTurap = matchedCases.filter(r => String(r['SIVIL WORKS'] || r['sivilWorks'] || r['Kerja Sivil'] || '').toUpperCase().includes('TURAP'));
@@ -2427,7 +2621,7 @@
 
             let template = `*LAPORAN HARIAN OPERASI* :\n\n`;
             template += `*Tarikh Laporan* : ${targetDDMMYYYY}\n*Tarikh Kemaskini* : ${tarikhKemaskini}\n*Daerah* : PORT DICKSON\n\n`;
-            template += `*PAIP PECAH / BOCOR :*\n\n*GENG PEMBAIKAN SAINS & LOKASI² ADUAN :* ${sainsText}\n\n*KONTRAKTOR² & LOKASI² ADUAN:* ${totalPecahBocor} NOS\n`;
+            template += `*PAIP PECAH / BOCOR :*\n\n*GENG PEMBAIKAN SAINS & LOKASI² ADUAN :* ${sainsText}\n\n*KONTRAKTOR² & LOKASI² ADUAN:* ${kesPecah.length + kesBocor.length} NOS\n`;
             
             if (matchedCases.length > 0) {
                 matchedCases.forEach((r, i) => {
