@@ -396,8 +396,8 @@
                         <label class="text-xs font-bold text-slate-600 dark:text-gray-400 uppercase">Zoom:</label>
                         <select id="cro-zoom-select" class="filter-select rounded px-3 py-1.5 text-sm">
                             <option value="0.5">50%</option>
-			    <option value="0.75">75%</option>
-			    <option value="1">100%</option>
+                            <option value="0.75">75%</option>
+                            <option value="1">100%</option>
                             <option value="1.25" selected>125%</option>
                             <option value="1.5">150%</option>
                             <option value="1.75">175%</option>
@@ -494,11 +494,26 @@
 
     <!-- MODAL: TAMBAH / KEMASKINI REKOD -->
     <div id="recordModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] hidden flex items-center justify-center p-4 overflow-y-auto">
-        <div class="dashboard-card w-full max-w-4xl max-h-[90vh] overflow-y-auto p-6 relative">
+        <div class="dashboard-card w-full max-w-7xl max-h-[95vh] overflow-y-auto p-6 relative">
             <button type="button" id="closeModal" class="absolute top-4 right-4 text-slate-400 hover:text-slate-100 text-xl"><i class="fa-solid fa-xmark"></i></button>
-            <h3 id="modalTitle" class="text-xl font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-file-pen text-blue-500"></i> <span id="modalTitleText">Kemaskini Rekod</span>
-            </h3>
+            
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-4 pr-12">
+                <h3 id="modalTitle" class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <i class="fa-solid fa-file-pen text-blue-500"></i> <span id="modalTitleText">Kemaskini Rekod</span>
+                </h3>
+                <!-- Dropdown Zoom untuk Modal -->
+                <div class="flex items-center gap-2 bg-slate-100 dark:bg-gray-800 p-1.5 rounded-lg border border-slate-200 dark:border-gray-700">
+                    <label class="text-xs font-bold text-slate-600 dark:text-gray-400 uppercase ml-1">Zoom:</label>
+                    <select id="modal-zoom-select" class="filter-select rounded px-2 py-1 text-sm bg-white dark:bg-gray-900 border-none shadow-sm cursor-pointer">
+                        <option value="0.5">50%</option>
+                        <option value="0.75">75%</option>
+                        <option value="1" selected>100%</option>
+                        <option value="1.25">125%</option>
+                        <option value="1.5">150%</option>
+                        <option value="1.75">175%</option>
+                    </select>
+                </div>
+            </div>
 
             <!-- Senarai Global Datalist -->
             <datalist id="list-zon"></datalist>
@@ -512,11 +527,17 @@
             <datalist id="list-sivilWorks"></datalist>
             <datalist id="list-dilaksanakanOleh"></datalist>
 
-            <form id="form-mutation" class="space-y-6" autocomplete="off">
+            <form id="form-mutation" class="space-y-6 transition-all origin-top-left" autocomplete="off">
                 <div class="bg-slate-50 dark:bg-gray-800/40 p-4 rounded-lg border border-slate-200 dark:border-gray-700/50">
                     <h4 class="text-sm font-bold text-cyan-500 dark:text-cyan-400 mb-4 flex items-center gap-2"><i class="fa-solid fa-location-dot"></i> Maklumat Asas & Lokasi</h4>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div><label class="form-label">No Aduan <span class="text-red-500">*</span></label><input type="text" id="m-noAduan" class="form-input" autocomplete="off" required></div>
+                        <div>
+                            <label class="form-label">No Aduan <span class="text-red-500">*</span></label>
+                            <div class="flex gap-2 items-center">
+                                <input type="text" id="m-noAduan" class="form-input flex-1" autocomplete="off" required>
+                                <button type="button" id="btn-unlock-noAduan" class="hidden px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded text-xs font-bold transition shadow-sm" title="Ubah No Aduan asal"><i class="fa-solid fa-unlock-keyhole"></i></button>
+                            </div>
+                        </div>
                         <div><label class="form-label">Zon</label><input type="text" id="m-zon" class="form-input" list="list-zon" autocomplete="off" placeholder="Pilih atau taip..."></div>
                         <div><label class="form-label">DMA</label><input type="text" id="m-dma" class="form-input" list="list-dma" autocomplete="off" placeholder="Pilih atau taip..."></div>
                         <div><label class="form-label">District Metered Area (Auto dari Kordinat)</label><input type="text" id="m-districtMeteredArea" class="form-input" readonly autocomplete="off" placeholder="Auto-deteksi peta..."></div>
@@ -558,6 +579,19 @@
                     <button type="submit" id="modalSubmitBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-save"></i> Semak & Simpan</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- MODAL PENGESAHAN UBAH NO ADUAN -->
+    <div id="confirmNoAduanModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[300] hidden flex items-center justify-center p-4">
+        <div class="dashboard-card w-full max-w-md p-6 relative border-t-4 border-t-amber-500">
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2"><i class="fa-solid fa-shield-halved text-amber-500 mr-2"></i> Pengesahan Keselamatan</h3>
+            <p class="text-sm text-slate-600 dark:text-gray-300 mb-4">Anda perlu taip no aduan untuk pengesahan. Sila taip <strong id="lbl-original-noAduan" class="text-red-500 select-all tracking-wider text-base"></strong> di bawah:</p>
+            <input type="text" id="input-confirm-noAduan" class="form-input mb-4 font-bold text-center tracking-wider text-lg" autocomplete="off" placeholder="Taip no aduan asal...">
+            <div class="flex justify-end gap-3">
+                <button type="button" id="btn-cancel-unlock" class="px-4 py-2 bg-slate-200 dark:bg-gray-700 hover:bg-slate-300 rounded-lg text-slate-800 dark:text-white text-sm font-medium transition">Batal</button>
+                <button type="button" id="btn-confirm-unlock" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 rounded-lg text-white font-bold text-sm shadow transition">Sahkan</button>
+            </div>
         </div>
     </div>
 
@@ -615,6 +649,74 @@
 
         let pendingMutationAction = null;
         let pendingMutationData = null;
+
+        // --- 1. LOGIK ZOOM MODAL (Sesi 4 Jam) ---
+        let modalZoomTimer;
+        const MODAL_ZOOM_LIMIT = 4 * 60 * 60 * 1000; // 4 Jam
+
+        function applyModalZoom(level) {
+            const formEl = document.getElementById('form-mutation');
+            if (formEl) formEl.style.zoom = level;
+            
+            localStorage.setItem('sainsModalZoom', level);
+            localStorage.setItem('sainsModalZoomTime', Date.now());
+
+            clearTimeout(modalZoomTimer);
+            modalZoomTimer = setTimeout(() => { resetModalZoom(); }, MODAL_ZOOM_LIMIT);
+        }
+
+        function resetModalZoom() {
+            const formEl = document.getElementById('form-mutation');
+            const sel = document.getElementById('modal-zoom-select');
+            if (formEl) formEl.style.zoom = "1";
+            if (sel) sel.value = "1";
+            localStorage.removeItem('sainsModalZoom');
+            localStorage.removeItem('sainsModalZoomTime');
+        }
+
+        function initModalZoom() {
+            const savedZoom = localStorage.getItem('sainsModalZoom');
+            const savedTime = localStorage.getItem('sainsModalZoomTime');
+            const sel = document.getElementById('modal-zoom-select');
+
+            if (savedZoom && savedTime) {
+                if (Date.now() - parseInt(savedTime) < MODAL_ZOOM_LIMIT) {
+                    if (sel) sel.value = savedZoom;
+                    applyModalZoom(savedZoom);
+                } else {
+                    resetModalZoom();
+                }
+            }
+            if (sel) {
+                sel.addEventListener('change', (e) => applyModalZoom(e.target.value));
+            }
+        }
+
+        // --- 2. LOGIK PENGESAHAN UBAH NO ADUAN ---
+        window.currentOriginalNoAduan = null;
+
+        document.getElementById('btn-unlock-noAduan').addEventListener('click', () => {
+            document.getElementById('lbl-original-noAduan').innerText = window.currentOriginalNoAduan;
+            document.getElementById('input-confirm-noAduan').value = '';
+            document.getElementById('confirmNoAduanModal').classList.remove('hidden');
+        });
+
+        document.getElementById('btn-cancel-unlock').addEventListener('click', () => {
+            document.getElementById('confirmNoAduanModal').classList.add('hidden');
+        });
+
+        document.getElementById('btn-confirm-unlock').addEventListener('click', () => {
+            const input = document.getElementById('input-confirm-noAduan').value.trim();
+            if (input === window.currentOriginalNoAduan) {
+                document.getElementById('m-noAduan').removeAttribute('readonly');
+                document.getElementById('btn-unlock-noAduan').classList.add('hidden');
+                document.getElementById('confirmNoAduanModal').classList.add('hidden');
+                document.getElementById('m-noAduan').focus();
+                showToast("Pengesahan berjaya. No Aduan kini boleh diedit.", "success");
+            } else {
+                showToast("No Aduan tidak sepadan! Sila taip dengan betul.", "error");
+            }
+        });
 
         // --- HIERARKI DISTRICT METERED AREA (MAIN & SUB IKUT MAP) ---
         const districtHierarchy = {
@@ -827,6 +929,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('sainsLoggedIn') !== 'true') { window.location.replace('index.html'); return; }
             initSessionTimeouts();
+            initModalZoom(); 
 
             if(localStorage.getItem('sainsTheme') === 'dark') {
                 document.documentElement.classList.add('dark');
@@ -1032,12 +1135,27 @@
             if(!val) return new Date(0);
             if(val instanceof Date) return val;
             let str = String(val).trim();
+            
+            let lowerStr = str.toLowerCase();
+            let isPm = lowerStr.includes('pm');
+            let isAm = lowerStr.includes('am');
+
             if(str.includes('/')) {
                 const parts = str.split(/[\s/:\-]/);
                 if(parts.length >= 3) {
+                    let dd = parseInt(parts[0], 10);
+                    let mm = parseInt(parts[1], 10) - 1;
                     let yr = parseInt(parts[2], 10);
                     if(yr < 100) yr += 2000;
-                    return new Date(yr, parseInt(parts[1])-1, parts[0], parts[3]||0, parts[4]||0);
+                    
+                    let hh = parseInt(parts[3] || 0, 10);
+                    let min = parseInt(parts[4] || 0, 10);
+
+                    // Laraskan jam mengikut AM / PM
+                    if (isPm && hh < 12) hh += 12;
+                    if (isAm && hh === 12) hh = 0;
+
+                    return new Date(yr, mm, dd, hh, min);
                 }
             }
             return new Date(str);
@@ -1329,15 +1447,26 @@
 
         async function sendMutation(actionType, payloadData) {
             const noAduan = payloadData['NO ADUAN'] || payloadData.noAduan;
-            
-            if(actionType === 'addData') { rawData.unshift(payloadData); } 
+            let targetNoAduanForBackend = noAduan; 
+
+            if(actionType === 'addData') { 
+                rawData.unshift(payloadData); 
+            } 
             else if(actionType === 'updateData') {
-                const idx = rawData.findIndex(item => String(item['NO ADUAN']).trim() === String(noAduan).trim());
-                if(idx !== -1) { rawData[idx] = { ...rawData[idx], ...payloadData }; }
+                const searchNoAduan = payloadData._oldNoAduan || noAduan;
+                targetNoAduanForBackend = searchNoAduan; 
+                
+                const idx = rawData.findIndex(item => String(item['NO ADUAN']).trim() === String(searchNoAduan).trim());
+                if(idx !== -1) { 
+                    rawData[idx] = { ...rawData[idx], ...payloadData }; 
+                }
             } else if(actionType === 'deleteData') {
                 rawData = rawData.filter(item => String(item['NO ADUAN']).trim() === String(noAduan).trim() === false);
             }
             
+            let cleanPayload = { ...payloadData };
+            delete cleanPayload._oldNoAduan;
+
             localStorage.setItem('sainsRawData', JSON.stringify(rawData));
             filteredData = [...rawData];
             applyFilters(); updateManagementTable(); updateCroTable();
@@ -1352,7 +1481,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${localStorage.getItem('sainsToken')}`
                     },
-                    body: JSON.stringify({ action: actionType, data: payloadData, noAduan: noAduan })
+                    body: JSON.stringify({ action: actionType, data: cleanPayload, noAduan: targetNoAduanForBackend })
                 });
                 
                 if(res.status === 401) return safeLogout("Sesi log masuk tamat tempoh.");
@@ -1365,7 +1494,7 @@
                 } else { throw new Error(result.message || "Ralat operasi pelayan"); }
             } catch(err) {
                 let queue = JSON.parse(localStorage.getItem('sainsOfflineQueue') || '[]');
-                queue.push({ action: actionType, data: payloadData, noAduan: noAduan });
+                queue.push({ action: actionType, data: cleanPayload, noAduan: targetNoAduanForBackend });
                 localStorage.setItem('sainsOfflineQueue', JSON.stringify(queue));
                 showToast("Pelayan sibuk. Disimpan dalam giliran latar belakang.", "error");
             }
@@ -1735,10 +1864,12 @@
 
         document.getElementById('btn-open-add').addEventListener('click', () => {
             currentMode = 'add';
+            window.currentOriginalNoAduan = null;
             document.getElementById('modalTitleText').innerText = "Tambah Laporan Baru";
             document.getElementById('modalSubmitBtn').innerHTML = `<i class="fa-solid fa-folder-plus"></i> Semak & Tambah`;
             document.getElementById('form-mutation').reset();
             document.getElementById('m-noAduan').removeAttribute('readonly');
+            document.getElementById('btn-unlock-noAduan').classList.add('hidden');
             recordModal.classList.remove('hidden');
         });
 
@@ -1755,11 +1886,14 @@
             if(!rowData) return;
 
             currentMode = 'update';
+            window.currentOriginalNoAduan = String(noAduan).trim();
+            
             document.getElementById('modalTitleText').innerText = "Kemaskini Rekod: " + escapeHTML(noAduan);
             document.getElementById('modalSubmitBtn').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Semak & Kemaskini`;
             
             document.getElementById('m-noAduan').value = rowData['NO ADUAN'] || '';
             document.getElementById('m-noAduan').setAttribute('readonly', true);
+            document.getElementById('btn-unlock-noAduan').classList.remove('hidden');
             
             setInputValue('m-zon', rowData['ZON'] || '');
             setInputValue('m-dma', rowData['DMA'] || '');
@@ -1795,7 +1929,12 @@
         document.getElementById('form-mutation').addEventListener('submit', (e) => {
             e.preventDefault();
             const action = currentMode === 'add' ? 'addData' : 'updateData';
-            triggerPreviewBeforeSave(action, getFormData());
+            let payload = getFormData();
+            
+            if (currentMode === 'update') {
+                payload._oldNoAduan = window.currentOriginalNoAduan;
+            }
+            triggerPreviewBeforeSave(action, payload);
         });
 
         document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
@@ -2149,52 +2288,79 @@
         }
 
         function updateManagementTable() {
-            const userLevel = localStorage.getItem('sainsUserLevel');
-            
-            let currentPage = 0;
-            if ($.fn.DataTable.isDataTable('#managementTable')) {
-                currentPage = managementTable.page();
-            }
+    const userLevel = localStorage.getItem('sainsUserLevel');
+    
+    let currentPage = 0;
+    if ($.fn.DataTable.isDataTable('#managementTable')) {
+        currentPage = managementTable.page();
+    }
 
-            const mgmtData = rawData.map(r => {
-                const noAduan = r['NO ADUAN'] || '';
-                const actionBtn = (userLevel === 'GUEST') ? `<span class="text-xs text-gray-400">View Only</span>` : `<button onclick="openEditModal('${escapeHTML(noAduan)}')" class="px-2.5 py-1 bg-blue-600 text-white rounded text-xs"><i class="fa-solid fa-pen-to-square"></i> Edit</button>`;
-                const linkMaps = r['LINK MAPS'] ? `<a href="${escapeHTML(r['LINK MAPS'])}" target="_blank" class="text-blue-500"><i class="fa-solid fa-map-location-dot"></i></a>` : '-';
-                let districtAreaVal = r['District Metered Area'] || r['DISTRICT METERED AREA'] || r['districtMeteredArea'] || '-';
-                if (parentFolders.includes(districtAreaVal.trim().toLowerCase())) districtAreaVal = '-';
-                return [
-                    actionBtn, escapeHTML(noAduan), escapeHTML(r['ZON']||'-'), escapeHTML(r['BULAN']||'-'), escapeHTML(formatDateToDDMMYYYY(r['TARIKH & MASA TERIMA  ADUAN']||r['TARIKH TERIMA'])),
-                    escapeHTML(formatDateToDDMMYYYY(r['TARIKH  TUTUP ADUAN']||r['TARIKH TUTUP'])), escapeHTML(r['KPI MASA TUTUP ADUAN']||'-'), escapeHTML(r['KPI Aduan']||r['KPI ADUAN']||'-'),
-                    escapeHTML(r['LOKASI / TEMPAT']||r['LOKASI']||'-'), escapeHTML(r['DMA']||'-'), escapeHTML(districtAreaVal), formatKategori(r['KATEGORI']), escapeHTML(r['JENIS PAIP']||'-'), escapeHTML(r['SAIZ PAIP']||'-'),
-                    escapeHTML(r['JENIS PAIP BARU']||'-'), escapeHTML(r['SAIZ']||'-'), escapeHTML(r['PANJANG PAIP (M)']||'-'), escapeHTML(r['SIVIL WORKS']||'-'), escapeHTML(formatDateToDDMMYYYY(r['TARIKH'])),
-                    escapeHTML(r['DILAKSANAKAN OLEH']||'-'), linkMaps, escapeHTML(r['KORDINAT']||'-')
-                ];
-            });
+    const mgmtData = rawData.map(r => {
+        const noAduan = r['NO ADUAN'] || '';
+        const actionBtn = (userLevel === 'GUEST') ? `<span class="text-xs text-gray-400">View Only</span>` : `<button onclick="openEditModal('${escapeHTML(noAduan)}')" class="px-2.5 py-1 bg-blue-600 text-white rounded text-xs"><i class="fa-solid fa-pen-to-square"></i> Edit</button>`;
+        const linkMaps = r['LINK MAPS'] ? `<a href="${escapeHTML(r['LINK MAPS'])}" target="_blank" class="text-blue-500"><i class="fa-solid fa-map-location-dot"></i></a>` : '-';
+        let districtAreaVal = r['District Metered Area'] || r['DISTRICT METERED AREA'] || r['districtMeteredArea'] || '-';
+        if (parentFolders.includes(districtAreaVal.trim().toLowerCase())) districtAreaVal = '-';
+        
+        // Tukar tarikh kepada nilai timestamp nombor untuk sorting kronologi yang tepat
+        const rawTerima = r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA'];
+        const terimaTimestamp = parseCustomDate(rawTerima).getTime() || 0;
+        const terimaFormatted = formatDateToDDMMYYYY(rawTerima);
 
-            const initialMgmtBulan = document.getElementById('mgmt-filter-bulan') ? document.getElementById('mgmt-filter-bulan').value : '';
+        const rawTutup = r['TARIKH  TUTUP ADUAN'] || r['TARIKH TUTUP'];
+        const tutupTimestamp = parseCustomDate(rawTutup).getTime() || 0;
+        const tutupFormatted = formatDateToDDMMYYYY(rawTutup);
 
-            if($.fn.DataTable.isDataTable('#managementTable')) { 
-                managementTable.clear().rows.add(mgmtData).draw(false); 
-                managementTable.page(currentPage).draw(false);
-            } else { 
-                managementTable = $('#managementTable').DataTable({ 
-                    data: mgmtData, 
-                    pageLength: 10, 
-                    scrollX: true, 
-                    scrollY: '500px',
-                    scrollCollapse: true,
-                    fixedColumns: {
-                        left: 2
-                    },
-                    order: [[4, 'desc']], 
-                    dom: 'Bfrtip', 
-                    buttons: ['excel', 'pdf', 'print'] 
-                }); 
-                if(initialMgmtBulan) {
-                    managementTable.column(3).search(initialMgmtBulan).draw();
-                }
-            }
+        return [
+            actionBtn, 
+            escapeHTML(noAduan), 
+            escapeHTML(r['ZON']||'-'), 
+            escapeHTML(r['BULAN']||'-'), 
+            `<span data-order="${terimaTimestamp}">${escapeHTML(terimaFormatted)}</span>`,
+            `<span data-order="${tutupTimestamp}">${escapeHTML(tutupFormatted)}</span>`,
+            escapeHTML(r['KPI MASA TUTUP ADUAN']||'-'), 
+            escapeHTML(r['KPI Aduan']||r['KPI ADUAN']||'-'),
+            escapeHTML(r['LOKASI / TEMPAT']||r['LOKASI']||'-'), 
+            escapeHTML(r['DMA']||'-'), 
+            escapeHTML(districtAreaVal), 
+            formatKategori(r['KATEGORI']), 
+            escapeHTML(r['JENIS PAIP']||'-'), 
+            escapeHTML(r['SAIZ PAIP']||'-'),
+            escapeHTML(r['JENIS PAIP BARU']||'-'), 
+            escapeHTML(r['SAIZ']||'-'), 
+            escapeHTML(r['PANJANG PAIP (M)']||'-'), 
+            escapeHTML(r['SIVIL WORKS']||'-'), 
+            escapeHTML(formatDateToDDMMYYYY(r['TARIKH'])),
+            escapeHTML(r['DILAKSANAKAN OLEH']||'-'), 
+            linkMaps, 
+            escapeHTML(r['KORDINAT']||'-')
+        ];
+    });
+
+    const initialMgmtBulan = document.getElementById('mgmt-filter-bulan') ? document.getElementById('mgmt-filter-bulan').value : '';
+
+    if($.fn.DataTable.isDataTable('#managementTable')) { 
+        managementTable.clear().rows.add(mgmtData).order([4, 'desc']).draw(false); 
+        managementTable.page(currentPage).draw(false);
+    } else { 
+        managementTable = $('#managementTable').DataTable({ 
+            data: mgmtData, 
+            pageLength: 10, 
+            scrollX: true, 
+            scrollY: '500px',
+            scrollCollapse: true,
+            fixedColumns: {
+                left: 2
+            },
+            order: [[4, 'desc']], // Susun ikut Kolum 4 (Tarikh Terima) secara Descending (terbaru di atas)
+            dom: 'Bfrtip', 
+            buttons: ['excel', 'pdf', 'print'] 
+        }); 
+        if(initialMgmtBulan) {
+            managementTable.column(3).search(initialMgmtBulan).draw();
         }
+    }
+}
 
         document.getElementById('btn-load-daily').addEventListener('click', () => {
             const selectedDate = document.getElementById('daily-date-picker').value; 
