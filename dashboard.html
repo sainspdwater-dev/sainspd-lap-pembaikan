@@ -526,33 +526,32 @@
         </div>
 
         <!-- TAB 5: AI AGENT (KHAS ADMIN) -->
-        <div id="ai-agent-content" class="hidden pb-24 h-[calc(100vh-140px)] flex flex-col">
-            <header class="mb-4 flex justify-between items-center shrink-0">
+        <div id="ai-agent-content" class="hidden pb-24 h-[calc(100vh-100px)] flex flex-col">
+            <header class="mb-3 flex justify-between items-center shrink-0">
                 <div>
                     <h2 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3"><i class="fa-solid fa-user-tie text-purple-500"></i> AI Agent (Engineer & Planner)</h2>
-                    <p class="text-slate-500 dark:text-gray-400 mt-1">Pembantu analitikal operasi NRW. Jana rumusan, pemetaan automatik, dan cadangan aset.</p>
+                    <p class="text-slate-500 dark:text-gray-400 mt-0.5 text-xs">Pembantu analitikal operasi NRW. Jana rumusan, pemetaan automatik, dan cadangan aset.</p>
                 </div>
             </header>
             <div class="dashboard-card flex-1 flex flex-col lg:flex-row overflow-hidden p-0">
-                <!-- Chat Panel -->
-                <div class="w-full lg:w-2/5 flex flex-col border-r border-slate-200 dark:border-gray-700 h-full bg-slate-50 dark:bg-gray-900">
-                    <div id="ai-chat-messages" class="flex-1 p-4 overflow-y-auto space-y-4 text-sm">
-                        <div class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-slate-200 dark:border-gray-700 shadow-sm text-slate-800 dark:text-slate-200">
+                <!-- Chat Panel (Dilebarkan kepada lg:w-3/5 supaya kotak respon lebih besar) -->
+                <div class="w-full lg:w-3/5 flex flex-col border-r border-slate-200 dark:border-gray-700 h-full bg-slate-50 dark:bg-gray-900">
+                    <div id="ai-chat-messages" class="flex-1 p-5 overflow-y-auto space-y-4 text-sm">
+                        <div class="bg-white dark:bg-gray-800 p-3.5 rounded-lg border border-slate-200 dark:border-gray-700 shadow-sm text-slate-800 dark:text-slate-200">
                             <b class="text-purple-600 dark:text-purple-400"><i class="fa-solid fa-robot"></i> Sains AI Planner:</b> Selamat sejahtera. Saya sedia membantu menganalisis data operasi, merumus metrik bulanan, dan memberikan justifikasi teknikal (NRW & Aset) terus ke atas peta. Sila pilih analisis di bawah atau taip soalan anda.
                         </div>
                     </div>
                     
                     <!-- Prompt Chips -->
-                    <div class="px-3 py-2 bg-slate-100 dark:bg-gray-800 border-t border-slate-200 dark:border-gray-700 flex flex-wrap gap-2 overflow-x-auto shrink-0">
-                        <button onclick="setAiPrompt('Analisis kes bulanan mengikut kategori')" class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-xs font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300 transition shadow-sm"><i class="fa-solid fa-chart-column text-purple-500 mr-1"></i> Analisis Bulanan</button>
-                        <button onclick="setAiPrompt('Prestasi kontraktor paling tinggi')" class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-xs font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300 transition shadow-sm"><i class="fa-solid fa-hard-hat text-amber-500 mr-1"></i> Prestasi Kontraktor</button>
-                        <button onclick="setAiPrompt('Cadangan kawasan tukar paip (Heatmap)')" class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-xs font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300 transition shadow-sm"><i class="fa-solid fa-fire text-red-500 mr-1"></i> Cadangan Tukar Paip</button>
-                        <button onclick="setAiPrompt('Status kes kerja sivil tertunggak')" class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-xs font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300 transition shadow-sm"><i class="fa-solid fa-road text-slate-500 mr-1"></i> Status Kerja Sivil</button>
-                        <button onclick="setAiPrompt('Di manakah kawasan hotspot utama kes paip pecah?')" class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-xs font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300 transition shadow-sm"><i class="fa-solid fa-map-pin text-red-500 mr-1"></i> Hotspot Paip Pecah</button>
-                        <button onclick="setAiPrompt('Ramalan Titik Paip Pecah: Menjana unjuran zon risiko tinggi berdasarkan sejarah kerosakan paip dan jenis')" class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-xs font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300 transition shadow-sm"><i class="fa-solid fa-triangle-exclamation text-red-500 mr-1"></i> Ramalan Titik Paip Pecah</button>
-                        <button onclick="setAiPrompt('Ramalan Titik Paip Bocor: Menjana unjuran zon risiko tinggi berdasarkan sejarah kerosakan paip dan jenis')" class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-xs font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300 transition shadow-sm"><i class="fa-solid fa-water text-blue-500 mr-1"></i> Ramalan Titik Paip Bocor</button>
-                        <button onclick="setAiPrompt('Penjadualan Laluan ALD: Mencadangkan laluan harian yang paling optimum untuk pasukan pemantauan kebocoran berdasarkan keutamaan sejarah bilangan paip pecah dan bocor. Ia juga menggangar kehilangan air yang dapat diselamatkan jika membuat aktiviti pengesanan kebocoran')" class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-xs font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300 transition shadow-sm"><i class="fa-solid fa-route text-emerald-500 mr-1"></i> Penjadualan Laluan ALD</button>
-                        <button onclick="setAiPrompt('Jana laporan harian untuk WhatsApp hari ini.')" class="whitespace-nowrap px-3 py-1.5 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-xs font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 hover:border-purple-300 transition shadow-sm"><i class="fa-brands fa-whatsapp text-emerald-500 mr-1"></i> Laporan WhatsApp</button>
+                    <div class="px-3 py-2 bg-slate-100 dark:bg-gray-800 border-t border-slate-200 dark:border-gray-700 flex flex-wrap gap-1.5 overflow-x-auto shrink-0 max-h-28">
+                        <button onclick="setAiPrompt('Analisis kes bulanan mengikut kategori')" class="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-chart-column text-purple-500 mr-1"></i> Analisis Bulanan</button>
+                        <button onclick="setAiPrompt('Prestasi kontraktor paling tinggi')" class="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-hard-hat text-amber-500 mr-1"></i> Prestasi Kontraktor</button>
+                        <button onclick="setAiPrompt('Cadangan kawasan tukar paip (Heatmap)')" class="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-fire text-red-500 mr-1"></i> Cadangan Tukar Paip</button>
+                        <button onclick="setAiPrompt('Status kes kerja sivil tertunggak')" class="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-road text-slate-500 mr-1"></i> Status Kerja Sivil</button>
+                        <button onclick="setAiPrompt('Di manakah kawasan hotspot utama kes paip pecah?')" class="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-map-pin text-red-500 mr-1"></i> Hotspot Paip Pecah</button>
+                        <button onclick="setAiPrompt('Ramalan Titik Paip Pecah: Menjana unjuran zon risiko tinggi berdasarkan sejarah kerosakan paip dan jenis')" class="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-triangle-exclamation text-red-500 mr-1"></i> Ramalan Paip Pecah</button>
+                        <button onclick="setAiPrompt('Ramalan Titik Paip Bocor: Menjana unjuran zon risiko tinggi berdasarkan sejarah kerosakan paip dan jenis')" class="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-water text-blue-500 mr-1"></i> Ramalan Paip Bocor</button>
+                        <button onclick="setAiPrompt('Penjadualan Laluan ALD: Mencadangkan laluan harian yang paling optimum untuk pasukan pemantauan kebocoran berdasarkan keutamaan sejarah bilangan paip pecah dan bocor.')" class="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-route text-emerald-500 mr-1"></i> Penjadualan ALD</button>
                     </div>
 
                     <div class="p-3 border-t border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
@@ -562,8 +561,9 @@
                         </button>
                     </div>
                 </div>
-                <!-- Map Proof Panel -->
-                <div class="w-full lg:w-3/5 h-64 lg:h-full relative flex flex-col">
+                
+                <!-- Map Proof Panel (Dilaraskan kepada lg:w-2/5) -->
+                <div class="w-full lg:w-2/5 h-64 lg:h-full relative flex flex-col">
                     <div class="p-2 bg-slate-100 dark:bg-gray-800 text-xs font-semibold text-slate-700 dark:text-gray-300 border-b border-slate-200 dark:border-gray-700 flex justify-between items-center">
                         <span><i class="fa-solid fa-map-location-dot text-blue-500 mr-1"></i> Peta Analisis Visual AI</span>
                         <span id="ai-map-status" class="text-slate-500 font-normal">Sedia...</span>
