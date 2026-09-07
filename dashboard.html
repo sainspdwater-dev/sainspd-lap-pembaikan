@@ -120,6 +120,21 @@
 
         .col-lokasi { min-width: 280px; max-width: 350px; white-space: normal !important; word-break: break-word; }
         .col-lokasi textarea, .col-lokasi input { white-space: normal !important; word-break: break-word; height: auto; min-height: 45px; }
+
+        /* CONDITIONAL FORMATTING - ROW LENGKAP */
+        tr.row-complete td, 
+        tr.row-complete td.col-1, 
+        tr.row-complete td.col-2,
+        table.dataTable tbody tr.row-complete td {
+            background-color: #dcfce7 !important; /* Hijau cair soft untuk mod siang */
+        }
+
+        .dark tr.row-complete td, 
+        .dark tr.row-complete td.col-1, 
+        .dark tr.row-complete td.col-2,
+        .dark table.dataTable tbody tr.row-complete td {
+            background-color: #064e3b !important; /* Hijau gelap Emerald 900 untuk mod malam */
+        }
     </style>
 </head>
 <body class="flex h-[100dvh] w-full overflow-hidden">
@@ -198,7 +213,6 @@
             <button id="nav-daily" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="Laporan Harian">
                 <i class="fa-solid fa-calendar-day w-6 text-center"></i> <span class="sidebar-text ml-3 font-medium">Laporan Harian</span>
             </button>
-            <!-- TAB BARU: AI AGENT (KHAS ADMIN) -->
             <button id="nav-ai" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="AI Agent">
                 <i class="fa-solid fa-robot w-6 text-center text-purple-500"></i> <span class="sidebar-text ml-3 font-medium">AI Agent</span>
             </button>
@@ -682,6 +696,33 @@
                 '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
             }[match]));
         }
+
+        // FUNGSI CHECK KELENGKAPAN ROW (KECUALI SIVIL WORKS & TARIKH PEMBAIKAN)
+        window.isRowComplete = function(r) {
+            if (!r) return false;
+            const req = [
+                r['NO ADUAN'] || r['noAduan'],
+                r['ZON'],
+                r['DMA'],
+                r['KATEGORI'],
+                r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi'],
+                r['KORDINAT'],
+                r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA'],
+                r['TARIKH  TUTUP ADUAN'] || r['TARIKH TUTUP'] || r['tarikhTutup'],
+                r['JENIS PAIP'],
+                r['SAIZ PAIP'],
+                r['JENIS PAIP BARU'],
+                r['SAIZ'],
+                r['PANJANG PAIP (M)'],
+                r['DILAKSANAKAN OLEH'] || r['Pelaksana']
+            ];
+            
+            // Return true jika semua values di atas wujud dan bukan sekadar '-'
+            return req.every(val => {
+                const str = String(val || '').trim();
+                return str !== '' && str !== '-';
+            });
+        };
 
         if (localStorage.getItem('sainsLoggedIn') !== 'true') { window.location.replace('index.html'); }
         window.addEventListener('pageshow', function(event) {
@@ -1601,8 +1642,12 @@
                 const lokasiVal = row['LOKASI / TEMPAT'] || row['LOKASI'] || '';
                 const kordinatVal = row['KORDINAT'] || '';
 
+                // Semak kelengkapan Row dan tetapkan kelas
+                const isComplete = window.isRowComplete(row);
+                const trClass = isComplete ? 'row-complete' : '';
+
                 html += `
-                    <tr>
+                    <tr class="${trClass}">
                         <td class="col-1 text-center p-1 whitespace-nowrap" tabindex="-1">
                             <button type="button" onclick="saveCroRow(this)" class="text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded text-xs mx-0.5 transition font-bold shadow-sm" title="Simpan"><i class="fa-solid fa-save"></i> SIMPAN</button>
                             <button type="button" onclick="confirmDeleteCro('${escapeHTML(noAduan)}')" class="text-red-600 hover:text-red-800 bg-red-100 hover:bg-red-200 px-2 py-1 rounded text-xs mx-0.5 transition shadow-sm" title="Padam"><i class="fa-solid fa-trash"></i></button>
@@ -2552,7 +2597,16 @@
                     fixedColumns: { left: 2 },
                     order: [[4, 'desc']],
                     dom: 'Bfrtip', 
-                    buttons: ['excel', 'pdf', 'print'] 
+                    buttons: ['excel', 'pdf', 'print'],
+                    // MENGESAN ROW LENGKAP PADA DATATABLES
+                    createdRow: function(row, data, dataIndex) {
+                        const noAduanVal = $(data[1]).text() || data[1]; // Index 1 ialah No Aduan
+                        const rawRow = rawData.find(r => escapeHTML(r['NO ADUAN'] || '') === noAduanVal);
+                        
+                        if (rawRow && window.isRowComplete(rawRow)) {
+                            $(row).addClass('row-complete');
+                        }
+                    }
                 }); 
                 if(initialMgmtBulan) {
                     managementTable.column(3).search(initialMgmtBulan).draw();
