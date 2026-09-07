@@ -156,7 +156,7 @@
 <body class="flex h-[100dvh] w-full overflow-hidden">
 
     <!-- Toast Notification -->
-    <div id="toast-container" class="fixed bottom-6 right-6 z-[100] flex flex-col gap-2 pointer-events-none"></div>
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[9999] flex flex-col gap-2 pointer-events-none"></div>
 
     <!-- MODEN LOADING OVERLAY -->
     <div id="loading-overlay">
@@ -1327,7 +1327,7 @@
         }
 
         function getFormData() {
-            const noAduan = document.getElementById('m-noAduan').value;
+            const noAduan = document.getElementById('m-noAduan').value.trim();
             const zon = document.getElementById('m-zon').value;
             const tarikhTerima = convertToDDMMYYYYHHMM(document.getElementById('m-tarikhTerima').value);
             const tarikhTutup = convertToDDMMYYYYHHMM(document.getElementById('m-tarikhTutup').value);
@@ -1913,6 +1913,15 @@
             const noAduan = tr.querySelector('.cro-noAduan').value.trim();
             if(!noAduan) { alert("Sila masukkan No Aduan"); return; }
 
+            const isNew = tr.classList.contains('new-row');
+            if (isNew) {
+                const exists = rawData.some(r => String(r['NO ADUAN'] || '').trim().toLowerCase() === noAduan.toLowerCase());
+                if (exists) {
+                    showToast(`No Aduan "${noAduan}" sudah wujud! Sila gunakan No Aduan yang lain.`, "error");
+                    return;
+                }
+            }
+
             const kordinat = tr.querySelector('.cro-kordinat').value.trim();
             let districtAreaVal = '';
             if (kordinat) {
@@ -1950,7 +1959,6 @@
                 "DILAKSANAKAN OLEH": tr.querySelector('.cro-pelaksana').value
             };
 
-            const isNew = tr.classList.contains('new-row');
             const exists = rawData.some(r => String(r['NO ADUAN']).trim() === String(noAduan).trim());
             const action = exists && !isNew ? 'updateData' : (exists && isNew ? 'updateData' : 'addData');
             
@@ -2038,12 +2046,32 @@
 
         document.getElementById('form-mutation').addEventListener('submit', (e) => {
             e.preventDefault();
-            const action = currentMode === 'add' ? 'addData' : 'updateData';
             let payload = getFormData();
-            
-            if (currentMode === 'update') {
-                payload._oldNoAduan = window.currentOriginalNoAduan;
+            const noAduan = String(payload['NO ADUAN'] || '').trim();
+
+            if (!noAduan) {
+                showToast("Sila masukkan No Aduan.", "error");
+                return;
             }
+
+            if (currentMode === 'add') {
+                const exists = rawData.some(r => String(r['NO ADUAN'] || r['noAduan'] || '').trim().toLowerCase() === noAduan.toLowerCase());
+                if (exists) {
+                    showToast(`No Aduan "${noAduan}" sudah wujud dalam sistem! Sila guna nombor aduan yang lain.`, "error");
+                    return;
+                }
+            } else if (currentMode === 'update') {
+                payload._oldNoAduan = window.currentOriginalNoAduan;
+                if (noAduan.toLowerCase() !== String(window.currentOriginalNoAduan).toLowerCase()) {
+                    const exists = rawData.some(r => String(r['NO ADUAN'] || r['noAduan'] || '').trim().toLowerCase() === noAduan.toLowerCase());
+                    if (exists) {
+                        showToast(`No Aduan "${noAduan}" sudah wujud pada rekod lain!`, "error");
+                        return;
+                    }
+                }
+            }
+
+            const action = currentMode === 'add' ? 'addData' : 'updateData';
             triggerPreviewBeforeSave(action, payload);
         });
 
