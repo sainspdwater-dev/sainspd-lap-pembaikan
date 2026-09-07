@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard • Laporan Pembaikan SAINS PD</title>
     
+    <!-- Preconnect untuk Mempercepat Capaian CDN Luaran -->
+    <link rel="preconnect" href="https://unpkg.com" crossorigin>
+    <link rel="preconnect" href="https://code.jquery.com" crossorigin>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -46,8 +52,21 @@
         body { background-color: #f1f5f9; color: #1e293b; font-family: 'Inter', system-ui, sans-serif; transition: background 0.3s, color 0.3s; }
         .dark body, html.dark { background-color: #0f172a; color: #f8fafc; }
         
-        .dashboard-card { background-color: #ffffff; border: 1px solid #cbd5e1; border-radius: 0.75rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-        .dark .dashboard-card { background-color: #1e293b; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .dashboard-card { 
+            background-color: #ffffff; 
+            border: 1px solid #cbd5e1; 
+            border-radius: 0.75rem; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); 
+            content-visibility: auto;
+            contain-intrinsic-size: 0 300px;
+        }
+        .dark .dashboard-card { 
+            background-color: #1e293b; 
+            border: 1px solid #334155; 
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); 
+            content-visibility: auto;
+            contain-intrinsic-size: 0 300px;
+        }
 
         .form-input { width: 100%; padding: 0.6rem 1rem; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.375rem; color: #1e293b; font-size: 0.875rem; }
         .dark .form-input { background-color: #0f172a; border: 1px solid #475569; color: #f8fafc; }
@@ -126,14 +145,14 @@
         tr.row-complete td.col-1, 
         tr.row-complete td.col-2,
         table.dataTable tbody tr.row-complete td {
-            background-color: #dcfce7 !important; /* Hijau cair soft untuk mod siang */
+            background-color: #dcfce7 !important;
         }
 
         .dark tr.row-complete td, 
         .dark tr.row-complete td.col-1, 
         .dark tr.row-complete td.col-2,
         .dark table.dataTable tbody tr.row-complete td {
-            background-color: #064e3b !important; /* Hijau gelap Emerald 900 untuk mod malam */
+            background-color: #064e3b !important;
         }
     </style>
 </head>
@@ -717,7 +736,6 @@
                 r['DILAKSANAKAN OLEH'] || r['Pelaksana']
             ];
             
-            // Return true jika semua values di atas wujud dan bukan sekadar '-'
             return req.every(val => {
                 const str = String(val || '').trim();
                 return str !== '' && str !== '-';
@@ -1642,7 +1660,6 @@
                 const lokasiVal = row['LOKASI / TEMPAT'] || row['LOKASI'] || '';
                 const kordinatVal = row['KORDINAT'] || '';
 
-                // Semak kelengkapan Row dan tetapkan kelas
                 const isComplete = window.isRowComplete(row);
                 const trClass = isComplete ? 'row-complete' : '';
 
@@ -2128,7 +2145,6 @@
             });
             document.getElementById('btn-cro-add').addEventListener('click', addCroBlankRow);
 
-            // Event Listener AI Agent Chat
             const aiSendBtn = document.getElementById('ai-send-btn');
             const aiInput = document.getElementById('ai-chat-input');
             if(aiSendBtn && aiInput) {
@@ -2435,7 +2451,10 @@
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
             markerClusterGroup = L.markerClusterGroup(); map.addLayer(markerClusterGroup);
             
-            muatSemuaDMZ();
+            // Ditangguhkan sedikit (Lazy loading) untuk mengelakkan rintangan muatan awal (PageSpeed TBT/LCP)
+            setTimeout(() => {
+                muatSemuaDMZ();
+            }, 800);
         }
 
         function updateDashboard() {
@@ -2598,9 +2617,8 @@
                     order: [[4, 'desc']],
                     dom: 'Bfrtip', 
                     buttons: ['excel', 'pdf', 'print'],
-                    // MENGESAN ROW LENGKAP PADA DATATABLES
                     createdRow: function(row, data, dataIndex) {
-                        const noAduanVal = $(data[1]).text() || data[1]; // Index 1 ialah No Aduan
+                        const noAduanVal = $(data[1]).text() || data[1];
                         const rawRow = rawData.find(r => escapeHTML(r['NO ADUAN'] || '') === noAduanVal);
                         
                         if (rawRow && window.isRowComplete(rawRow)) {
