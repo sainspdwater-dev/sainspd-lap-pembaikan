@@ -1171,6 +1171,10 @@
             startLiveClock();
             setupEvents();
 
+            // PANGGILAN FUNGSI DROP ZONE & MEMORI KOLAM
+            loadSavedFilesFromSession();
+            setupDropZoneEvents();
+
             showLoading(true, 10, "Memeriksa sesi pengguna...");
 
             const cachedData = localStorage.getItem('sainsRawData');
