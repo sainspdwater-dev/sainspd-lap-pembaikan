@@ -35,10 +35,9 @@
     <link rel="stylesheet" href="https://cdn.datatables.net/fixedcolumns/4.3.0/css/fixedColumns.dataTables.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
-    <!-- jQuery (Dimuatkan awal untuk kebolehgantungan skrip asas) -->
+    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-    <!-- Font Display Swap & Container Min-Heights untuk Menghapuskan CLS -->
     <style>
         @font-face {
             font-family: "Font Awesome 6 Free";
@@ -66,7 +65,7 @@
             min-height: 250px;
         }
 
-        .form-input { width: 100%; padding: 0.6rem 1rem; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.375rem; color: #1e293b; font-size: 0.875rem; }
+        .form-input { width: 100%; padding: 0.5rem 0.75rem; background-color: #f8fafc; border: 1px solid #cbd5e1; border-radius: 0.375rem; color: #1e293b; font-size: 0.875rem; }
         .dark .form-input { background-color: #0f172a; border: 1px solid #475569; color: #f8fafc; }
         .form-input:focus { border-color: #3b82f6; outline: none; }
         .form-input[readonly] { background-color: #e2e8f0; color: #64748b; cursor: not-allowed; }
@@ -75,7 +74,7 @@
         .form-label { display: block; font-size: 0.8rem; font-weight: 600; color: #475569; margin-bottom: 0.3rem; text-transform: uppercase; }
         .dark .form-label { color: #94a3b8; }
 
-        .filter-select { background-color: #ffffff; border: 1px solid #cbd5e1; color: #1e293b; border-radius: 0.375rem; padding: 0.5rem; }
+        .filter-select { background-color: #ffffff; border: 1px solid #cbd5e1; color: #1e293b; border-radius: 0.375rem; padding: 0.4rem 0.5rem; }
         .dark .filter-select { background-color: #0f172a; border: 1px solid #475569; color: #f8fafc; }
 
         #managementTable td, #dataTable td { white-space: normal !important; word-break: break-word; max-width: 200px; }
@@ -231,6 +230,9 @@
             </button>
             <button id="nav-ai" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="AI Agent">
                 <i class="fa-solid fa-robot w-6 text-center text-purple-500"></i> <span class="sidebar-text ml-3 font-medium">AI Agent</span>
+            </button>
+            <button id="nav-kolam" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="Automasi Kolam">
+                <i class="fa-solid fa-water-ladder w-6 text-center text-cyan-500"></i> <span class="sidebar-text ml-3 font-medium">Automasi Kolam</span>
             </button>
         </nav>
 
@@ -525,50 +527,157 @@
             </section>
         </div>
 
-        <!-- TAB 5: AI AGENT (KHAS ADMIN) -->
-        <div id="ai-agent-content" class="hidden pb-24 h-[calc(100vh-100px)] flex flex-col">
-            <header class="mb-3 flex justify-between items-center shrink-0">
+        <!-- TAB 5: AI AGENT (KHAS ADMIN) - SUSUN ATUR ATAS (PROMPTS & PARAMETER), BAWAH (RESPON AI DENGAN SKROL) -->
+        <div id="ai-agent-content" class="hidden pb-24 h-[calc(100vh-90px)] flex flex-col">
+            <header class="mb-2 flex justify-between items-center shrink-0">
                 <div>
-                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3"><i class="fa-solid fa-user-tie text-purple-500"></i> AI Agent (Engineer & Planner)</h2>
-                    <p class="text-slate-500 dark:text-gray-400 mt-0.5 text-xs">Pembantu analitikal operasi NRW. Jana rumusan, pemetaan automatik, dan cadangan aset.</p>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><i class="fa-solid fa-user-tie text-purple-500"></i> AI Agent (Engineer & Planner)</h2>
+                    <p class="text-slate-500 dark:text-gray-400 text-xs">Pembantu analitikal operasi NRW. Jana rumusan, pemetaan automatik, dan cadangan aset berdasarkan District Metered Area.</p>
                 </div>
             </header>
             <div class="dashboard-card flex-1 flex flex-col lg:flex-row overflow-hidden p-0">
-                <!-- Chat Panel (Dilebarkan kepada lg:w-3/5 supaya kotak respon lebih besar) -->
-                <div class="w-full lg:w-3/5 flex flex-col border-r border-slate-200 dark:border-gray-700 h-full bg-slate-50 dark:bg-gray-900">
-                    <div id="ai-chat-messages" class="flex-1 p-5 overflow-y-auto space-y-4 text-sm">
-                        <div class="bg-white dark:bg-gray-800 p-3.5 rounded-lg border border-slate-200 dark:border-gray-700 shadow-sm text-slate-800 dark:text-slate-200">
-                            <b class="text-purple-600 dark:text-purple-400"><i class="fa-solid fa-robot"></i> Sains AI Planner:</b> Selamat sejahtera. Saya sedia membantu menganalisis data operasi, merumus metrik bulanan, dan memberikan justifikasi teknikal (NRW & Aset) terus ke atas peta. Sila pilih analisis di bawah atau taip soalan anda.
+                <!-- Panel Kiri: Atas (Prompt, Parameter & Kotak Submit), Bawah (Kotak Respon AI dengan Skrol Penuh) -->
+                <div class="w-full lg:w-3/5 flex flex-col border-r border-slate-200 dark:border-gray-700 h-full bg-slate-50 dark:bg-gray-900 overflow-hidden">
+                    
+                    <!-- BAHAGIAN ATAS: Prompt Chips, Parameter & Kotak Hantar -->
+                    <div class="p-3 bg-slate-100 dark:bg-gray-800 border-b border-slate-200 dark:border-gray-700 flex flex-col gap-2 shrink-0">
+                        <!-- Prompt Chips -->
+                        <div id="ai-prompt-chips" class="flex flex-wrap gap-1">
+                            <button onclick="setAiPrompt('Analisis kes bulanan mengikut kategori', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-chart-column text-purple-500 mr-1"></i> Analisis Bulanan</button>
+                            <button onclick="setAiPrompt('Prestasi kontraktor paling tinggi', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-hard-hat text-amber-500 mr-1"></i> Prestasi Kontraktor</button>
+                            <button onclick="setAiPrompt('Cadangan kawasan tukar paip (Heatmap)', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-fire text-red-500 mr-1"></i> Cadangan Tukar Paip</button>
+                            <button onclick="setAiPrompt('Status kes kerja sivil tertunggak', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-road text-slate-500 mr-1"></i> Status Kerja Sivil</button>
+                            <button onclick="setAiPrompt('Di manakah kawasan hotspot utama kes paip pecah?', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-map-pin text-red-500 mr-1"></i> Hotspot Paip Pecah</button>
+                            <button onclick="setAiPrompt('Berikan ramalan kes paip pecah berdasarkan data semasa', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-triangle-exclamation text-amber-500 mr-1"></i> Ramalan Paip Pecah</button>
+                            <button onclick="setAiPrompt('Analisis ramalan paip bocor dan zon berisiko tinggi', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-water text-cyan-500 mr-1"></i> Ramalan Paip Bocor</button>
+                            <button onclick="setAiPrompt('Cadangan jadual Active Leakage Detection (ALD) mengikut zon', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-magnifying-glass-chart text-emerald-500 mr-1"></i> Penjadualan ALD</button>
+                        </div>
+
+                        <!-- Kotak Parameter AI -->
+                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                            <div>
+                                <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]">Tapis Bulan</label>
+                                <select id="ai-filter-bulan" class="filter-select w-full py-1 text-xs"><option value="">Semua</option></select>
+                            </div>
+                            <div>
+                                <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]">District Metered Area</label>
+                                <select id="ai-filter-district" class="filter-select w-full py-1 text-xs"><option value="">Semua</option></select>
+                            </div>
+                            <div>
+                                <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]" title="Average Total Flow per day (m³)">Avg Flow/Day (m³)</label>
+                                <input type="number" step="any" id="ai-avg-flow" class="form-input py-1 text-xs" placeholder="Cth: 1200">
+                            </div>
+                            <div>
+                                <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]" title="Average Minimum Night Flow (m³/h)">Avg MNF (m³/h)</label>
+                                <input type="number" step="any" id="ai-avg-mnf" class="form-input py-1 text-xs" placeholder="Cth: 25.5">
+                            </div>
+                            <div>
+                                <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]" title="Jumlah Bil Sehari (m3)">Jumlah Bil Sehari (m³)</label>
+                                <input type="number" step="any" id="ai-jumlah-bil" class="form-input py-1 text-xs" placeholder="Cth: 950">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center text-xs">
+                            <div>
+                                <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]">Avg Pressure & Panjang Paip</label>
+                                <div class="flex gap-1">
+                                    <input type="number" step="any" id="ai-avg-pressure" class="form-input py-1 text-xs flex-1" placeholder="Tekanan">
+                                    <select id="ai-pressure-unit" class="filter-select py-1 w-14 text-center px-0.5 text-xs"><option value="bar">bar</option><option value="m">m</option></select>
+                                    <input type="number" step="any" id="ai-pipe-length" class="form-input py-1 text-xs flex-1" placeholder="Panjang (m)">
+                                </div>
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="font-bold text-emerald-600 dark:text-emerald-400 mb-0.5 block text-[10px]"><i class="fa-solid fa-file-excel mr-1"></i> Data Flow District Metered Area (Excel/CSV)</label>
+                                <input type="file" id="ai-flow-file" accept=".csv, .xls, .xlsx" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-0.5 file:px-2 file:rounded file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
+                            </div>
+                        </div>
+
+                        <!-- Kotak Hantar (Submit) & Reset -->
+                        <div class="flex gap-2 pt-1">
+                            <input type="text" id="ai-chat-input" aria-label="Soalan kepada AI Agent" class="form-input flex-1 text-xs bg-white dark:bg-gray-900 py-1.5" placeholder="Sila pilih prompt di atas atau taip soalan..." autocomplete="off">
+                            <button type="button" onclick="resetAiInputs()" class="px-3 py-1.5 bg-slate-500 hover:bg-slate-600 text-white rounded-md text-xs font-bold flex items-center gap-1 transition shadow-sm" title="Reset Semua Parameter & Fail">
+                                <i class="fa-solid fa-rotate-right"></i> Reset
+                            </button>
+                            <button id="ai-send-btn" aria-label="Hantar mesej AI" class="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-md text-xs font-bold flex items-center gap-1.5 transition shadow-sm">
+                                Submit <i class="fa-solid fa-paper-plane"></i>
+                            </button>
                         </div>
                     </div>
-                    
-                    <!-- Prompt Chips -->
-                    <div class="px-3 py-2 bg-slate-100 dark:bg-gray-800 border-t border-slate-200 dark:border-gray-700 flex flex-wrap gap-1.5 overflow-x-auto shrink-0 max-h-28">
-                        <button onclick="setAiPrompt('Analisis kes bulanan mengikut kategori')" class="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-chart-column text-purple-500 mr-1"></i> Analisis Bulanan</button>
-                        <button onclick="setAiPrompt('Prestasi kontraktor paling tinggi')" class="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-hard-hat text-amber-500 mr-1"></i> Prestasi Kontraktor</button>
-                        <button onclick="setAiPrompt('Cadangan kawasan tukar paip (Heatmap)')" class="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-fire text-red-500 mr-1"></i> Cadangan Tukar Paip</button>
-                        <button onclick="setAiPrompt('Status kes kerja sivil tertunggak')" class="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-road text-slate-500 mr-1"></i> Status Kerja Sivil</button>
-                        <button onclick="setAiPrompt('Di manakah kawasan hotspot utama kes paip pecah?')" class="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-map-pin text-red-500 mr-1"></i> Hotspot Paip Pecah</button>
-                        <button onclick="setAiPrompt('Ramalan Titik Paip Pecah: Menjana unjuran zon risiko tinggi berdasarkan sejarah kerosakan paip dan jenis')" class="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-triangle-exclamation text-red-500 mr-1"></i> Ramalan Paip Pecah</button>
-                        <button onclick="setAiPrompt('Ramalan Titik Paip Bocor: Menjana unjuran zon risiko tinggi berdasarkan sejarah kerosakan paip dan jenis')" class="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-water text-blue-500 mr-1"></i> Ramalan Paip Bocor</button>
-                        <button onclick="setAiPrompt('Penjadualan Laluan ALD: Mencadangkan laluan harian yang paling optimum untuk pasukan pemantauan kebocoran berdasarkan keutamaan sejarah bilangan paip pecah dan bocor.')" class="whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-route text-emerald-500 mr-1"></i> Penjadualan ALD</button>
+
+                    <!-- BAHAGIAN BAWAH: Kotak Respon AI dengan Skrol Penuh -->
+                    <div id="ai-chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm bg-white dark:bg-gray-900">
+                        <div class="bg-slate-50 dark:bg-gray-800 p-3.5 rounded-lg border border-slate-200 dark:border-gray-700 shadow-sm text-slate-800 dark:text-slate-200">
+                            <b class="text-purple-600 dark:text-purple-400"><i class="fa-solid fa-robot"></i> Sains AI Planner:</b> Selamat sejahtera. Saya sedia membantu menganalisis data operasi berpandukan **District Metered Area**, merumus metrik bulanan, dan memberikan justifikasi teknikal (NRW & Aset) terus ke atas peta. Sila pilih analisis di atas, tetapkan parameter, atau taip soalan anda.
+                        </div>
                     </div>
 
-                    <div class="p-3 border-t border-slate-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
-                        <input type="text" id="ai-chat-input" aria-label="Soalan kepada AI Agent" class="form-input flex-1 text-sm bg-slate-50 dark:bg-gray-900" placeholder="Tanya soalan teknikal..." autocomplete="off">
-                        <button id="ai-send-btn" aria-label="Hantar mesej AI" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-md text-sm font-bold flex items-center gap-1 transition shadow-sm">
-                            <i class="fa-solid fa-paper-plane"></i>
-                        </button>
-                    </div>
                 </div>
                 
-                <!-- Map Proof Panel (Dilaraskan kepada lg:w-2/5) -->
+                <!-- Map Proof Panel -->
                 <div class="w-full lg:w-2/5 h-64 lg:h-full relative flex flex-col">
                     <div class="p-2 bg-slate-100 dark:bg-gray-800 text-xs font-semibold text-slate-700 dark:text-gray-300 border-b border-slate-200 dark:border-gray-700 flex justify-between items-center">
-                        <span><i class="fa-solid fa-map-location-dot text-blue-500 mr-1"></i> Peta Analisis Visual AI</span>
+                        <span><i class="fa-solid fa-map-location-dot text-blue-500 mr-1"></i> Peta Analisis Visual AI (District Metered Area)</span>
                         <span id="ai-map-status" class="text-slate-500 font-normal">Sedia...</span>
                     </div>
                     <div id="ai-agent-map" class="flex-1 w-full h-full min-h-[300px] z-10"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 6: AUTOMASI KOLAM -->
+        <div id="kolam-content" class="hidden pb-24 h-[calc(100vh-100px)] flex-col">
+            <header class="mb-4 flex justify-between items-center shrink-0">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-3"><i class="fa-solid fa-water-ladder text-cyan-500"></i> Automasi Laporan Kolam</h2>
+                    <p class="text-slate-500 dark:text-gray-400 mt-0.5 text-xs">Jana laporan bacaan tangki/kolam secara automatik ke WhatsApp.</p>
+                </div>
+            </header>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
+                <!-- Panel Kawalan & Muat Naik -->
+                <div class="dashboard-card p-5 flex flex-col gap-4 bg-slate-50 dark:bg-gray-900 overflow-y-auto">
+                    <div>
+                        <label class="form-label" for="kolam-date"><i class="fa-regular fa-calendar text-blue-500"></i> Tarikh Laporan</label>
+                        <input type="date" id="kolam-date" class="form-input">
+                    </div>
+                    <div>
+                        <label class="form-label" for="kolam-time"><i class="fa-regular fa-clock text-blue-500"></i> Masa Bacaan</label>
+                        <input type="time" id="kolam-time" class="form-input" step="900">
+                    </div>
+                    <div class="border-t border-slate-200 dark:border-gray-700 pt-3">
+                        <label class="form-label mb-2"><i class="fa-solid fa-file-excel text-emerald-500"></i> Muat Naik Fail Pukal</label>
+                        
+                        <!-- Kotak Drag & Drop -->
+                        <div id="drop-zone" class="border-2 border-dashed border-slate-300 dark:border-gray-600 hover:border-blue-500 rounded-xl p-4 text-center cursor-pointer bg-white dark:bg-gray-800 transition flex flex-col items-center justify-center gap-2">
+                            <i class="fa-solid fa-cloud-arrow-up text-3xl text-blue-500"></i>
+                            <p class="text-xs text-slate-600 dark:text-gray-300 font-medium">Seret & Letak fail Excel/CSV di sini atau <span class="text-blue-500 underline">Pilih Fail</span></p>
+                            <input type="file" id="kolam-files" multiple accept=".xlsx, .xls, .csv" class="hidden">
+                        </div>
+
+                        <div class="flex justify-between items-center mt-2">
+                            <span id="file-count-label" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">0 fail tersimpan dalam memori</span>
+                            <button id="btn-reset-kolam-files" class="text-xs text-red-500 hover:text-red-700 font-bold underline"><i class="fa-solid fa-trash-can mr-1"></i> Reset Fail</button>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-1">*Fail kekal disimpan selama 1 jam. Anda boleh tambah fail baru pada bila-bila masa.</p>
+                    </div>
+                    <button id="btn-jana-kolam" class="mt-auto px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-bold flex justify-center items-center gap-2 shadow-sm transition">
+                        <i class="fa-solid fa-gears"></i> Baca & Jana Laporan
+                    </button>
+                </div>
+
+                <!-- Panel Laporan (Edit & Hantar) -->
+                <div class="lg:col-span-2 dashboard-card p-5 flex flex-col bg-slate-50 dark:bg-gray-900">
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="form-label mb-0"><i class="fa-brands fa-whatsapp text-emerald-500 text-lg"></i> Prebiu Laporan (Boleh Diedit)</label>
+                        <div class="flex gap-2">
+                            <button id="btn-copy-kolam" class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs font-bold flex items-center gap-1 transition">
+                                <i class="fa-solid fa-copy"></i> Copy Text
+                            </button>
+                            <button id="btn-wa-kolam" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-bold flex items-center gap-1 transition">
+                                <i class="fa-brands fa-whatsapp"></i> Hantar WhatsApp
+                            </button>
+                        </div>
+                    </div>
+                    <textarea id="kolam-report-output" class="form-input flex-1 font-mono text-xs leading-relaxed resize-none p-4 rounded-xl border border-slate-300 dark:border-gray-700 h-full min-h-[400px]" placeholder="Sila pilih tarikh, masa, muat naik fail dan tekan 'Baca & Jana Laporan'..."></textarea>
                 </div>
             </div>
         </div>
@@ -656,7 +765,7 @@
 
                 <div class="flex justify-end gap-3 pt-4 border-t border-slate-200 dark:border-gray-700">
                     <button type="button" id="closeModalBtn" class="px-4 py-2 bg-slate-200 dark:bg-gray-700 hover:bg-slate-300 dark:hover:bg-gray-600 rounded text-slate-800 dark:text-white text-sm font-medium">Batal</button>
-                    <button type="submit" id="modalSubmitBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 rounded text-white font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-save"></i> Semak & Simpan</button>
+                    <button type="submit" id="modalSubmitBtn" class="px-6 py-2 bg-blue-600 hover:bg-blue-50 rounded text-white font-bold text-sm flex items-center gap-2"><i class="fa-solid fa-save"></i> Semak & Simpan</button>
                 </div>
             </form>
         </div>
@@ -675,7 +784,7 @@
         </div>
     </div>
 
-    <!-- MODAL: SEMAKAN SEMULA & PREVIEW SEBELUM CONFIRM -->
+    <!-- MODAL: SEMAKAN SEMULA & PREVIEW -->
     <div id="previewModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[250] hidden flex items-center justify-center p-4">
         <div class="dashboard-card w-full max-w-2xl p-6 relative border-t-4 border-t-blue-500">
             <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2"><i class="fa-solid fa-circle-check text-blue-500"></i> Prebiu Ringkasan Rekod</h3>
@@ -703,7 +812,7 @@
         </div>
     </div>
 
-    <!-- SKRIP LUARAN DENGAN DEFER (MENGELAKKAN RENDER-BLOCKING) -->
+    <!-- SKRIP LUARAN DENGAN DEFER -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js" defer></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js" defer></script>
@@ -714,6 +823,7 @@
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js" defer></script>
     <script src="https://cdn.datatables.net/fixedcolumns/4.3.0/js/dataTables.fixedColumns.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
 
     <!-- SCRIPT UTAMA APLIKASI -->
     <script>
@@ -937,7 +1047,7 @@
                                 f.properties._fileName = cleanFileName;
                                 f.properties._mainArea = mainArea;
                                 let nama = getFeatureName(f.properties);
-                                layer.bindPopup(`<b>DMA (${mainArea}):</b> ${escapeHTML(nama)}`);
+                                layer.bindPopup(`<b>District Metered Area (${mainArea}):</b> ${escapeHTML(nama)}`);
                             }
                         }).addTo(map);
                     }
@@ -1165,7 +1275,7 @@
 
                 if (percent <= 40) {
                     if(elTruckGroup) elTruckGroup.style.transform = "translateX(0)";
-                    if(elWheels) elWheels.forEach(w => w.style.transform = "rotate(0deg)");
+                    if(elWheels) elWheels.forEach(w => { w.style.transform = "rotate(0deg)"; });
                     if(elValveWheel) elValveWheel.style.transform = "rotate(0deg)";
                     if(elWaterStream) elWaterStream.style.opacity = "0";
                     if(elWaterFill) { elWaterFill.setAttribute('y', 280); elWaterFill.setAttribute('height', 0); }
@@ -1181,7 +1291,7 @@
                     if(percent >= 90 && elValveWheel) elValveWheel.style.transform = "rotate(0deg)";
                 } else if (percent >= 95) {
                     if(elTruckGroup) elTruckGroup.style.transform = "translateX(500px)";
-                    if(elWheels) elWheels.forEach(w => w.style.transform = "rotate(720deg)");
+                    if(elWheels) elWheels.forEach(w => { w.style.transform = "rotate(720deg)"; });
                 }
             } else {
                 overlay.style.opacity = "0";
@@ -2090,6 +2200,7 @@
             const navCro = document.getElementById('nav-cro');
             const navDaily = document.getElementById('nav-daily');
             const navAi = document.getElementById('nav-ai');
+            const navKolam = document.getElementById('nav-kolam');
 
             const hideAllTabs = () => {
                 document.getElementById('dashboard-content').style.display = 'none';
@@ -2097,9 +2208,12 @@
                 document.getElementById('cro-content').style.display = 'none';
                 document.getElementById('daily-content').style.display = 'none';
                 document.getElementById('ai-agent-content').style.display = 'none';
+                document.getElementById('kolam-content').style.display = 'none';
                 
                 const inactiveClass = "w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 transition-colors";
-                navD.className = inactiveClass; navU.className = inactiveClass; navCro.className = inactiveClass; navDaily.className = inactiveClass; if(navAi) navAi.className = inactiveClass;
+                navD.className = inactiveClass; navU.className = inactiveClass; navCro.className = inactiveClass; navDaily.className = inactiveClass; 
+                if(navAi) navAi.className = inactiveClass;
+                if(navKolam) navKolam.className = inactiveClass;
             };
 
             navD.addEventListener('click', () => {
@@ -2138,6 +2252,19 @@
                     navAi.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
                     if(!aiAgentMap) initAiAgentMap();
                     else setTimeout(() => aiAgentMap.invalidateSize(), 300);
+                });
+            }
+
+            if(navKolam) {
+                navKolam.addEventListener('click', () => {
+                    hideAllTabs();
+                    document.getElementById('kolam-content').style.display = 'flex';
+                    navKolam.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
+                    const dateInput = document.getElementById('kolam-date');
+                    if(!dateInput.value) {
+                        const today = new Date();
+                        dateInput.value = today.toISOString().split('T')[0];
+                    }
                 });
             }
 
@@ -2188,9 +2315,66 @@
             }
         }
 
-        window.setAiPrompt = function(text) {
-            document.getElementById('ai-chat-input').value = text;
-            sendAiMessage();
+        window.setAiPrompt = function(text, btnElement) {
+            let bulan = document.getElementById('ai-filter-bulan').value;
+            let district = document.getElementById('ai-filter-district').value;
+            let avgFlow = document.getElementById('ai-avg-flow').value;
+            let avgMnf = document.getElementById('ai-avg-mnf').value;
+            let jumlahBil = document.getElementById('ai-jumlah-bil').value;
+            let pressure = document.getElementById('ai-avg-pressure').value;
+            let pUnit = document.getElementById('ai-pressure-unit').value;
+            let pLength = document.getElementById('ai-pipe-length').value;
+            
+            let fileInput = document.getElementById('ai-flow-file');
+            let fileName = (fileInput && fileInput.files.length > 0) ? fileInput.files[0].name : '';
+
+            let extraParts = [];
+            if (bulan) extraParts.push(`Bulan: ${bulan}`);
+            if (district) extraParts.push(`District Metered Area: ${district}`);
+            if (avgFlow) extraParts.push(`Avg Flow/Day: ${avgFlow} m³`);
+            if (avgMnf) extraParts.push(`Avg MNF: ${avgMnf} m³/h`);
+            if (jumlahBil) extraParts.push(`Jumlah Bil Sehari: ${jumlahBil} m³`);
+            if (pressure) extraParts.push(`Pressure: ${pressure} ${pUnit}`);
+            if (pLength) extraParts.push(`Panjang Paip: ${pLength} m`);
+            if (fileName) extraParts.push(`Fail Excel: ${fileName}`);
+
+            let combinedText = text;
+            if (extraParts.length > 0) {
+                combinedText += ` [Parameter Rujukan - ${extraParts.join(', ')}]`;
+            }
+
+            document.getElementById('ai-chat-input').value = combinedText;
+            
+            const chips = document.querySelectorAll('.ai-chip');
+            chips.forEach(c => {
+                c.classList.remove('ring-2', 'ring-purple-500', 'bg-purple-50', 'dark:bg-purple-900/30');
+                c.classList.add('bg-white', 'dark:bg-gray-700');
+            });
+
+            if (btnElement) {
+                btnElement.classList.remove('bg-white', 'dark:bg-gray-700');
+                btnElement.classList.add('ring-2', 'ring-purple-500', 'bg-purple-50', 'dark:bg-purple-900/30');
+            }
+        };
+
+        window.resetAiInputs = function() {
+            document.getElementById('ai-filter-bulan').value = '';
+            document.getElementById('ai-filter-district').value = '';
+            document.getElementById('ai-avg-flow').value = '';
+            document.getElementById('ai-avg-mnf').value = '';
+            document.getElementById('ai-jumlah-bil').value = '';
+            document.getElementById('ai-avg-pressure').value = '';
+            document.getElementById('ai-pressure-unit').value = 'bar';
+            document.getElementById('ai-pipe-length').value = '';
+            document.getElementById('ai-flow-file').value = '';
+            document.getElementById('ai-chat-input').value = '';
+
+            const chips = document.querySelectorAll('.ai-chip');
+            chips.forEach(c => {
+                c.classList.remove('ring-2', 'ring-purple-500', 'bg-purple-50', 'dark:bg-purple-900/30');
+                c.classList.add('bg-white', 'dark:bg-gray-700');
+            });
+            showToast("Semua parameter & fail AI telah di-reset.", "success");
         };
 
         function initAiAgentMap() {
@@ -2215,7 +2399,7 @@
                         onEachFeature: (f, layer) => {
                             let nama = f.properties._fileName || 'Kawasan DMZ';
                             let mainArea = f.properties._mainArea || '';
-                            layer.bindPopup(`<b>DMA (${mainArea}):</b> ${escapeHTML(nama)}`);
+                            layer.bindPopup(`<b>District Metered Area (${mainArea}):</b> ${escapeHTML(nama)}`);
                         }
                     }).addTo(aiAgentMap);
                 });
@@ -2226,7 +2410,10 @@
             const inputEl = document.getElementById('ai-chat-input');
             const messagesContainer = document.getElementById('ai-chat-messages');
             const prompt = inputEl.value.trim();
-            if(!prompt) return;
+            if(!prompt) {
+                showToast("Sila taip soalan atau pilih prompt terlebih dahulu.", "error");
+                return;
+            }
 
             messagesContainer.innerHTML += `
                 <div class="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg border border-purple-100 dark:border-purple-800 ml-6 text-slate-800 dark:text-slate-200 shadow-sm">
@@ -2239,29 +2426,73 @@
             const loadingId = 'ai-loading-' + Date.now();
             messagesContainer.innerHTML += `
                 <div id="${loadingId}" class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-slate-200 dark:border-gray-700 text-slate-500 italic shadow-sm flex items-center gap-2">
-                    <i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Memproses data geospatial & metrik...
+                    <i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Memproses parameter District Metered Area & metrik geospatial...
                 </div>
             `;
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-            const allRecordsForAi = (window.rawData || []).map(r => ({
-                noAduan: r['NO ADUAN'] || r['noAduan'] || '',
-                dma: r['DMA'] || r['dma'] || '',
-                kategori: r['KATEGORI'] || r['kategori'] || '',
-                jenisPaip: r['JENIS PAIP'] || r['jenisPaip'] || '',
-                lokasi: r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi'] || '',
-                kordinat: r['KORDINAT'] || r['kordinat'] || '',
-                tarikh: r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA'] || '',
-                bulan: r['BULAN'] || '',
-                pelaksana: r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || '',
-                sivil: r['SIVIL WORKS'] || r['sivilWorks'] || ''
-            }));
+            let flowDataArray = [];
+            const fileInput = document.getElementById('ai-flow-file');
+            if (fileInput && fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                try {
+                    const buffer = await file.arrayBuffer();
+                    const workbook = XLSX.read(buffer, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    flowDataArray = XLSX.utils.sheet_to_json(worksheet, { defval: null });
+                } catch(e) {
+                    console.warn("Gagal membaca fail flow AI:", e);
+                }
+            }
+
+            const aiParams = {
+                bulan: document.getElementById('ai-filter-bulan').value,
+                district: document.getElementById('ai-filter-district').value,
+                avgFlow: document.getElementById('ai-avg-flow').value,
+                avgMnf: document.getElementById('ai-avg-mnf').value,
+                jumlahBil: document.getElementById('ai-jumlah-bil').value,
+                avgPressure: document.getElementById('ai-avg-pressure').value,
+                pressureUnit: document.getElementById('ai-pressure-unit').value,
+                pipeLength: document.getElementById('ai-pipe-length').value,
+                flowData: flowDataArray 
+            };
+
+            let allRecordsForAi = (window.rawData || []).map(r => {
+                let distArea = r['District Metered Area'] || r['DISTRICT METERED AREA'] || r['districtMeteredArea'] || '';
+                if (parentFolders.includes(String(distArea).trim().toLowerCase())) distArea = '';
+
+                return {
+                    noAduan: r['NO ADUAN'] || r['noAduan'] || '',
+                    dma: distArea, // strictly District Metered Area
+                    kategori: r['KATEGORI'] || r['kategori'] || '',
+                    jenisPaip: r['JENIS PAIP'] || r['jenisPaip'] || '',
+                    lokasi: r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi'] || '',
+                    kordinat: r['KORDINAT'] || r['kordinat'] || '',
+                    tarikh: r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA'] || '',
+                    bulan: r['BULAN'] || '',
+                    pelaksana: r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || '',
+                    sivil: r['SIVIL WORKS'] || r['sivilWorks'] || ''
+                };
+            });
+
+            if (aiParams.bulan) {
+                allRecordsForAi = allRecordsForAi.filter(r => r.bulan === aiParams.bulan);
+            }
+            if (aiParams.district) {
+                allRecordsForAi = allRecordsForAi.filter(r => r.dma.toLowerCase() === aiParams.district.toLowerCase() || r.dma.toLowerCase().includes(aiParams.district.toLowerCase()));
+            }
 
             try {
                 const res = await fetch(WORKER_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('sainsToken')}` },
-                    body: JSON.stringify({ action: 'aiAgent', prompt: prompt, records: allRecordsForAi })
+                    body: JSON.stringify({ 
+                        action: 'aiAgent', 
+                        prompt: prompt, 
+                        records: allRecordsForAi,
+                        params: aiParams 
+                    })
                 });
 
                 const data = await res.json();
@@ -2271,7 +2502,7 @@
                     
                     messagesContainer.innerHTML += `
                         <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border-l-4 border-l-purple-500 border-y border-r border-slate-200 dark:border-gray-700 shadow-sm text-slate-800 dark:text-slate-200">
-                            <b class="text-purple-600 dark:text-purple-400 font-bold mb-2 block"><i class="fa-solid fa-robot"></i> Rumusan Analisis:</b>
+                            <b class="text-purple-600 dark:text-purple-400 font-bold mb-2 block"><i class="fa-solid fa-robot"></i> Rumusan Analisis (District Metered Area):</b>
                             <div class="leading-relaxed whitespace-pre-wrap">${escapeHTML(data.reply).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')}</div>
                         </div>
                     `;
@@ -2344,6 +2575,17 @@
             populateSel('mgmt-filter-bulan', sortedMonths);
             populateSel('cro-filter-bulan', sortedMonths);
 
+            populateSel('ai-filter-bulan', sortedMonths);
+
+            const districtsSet = new Set();
+            rawData.forEach(r => {
+                let d = r['District Metered Area'] || r['DISTRICT METERED AREA'] || r['districtMeteredArea'];
+                if(d && !parentFolders.includes(String(d).trim().toLowerCase())) {
+                    districtsSet.add(String(d).trim());
+                }
+            });
+            populateSel('ai-filter-district', [...districtsSet].sort());
+
             const latestMonth = sortedMonths.length > 0 ? sortedMonths[sortedMonths.length - 1] : '';
 
             const filterBulanEl = document.getElementById('filter-bulan');
@@ -2354,6 +2596,9 @@
 
             const croFilterBulan = document.getElementById('cro-filter-bulan');
             if (croFilterBulan && latestMonth) croFilterBulan.value = latestMonth;
+
+            const aiFilterBulan = document.getElementById('ai-filter-bulan');
+            if (aiFilterBulan && latestMonth) aiFilterBulan.value = latestMonth;
 
             const dmas = uniqueValues('DMA').sort();
             const zonContainer = document.getElementById('filter-zon-container');
@@ -2786,6 +3031,335 @@
             const encodedText = encodeURIComponent(previewBox.value);
             const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`; window.open(whatsappUrl, '_blank');
         });
+
+        const laporanTemplate = `*LAPORAN HARIAN KERJA PEMBAIKAN OPERASI SAINS PORT DICKSON*
+
+*TARIKH :* {TARIKH}
+*MASA :* {MASA}
+*KPI DAERAH:* 98.89%
+
+*STATUS SEMASA KEROSAKAN & GANGGUAN BEKALAN AKIBAT PAIP PECAH*
+
+*KES BARU :* TIADA
+*DALAM PEMBAIKAN :* 
+*a.* 
+*SIAP DIBAIKI :* TIADA
+*LAIN-LAIN GANGGUAN :* TIADA
+
+*PERKARA: PARAS KOLAM UTAMA / TANGKI AIR*
+*1).* Tmn. Bagan Kurnia - *110816* : {Tmn. Bagan Kurnia}
+*2).* Bayu Indera ( RSVR )  - *110337* : {Bayu Indera ( RSVR )}
+*3).* Bayu Sutera (RSVR) - *111381* : {Bayu Sutera (RSVR)}
+*4).* Bkt. Kepong (ST) - *111303* : {Bkt. Kepong (ST)}
+*5).* Bkt. Kuau Lama - *111223* : {Bkt. Kuau Lama}
+*6).* Bkt. Kuau Baru - *111221* : {Bkt. Kuau Baru}
+*7).* Bkt. Kunyit 2 - *111229* : {Bkt. Kunyit 2}
+*8).* Bkt. Pelandok - *111230* : {Bkt. Pelandok}
+*9).* Bkt. Tunggal (BARU) - *110539* : {Bkt. Tunggal (BARU)}
+*10).* Chuah - *111208* : {Chuah}
+*11).* Desa PD 1 (RSVR) - *111306* : {Desa PD 1 (RSVR)}
+*12).* Desa PD 2 (RSVR) - *111310* : {Desa PD 2 (RSVR)}
+*13).* Intan Duyung (RSVR) - *111227* : {Intan Duyung (RSVR)}
+*14).* Tmn. Intan Perdana (1) - *111215* : {Tmn. Intan Perdana (1)}
+*15).* Tangki Jimah Indah (SITE A) - *111308* : {Tangki Jimah Indah (SITE A)}
+*16).* Tangki Jimah Jaya (SITE C) - *110105* : {Tangki Jimah Jaya (SITE C)}
+*17).* Linggi - *111205* : {Linggi}
+*18).* Lukut Makmur (RSVR) - *111307* : {Lukut Makmur (RSVR)}
+*19).* Lukut Prima (RSVR) - *111267* : {Lukut Prima (RSVR)}
+*20).* Marlin (RSVR) - *110673* : {Marlin (RSVR)}
+*21).* Mayung (RSVR) - *110679* : {Mayung (RSVR)}
+*22).* Mayung (ST) - *110678* : {Mayung (ST)}
+*23).* Nila Aspira (RSVR) - *110144* : {Nila Aspira (RSVR)}
+*24).* Nila Aspira (ST) - *110138* : {Nila Aspira (ST)}
+*25).* PD Utama 1 (RSVR) - *111304* : {PD Utama 1 (RSVR)}
+*26).* PD Utama 2 (RSVR) - *111213* : {PD Utama 2 (RSVR)}
+*27).* PD Villa (RSVR) - *111268* : {PD Villa (RSVR)}
+*28).* Politeknik (RSVR) - *111269* : {Politeknik (RSVR)}
+*29).* Kolam PD - *111206* : {Kolam PD}
+*30).* PPR Desa Tanjung (RSVR) - *0676* : {PPR Desa Tanjung (RSVR)}
+*31).* PPR Desa Tanjung (ST) - *0675* : {PPR Desa Tanjung (ST)}
+*32).* R. R. Tlk. Pelandok (ST) - *110672* : {R. R. Tlk. Pelandok (ST)}
+*33).* R/ Rakyat Permatang Pasir (RSVR) - *110349* : {R/ Rakyat Permatang Pasir (RSVR)}
+*34).* R/ Rakyat Telok Kemang (RSVR) - *110351* : {R/ Rakyat Telok Kemang (RSVR)}
+*35).* Residendi Prima PD (RSVR) - *111255* : {Residendi Prima PD (RSVR)}
+*36).* R/ Rakyat Peng. Durian (1) - *111228* : {R/ Rakyat Peng. Durian (1)}
+*37).* Sengkang (RSVR) - *110688* : {Sengkang (RSVR)}
+*38).* Sengkang (ST) - *110687* : {Sengkang (ST)}
+*39).* Sirusa 2 - *111200* : {Sirusa 2}
+*40).* Sirusa 3 - *111201* : {Sirusa 3}
+*41).* Sirusa 4 - *111202* : {Sirusa 4}
+*42).* Sirusa 5A - *111232* : {Sirusa 5A}
+*43).* Sirusa 5B - *111203* : {Sirusa 5B}
+*44).* Springhill (NEW) - *110788* : {Springhill (NEW)}
+*45).* Springhill (COMP 1) - *111209* : {Springhill (COMP 1)}
+*46).* Springhill (COMP 2) - *110347* : {Springhill (COMP 2)}
+*47).* Springhill (COMP 3) - *110348* : {Springhill (COMP 3)}
+*48).* Kolam Sunggala - *111231* : {Kolam Sunggala}
+*49).* Tmn. Sunggala Hartamas - *110876* : {Tmn. Sunggala Hartamas}
+*50).* Tmn. Indah Baru (RSVR) - *111363* : {Tmn. Indah Baru (RSVR)}
+*51).* Tmn. Indah Jaya (RSVR) - *111364* : {Tmn. Indah Jaya (RSVR)}
+*52).* Tmn. Shorea Hartamas (RSVR) - *111397* : {Tmn. Shorea Hartamas (RSVR)}
+*53).* Tanjung (RSVR) - *111309* : {Tanjung (RSVR)}
+*54).* Telok Kemang (Lama) - *111204* : {Telok Kemang (Lama)}
+*55).* Telok Kemang (Baru) - *110352* : {Telok Kemang (Baru)}
+*56).* Tmn. Impian Putra (RSVR) - *110872* : {Tmn. Impian Putra (RSVR)}
+*57).* Vista Jaya (RSVR) - *111305* : {Vista Jaya (RSVR)}
+*58).* Bandar Springhill (RSVR) - *111443* : {Bandar Springhill (RSVR)}
+*59).* Bandar Springhill (ST) - *111442* : {Bandar Springhill (ST)}
+*60).* Desa Rusa (RSVR) - *111220* : {Desa Rusa (RSVR)}
+
+*BACAAN PRESSURE:*
+*1).* Bkt. Palong ( CP ) - *130225* : {Bkt. Palong ( CP )}
+*2).* Inlet Springhill - *130401* : {Inlet Springhill}
+*3).* Kg. Site A ( CP ) - *130114* : {Kg. Site A ( CP )}
+*4).* PRV Sri Parit ( DOWN ) - *130402* : {PRV Sri Parit ( DOWN )}
+*5).* PRV Sg Sendayan - *130339* : {PRV Sg Sendayan}
+*6).* Greenview CP - *131471* : {Greenview CP}`;
+
+        let uploadedKolamBuffers = [];
+
+        function saveFilesToSession() {
+            try {
+                const payload = { timestamp: Date.now(), files: uploadedKolamBuffers };
+                sessionStorage.setItem('sainsKolamCache', JSON.stringify(payload));
+                updateFileCountUI();
+            } catch(e) {}
+        }
+
+        function loadSavedFilesFromSession() {
+            try {
+                const saved = sessionStorage.getItem('sainsKolamCache');
+                if (saved) {
+                    const data = JSON.parse(saved);
+                    const oneHour = 60 * 60 * 1000;
+                    if (Date.now() - data.timestamp < oneHour) {
+                        uploadedKolamBuffers = data.files || [];
+                    } else {
+                        sessionStorage.removeItem('sainsKolamCache');
+                        uploadedKolamBuffers = [];
+                    }
+                }
+            } catch(e) {
+                uploadedKolamBuffers = [];
+            }
+            updateFileCountUI();
+        }
+
+        function updateFileCountUI() {
+            const lbl = document.getElementById('file-count-label');
+            if (lbl) { lbl.innerText = `${uploadedKolamBuffers.length} fail tersimpan dalam memori`; }
+        }
+
+        function setupDropZoneEvents() {
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('kolam-files');
+            const resetBtn = document.getElementById('btn-reset-kolam-files');
+
+            if (!dropZone || !fileInput) return;
+
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('border-blue-500', 'bg-blue-50', 'dark:bg-gray-700');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropZone.addEventListener(eventName, (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-gray-700');
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', async (e) => {
+                const dt = e.dataTransfer;
+                await processAndStoreFiles(dt.files);
+            });
+
+            fileInput.addEventListener('change', async (e) => {
+                await processAndStoreFiles(e.target.files);
+            });
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    uploadedKolamBuffers = [];
+                    sessionStorage.removeItem('sainsKolamCache');
+                    fileInput.value = '';
+                    updateFileCountUI();
+                    showToast("Semua fail dalam memori telah dikosongkan.", "success");
+                });
+            }
+        }
+
+        async function processAndStoreFiles(fileList) {
+            if (!fileList || fileList.length === 0) return;
+            showLoading(true, 30, "Menyimpan fail ke dalam memori...");
+
+            for (let i = 0; i < fileList.length; i++) {
+                const file = fileList[i];
+                try {
+                    const buffer = await file.arrayBuffer();
+                    const exists = uploadedKolamBuffers.some(f => f.name === file.name);
+                    if (!exists) {
+                        uploadedKolamBuffers.push({ name: file.name, buffer: buffer });
+                    }
+                } catch(err) {}
+            }
+
+            saveFilesToSession();
+            showLoading(false);
+            showToast(`${fileList.length} fail berjaya ditambah ke memori!`, "success");
+        }
+
+        function matchSiteName(targetName, extractedDataMap) {
+            let cleanTarget = targetName.toLowerCase().replace(/[^a-z0-9]/g, '');
+            
+            for (let siteNameKey in extractedDataMap) {
+                let cleanSite = siteNameKey.toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (cleanTarget === cleanSite) {
+                    let val = extractedDataMap[siteNameKey];
+                    let num = parseFloat(val);
+                    return !isNaN(num) ? num.toFixed(1) + 'M' : 'Tiada';
+                }
+            }
+
+            let targetLower = targetName.toLowerCase();
+            let bestVal = 'Tiada';
+            let highestScore = 0;
+
+            for (let siteNameKey in extractedDataMap) {
+                let siteLower = siteNameKey.toLowerCase();
+
+                if (targetLower.includes('desa pd') && siteLower.includes('tanjung')) continue;
+                if (targetLower.includes('tanjung') && !siteLower.includes('tanjung')) continue;
+                if (targetLower.includes('st') && siteLower.includes('rsvr') && !targetLower.includes('rsvr')) continue;
+                if (targetLower.includes('rsvr') && siteLower.includes('st') && !targetLower.includes('st')) continue;
+
+                let targetWords = targetLower.split(/[\s\(\)\.\-\_]+/).filter(w => w.length > 1);
+                let siteWords = siteLower.split(/[\s\(\)\.\-\_]+/).filter(w => w.length > 1);
+
+                let matches = 0;
+                targetWords.forEach(w => {
+                    if (siteWords.includes(w)) matches++;
+                });
+
+                if (matches > highestScore && matches >= 2) {
+                    highestScore = matches;
+                    let val = extractedDataMap[siteNameKey];
+                    let num = parseFloat(val);
+                    bestVal = !isNaN(num) ? num.toFixed(1) + 'M' : 'Tiada';
+                }
+            }
+            return bestVal;
+        }
+
+        document.addEventListener('click', async (e) => {
+            if (e.target && e.target.id === 'btn-jana-kolam') {
+                const selectedDate = document.getElementById('kolam-date').value;
+                const selectedTime = document.getElementById('kolam-time').value;
+
+                if (!selectedDate || !selectedTime) {
+                    showToast("Sila pilih tarikh dan masa yang dikehendaki!", "error");
+                    return;
+                }
+                if (uploadedKolamBuffers.length === 0) {
+                    showToast("Sila muat naik fail paras kolam terlebih dahulu!", "error");
+                    return;
+                }
+
+                let [yy, mm, dd] = selectedDate.split('-');
+                let targetDateStr = `${dd}/${mm}/${yy}`;
+                let targetDateTimeStr = `${targetDateStr} ${selectedTime}`;
+
+                let kolamData = {};
+                showLoading(true, 50, "Membaca data fail dari memori...");
+
+                try {
+                    for (let item of uploadedKolamBuffers) {
+                        const workbook = XLSX.read(item.buffer, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        
+                        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
+                        
+                        let siteName = "";
+                        let readingValue = "";
+
+                        if (rows.length > 0 && rows[0][0] && typeof rows[0][0] === 'string' && rows[0][0].includes("Site name:")) {
+                            siteName = rows[0][0].replace("Site name:", "").trim();
+                        }
+
+                        if(!siteName) {
+                            for (let row of rows) {
+                                if (row[0] && typeof row[0] === 'string' && row[0].includes("Site name:")) {
+                                    siteName = row[0].replace("Site name:", "").trim(); break;
+                                }
+                            }
+                        }
+
+                        for (let r = 0; r < rows.length; r++) {
+                            const rowData = rows[r];
+                            if (rowData[0] && typeof rowData[0] === 'string') {
+                                if (rowData[0].includes(targetDateTimeStr)) {
+                                    readingValue = rowData[1]; 
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (siteName) {
+                            kolamData[siteName] = readingValue || "Tiada";
+                        }
+                    }
+
+                    let finalReport = laporanTemplate;
+                    
+                    let [hh, min] = selectedTime.split(':');
+                    let hourStr = parseInt(hh);
+                    let ampm = hourStr >= 12 ? 'PM' : 'AM';
+                    hourStr = hourStr % 12; hourStr = hourStr ? hourStr : 12;
+                    let displayTime = `${hourStr}:${min} ${ampm}`;
+
+                    finalReport = finalReport.replace("{TARIKH}", targetDateStr).replace("{MASA}", displayTime);
+
+                    const matches = finalReport.match(/\{([^}]+)\}/g);
+                    if (matches) {
+                        matches.forEach(matchKey => {
+                            let pureName = matchKey.replace('{', '').replace('}', '');
+                            let foundValue = matchSiteName(pureName, kolamData);
+                            finalReport = finalReport.replace(matchKey, foundValue);
+                        });
+                    }
+
+                    document.getElementById('kolam-report-output').value = finalReport;
+                    showLoading(false);
+                    showToast("Laporan Automasi Kolam berjaya dijana!", "success");
+
+                } catch (err) {
+                    showLoading(false);
+                    showToast("Ralat rujukan pembacaan: " + err.message, "error");
+                }
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target && e.target.id === 'btn-copy-kolam') {
+                const textToCopy = document.getElementById('kolam-report-output').value;
+                if (!textToCopy) return showToast("Sila jana laporan dahulu!", "error");
+                navigator.clipboard.writeText(textToCopy).then(() => {
+                    showToast("Laporan disalin!", "success");
+                });
+            }
+            if (e.target && e.target.id === 'btn-wa-kolam') {
+                const textToCopy = document.getElementById('kolam-report-output').value;
+                if (!textToCopy) return showToast("Sila jana laporan dahulu!", "error");
+                const encodedText = encodeURIComponent(textToCopy);
+                window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
+            }
+        });
+
     </script>
 </body>
 </html>
