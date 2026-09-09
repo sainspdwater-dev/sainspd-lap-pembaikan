@@ -527,11 +527,11 @@
             </section>
         </div>
 
-        <!-- TAB 5: AI AGENT (KHAS ADMIN) - SUSUN ATUR ATAS (PROMPTS & PARAMETER), BAWAH (RESPON AI DENGAN SKROL) -->
+        <!-- TAB 5: Co Pilot (KHAS ADMIN) - SUSUN ATUR ATAS (PROMPTS & PARAMETER), BAWAH (RESPON AI DENGAN SKROL) -->
         <div id="ai-agent-content" class="hidden pb-24 h-[calc(100vh-90px)] flex flex-col">
             <header class="mb-2 flex justify-between items-center shrink-0">
                 <div>
-                    <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><i class="fa-solid fa-user-tie text-purple-500"></i> AI Agent (Engineer & Planner)</h2>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><i class="fa-solid fa-user-tie text-purple-500"></i> Co Pilot (Engineer & Planner)</h2>
                     <p class="text-slate-500 dark:text-gray-400 text-xs">Pembantu analitikal operasi NRW. Jana rumusan, pemetaan automatik, dan cadangan aset berdasarkan District Metered Area.</p>
                 </div>
             </header>
@@ -614,9 +614,12 @@
                 
                 <!-- Map Proof Panel -->
                 <div class="w-full lg:w-2/5 h-64 lg:h-full relative flex flex-col">
-                    <div class="p-2 bg-slate-100 dark:bg-gray-800 text-xs font-semibold text-slate-700 dark:text-gray-300 border-b border-slate-200 dark:border-gray-700 flex justify-between items-center">
-                        <span><i class="fa-solid fa-map-location-dot text-blue-500 mr-1"></i> Peta Analisis Visual AI (District Metered Area)</span>
-                        <span id="ai-map-status" class="text-slate-500 font-normal">Sedia...</span>
+                    <div class="p-2 bg-slate-100 dark:bg-gray-800 text-xs font-semibold text-slate-700 dark:text-gray-300 border-b border-slate-200 dark:border-gray-700 flex justify-between items-center gap-2">
+                        <span><i class="fa-solid fa-map-location-dot text-blue-500 mr-1"></i> Peta Analisis Visual AI</span>
+                        <div class="flex items-center gap-1">
+                            <input type="text" id="map-search-latlng" placeholder="Cari Lat, Lng (Cth: 2.59, 101.81)" class="form-input py-0.5 px-2 text-[11px] w-44 bg-white dark:bg-gray-900" autocomplete="off">
+                            <button type="button" onclick="searchLatLngOnMap()" class="px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-[11px] font-bold transition" title="Cari Koordinat"><i class="fa-solid fa-magnifying-glass"></i></button>
+                        </div>
                     </div>
                     <div id="ai-agent-map" class="flex-1 w-full h-full min-h-[300px] z-10"></div>
                 </div>
@@ -1065,6 +1068,17 @@
                 }
             });
 
+            const selectEl = document.getElementById('ai-filter-district');
+            if (selectEl) {
+                let currentVal = selectEl.value;
+                let html = '<option value="">Semua (Ikut Poligon GIS)</option>';
+                Array.from(mapNames).sort().forEach(item => {
+                    html += `<option value="${escapeHTML(item)}">${escapeHTML(item)}</option>`;
+                });
+                selectEl.innerHTML = html;
+                if (currentVal) selectEl.value = currentVal;
+            }
+
             if (mapNames.size > 0) {
                 const listEl = document.getElementById('list-map-dma');
                 if (listEl) {
@@ -1171,7 +1185,6 @@
             startLiveClock();
             setupEvents();
 
-            // PANGGILAN FUNGSI DROP ZONE & MEMORI KOLAM
             loadSavedFilesFromSession();
             setupDropZoneEvents();
 
@@ -2410,18 +2423,61 @@
             }
         }
 
+        // Tampal fungsi carian koordinat di sini:
+        window.searchLatLngOnMap = function() {
+            const inputVal = document.getElementById('map-search-latlng').value.trim();
+            if (!inputVal) {
+                showToast("Sila masukkan koordinat Lat, Lng terlebih dahulu.", "error");
+                return;
+            }
+
+            const parts = inputVal.split(',');
+            if (parts.length !== 2) {
+                showToast("Format tidak sah! Guna format: lat, lng (Cth: 2.5902, 101.8173)", "error");
+                return;
+            }
+
+            const lat = parseFloat(parts[0].trim());
+            const lng = parseFloat(parts[1].trim());
+
+            if (isNaN(lat) || isNaN(lng)) {
+                showToast("Nilai latitud atau longitud bukan nombor sah.", "error");
+                return;
+            }
+
+            if (aiAgentMap) {
+                aiAgentMap.setView([lat, lng], 17);
+                
+                if (window.searchMarker) {
+                    aiAgentMap.removeLayer(window.searchMarker);
+                }
+                
+                window.searchMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'custom-search-pin',
+                        html: '<div style="background-color:#ef4444; width:14px; height:14px; border-radius:50%; border:2px solid white; box-shadow:0 0 4px rgba(0,0,0,0.5);"></div>',
+                        iconSize: [14, 14],
+                        iconAnchor: [7, 7]
+                    })
+                }).addTo(aiAgentMap).bindPopup(`<b>Carian Koordinat</b><br>Lat: ${lat}<br>Lng: ${lng}`).openPopup();
+
+                document.getElementById('ai-map-status').innerText = `Zum ke koordinat: ${lat}, ${lng}`;
+                showToast("Peta berjaya dizum ke koordinat!", "success");
+            }
+        };
+
         async function sendAiMessage() {
             const inputEl = document.getElementById('ai-chat-input');
             const messagesContainer = document.getElementById('ai-chat-messages');
-            const prompt = inputEl.value.trim();
-            if(!prompt) {
+            const userPrompt = inputEl.value.trim();
+            if(!userPrompt) {
                 showToast("Sila taip soalan atau pilih prompt terlebih dahulu.", "error");
                 return;
             }
 
             messagesContainer.innerHTML += `
                 <div class="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg border border-purple-100 dark:border-purple-800 ml-6 text-slate-800 dark:text-slate-200 shadow-sm">
-                    <b class="text-purple-600 dark:text-purple-400">Anda:</b> ${escapeHTML(prompt)}
+                    <b class="text-purple-600 dark:text-purple-400">Anda:</b> ${escapeHTML(userPrompt)}
                 </div>
             `;
             inputEl.value = '';
@@ -2430,7 +2486,7 @@
             const loadingId = 'ai-loading-' + Date.now();
             messagesContainer.innerHTML += `
                 <div id="${loadingId}" class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-slate-200 dark:border-gray-700 text-slate-500 italic shadow-sm flex items-center gap-2">
-                    <i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Memproses parameter District Metered Area & metrik geospatial...
+                    <i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Menganalisis GIS & sempadan poligon rasmi...
                 </div>
             `;
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -2438,21 +2494,17 @@
             let flowDataArray = [];
             const fileInput = document.getElementById('ai-flow-file');
             if (fileInput && fileInput.files.length > 0) {
-                const file = fileInput.files[0];
                 try {
-                    const buffer = await file.arrayBuffer();
+                    const buffer = await fileInput.files[0].arrayBuffer();
                     const workbook = XLSX.read(buffer, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    flowDataArray = XLSX.utils.sheet_to_json(worksheet, { defval: null });
-                } catch(e) {
-                    console.warn("Gagal membaca fail flow AI:", e);
-                }
+                    flowDataArray = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: null });
+                } catch(e) {}
             }
 
+            const selectedDistrict = document.getElementById('ai-filter-district').value.trim();
             const aiParams = {
                 bulan: document.getElementById('ai-filter-bulan').value,
-                district: document.getElementById('ai-filter-district').value,
+                district: selectedDistrict,
                 avgFlow: document.getElementById('ai-avg-flow').value,
                 avgMnf: document.getElementById('ai-avg-mnf').value,
                 jumlahBil: document.getElementById('ai-jumlah-bil').value,
@@ -2462,90 +2514,174 @@
                 flowData: flowDataArray 
             };
 
+            // CARI OBJEK POLIGON GIS SEBENAR UNTUK DMA YANG DIPILIH
+            let targetPolygonFeature = null;
+            let polygonCenterLat = 2.5225;
+            let polygonCenterLng = 101.7946;
+            if (selectedDistrict && window.koleksiPoligonDMZ) {
+                for (let feature of window.koleksiPoligonDMZ) {
+                    let fName = (feature.properties._fileName || '').trim();
+                    if (fName.toLowerCase() === selectedDistrict.toLowerCase() || selectedDistrict.toLowerCase().includes(fName.toLowerCase())) {
+                        targetPolygonFeature = feature;
+                        try {
+                            let centroid = turf.centroid(feature);
+                            polygonCenterLng = centroid.geometry.coordinates[0];
+                            polygonCenterLat = centroid.geometry.coordinates[1];
+                        } catch(e) {}
+                        break;
+                    }
+                }
+            }
+
+            // PENAPISAN REKOD MENGGUNAKAN GIS & STRING MATCHING
             let allRecordsForAi = (window.rawData || []).map(r => {
-                let distArea = r['District Metered Area'] || r['DISTRICT METERED AREA'] || r['districtMeteredArea'] || '';
-                if (parentFolders.includes(String(distArea).trim().toLowerCase())) distArea = '';
+                let districtAreaVal = r['District Metered Area'] || r['DISTRICT METERED AREA'] || r['districtMeteredArea'] || '';
+                if (parentFolders && parentFolders.includes(String(districtAreaVal).trim().toLowerCase())) districtAreaVal = '';
+
+                let kord = r['KORDINAT'] || '';
+                let lat = '', lng = '';
+                let parts = kord.split(',');
+                if (parts.length === 2) {
+                    lat = parseFloat(parts[0].trim());
+                    lng = parseFloat(parts[1].trim());
+                    if (!isNaN(lat) && !isNaN(lng) && !districtAreaVal && window.koleksiPoligonDMZ) {
+                        let resDMZ = semakPointInDMZ(lat, lng);
+                        if (resDMZ.zone && !parentFolders.includes(resDMZ.zone.toLowerCase())) {
+                            districtAreaVal = resDMZ.zone;
+                        }
+                    }
+                }
 
                 return {
-                    noAduan: r['NO ADUAN'] || r['noAduan'] || '',
-                    dma: distArea, // strictly District Metered Area
-                    kategori: r['KATEGORI'] || r['kategori'] || '',
-                    jenisPaip: r['JENIS PAIP'] || r['jenisPaip'] || '',
-                    lokasi: r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi'] || '',
-                    kordinat: r['KORDINAT'] || r['kordinat'] || '',
-                    tarikh: r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA'] || '',
-                    bulan: r['BULAN'] || '',
-                    pelaksana: r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || '',
-                    sivil: r['SIVIL WORKS'] || r['sivilWorks'] || ''
+                    "No Aduan": r['NO ADUAN'] || r['noAduan'] || '',
+                    "Zon": r['ZON'] || r['Zon'] || '',
+                    "Bulan": r['BULAN'] || r['bulan'] || '',
+                    "District Metered Area": districtAreaVal,
+                    "Kategori": r['KATEGORI'] || r['kategori'] || '',
+                    "Lokasi / Tempat": r['LOKASI / TEMPAT'] || r['LOKASI'] || '',
+                    "Kordinat": kord,
+                    "_lat": lat,
+                    "_lng": lng,
+                    "Tarikh Terima": r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA'] || '',
+                    "Tarikh Tutup": r['TARIKH  TUTUP ADUAN'] || r['TARIKH TUTUP'] || '',
+                    "Jenis Paip (Lama)": r['JENIS PAIP'] || r['jenisPaip'] || '',
+                    "Saiz (Lama)": r['SAIZ PAIP'] || r['saizPaip'] || '',
+                    "Panjang Paip (M)": r['PANJANG PAIP (M)'] || r['panjangPaip'] || ''
                 };
             });
 
             if (aiParams.bulan) {
-                allRecordsForAi = allRecordsForAi.filter(r => r.bulan === aiParams.bulan);
-            }
-            if (aiParams.district) {
-                allRecordsForAi = allRecordsForAi.filter(r => r.dma.toLowerCase() === aiParams.district.toLowerCase() || r.dma.toLowerCase().includes(aiParams.district.toLowerCase()));
+                allRecordsForAi = allRecordsForAi.filter(r => String(r.Bulan).toLowerCase() === String(aiParams.bulan).toLowerCase());
             }
 
+            if (selectedDistrict) {
+                const targetDist = selectedDistrict.toLowerCase();
+                allRecordsForAi = allRecordsForAi.filter(r => {
+                    let matchText = String(r["District Metered Area"]).toLowerCase().includes(targetDist) || 
+                                    String(r.DMA).toLowerCase().includes(targetDist);
+                    if (matchText) return true;
+
+                    if (!isNaN(r._lat) && !isNaN(r._lng) && targetPolygonFeature) {
+                        try {
+                            let pt = turf.point([r._lng, r._lat]);
+                            return turf.booleanPointInPolygon(pt, targetPolygonFeature);
+                        } catch(e) {}
+                    }
+                    return false;
+                });
+            }
+
+            const systemPrompt = `Anda adalah Sains AI Planner, pakar jurutera utiliti air dan perancang operasi NRW (Non-Revenue Water) SAINS Port Dickson. 
+Analisis data operasi berikut untuk zon rasmi GIS: [${selectedDistrict || 'Semua Daerah'} - Pusat Koordinat Lat: ${polygonCenterLat}, Lng: ${polygonCenterLng}].
+Parameter Rujukan: Bulan: ${aiParams.bulan || 'Tidak ditetapkan'}, DMA: ${selectedDistrict || 'Semua'}, Avg Flow: ${aiParams.avgFlow || 0} m3/d, Avg MNF: ${aiParams.avgMnf || 0} m3/h, Bil Sehari: ${aiParams.jumlahBil || 0} m3/d, Tekanan: ${aiParams.avgPressure || 0} ${aiParams.pressureUnit}.
+Soalan Pengguna: ${userPrompt}
+Senarai Rekod Aduan Sah dalam Zon GIS ini (${allRecordsForAi.length} rekod): ${JSON.stringify(allRecordsForAi.slice(0, 30))}
+
+Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang koordinat hotspot yang dicadangkan berada di sekitar pusat koordinat Lat: ${polygonCenterLat}, Lng: ${polygonCenterLng} bagi memastikan ketepatan peta GIS.`;
+
             try {
-                const res = await fetch(WORKER_URL, {
+                const geminiApiKey = localStorage.getItem('geminiApiKey') || window.prompt("Sila masukkan Google Gemini API Key anda untuk sesi ini:");
+                if (!geminiApiKey) throw new Error("API Key diperlukan untuk analisis AI.");
+                localStorage.setItem('geminiApiKey', geminiApiKey);
+
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiApiKey}`;
+
+                const res = await fetch(geminiUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('sainsToken')}` },
-                    body: JSON.stringify({ 
-                        action: 'aiAgent', 
-                        prompt: prompt, 
-                        records: allRecordsForAi,
-                        params: aiParams 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: systemPrompt }] }]
                     })
                 });
 
-                const data = await res.json();
+                const jsonRes = await res.json();
+                if (!res.ok) throw new Error(jsonRes.error?.message || 'Gagal berhubung dengan Gemini API.');
 
-                if(res.ok && data.status === 'success') {
-                    document.getElementById(loadingId).remove();
+                const aiReplyText = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text || 'Tiada maklum balas dijana.';
+                document.getElementById(loadingId).remove();
+
+                messagesContainer.innerHTML += `
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border-l-4 border-l-purple-500 border-y border-r border-slate-200 dark:border-gray-700 shadow-sm text-slate-800 dark:text-slate-200">
+                        <b class="text-purple-600 dark:text-purple-400 font-bold mb-2 block"><i class="fa-solid fa-robot"></i> Rumusan Analisis (Sains AI Planner):</b>
+                        <div class="leading-relaxed whitespace-pre-wrap">${escapeHTML(aiReplyText).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')}</div>
+                    </div>
+                `;
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+                // PENGURUSAN PETA & ZUM GIS RASMI
+                if (aiAgentMap) {
+                    if (aiAgentClusterGroup) aiAgentClusterGroup.clearLayers();
+                    if (aiHeatLayer) { aiAgentMap.removeLayer(aiHeatLayer); aiHeatLayer = null; }
+
+                    const bounds = [];
                     
-                    messagesContainer.innerHTML += `
-                        <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border-l-4 border-l-purple-500 border-y border-r border-slate-200 dark:border-gray-700 shadow-sm text-slate-800 dark:text-slate-200">
-                            <b class="text-purple-600 dark:text-purple-400 font-bold mb-2 block"><i class="fa-solid fa-robot"></i> Rumusan Analisis (District Metered Area):</b>
-                            <div class="leading-relaxed whitespace-pre-wrap">${escapeHTML(data.reply).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')}</div>
-                        </div>
-                    `;
-                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-                    if (aiAgentMap) {
-                        if (aiAgentClusterGroup) aiAgentClusterGroup.clearLayers();
-                        if (aiHeatLayer) { aiAgentMap.removeLayer(aiHeatLayer); aiHeatLayer = null; }
-                        
-                        const bounds = [];
-                        const mapPts = data.mapData || [];
-
-                        document.getElementById('ai-map-status').innerText = `Menapis ${mapPts.length} lokasi...`;
-
-                        if (data.mapAction === 'heatmap' && typeof L.heatLayer !== 'undefined') {
-                            const heatCoords = [];
-                            mapPts.forEach(pt => {
-                                heatCoords.push([pt.lat, pt.lng, 1]);
-                                bounds.push([pt.lat, pt.lng]);
-                            });
-                            aiHeatLayer = L.heatLayer(heatCoords, { radius: 25, blur: 15, maxZoom: 14, gradient:{0.4:'blue',0.65:'lime',1:'red'} }).addTo(aiAgentMap);
-                            
-                        } else if (data.mapAction === 'markers') {
-                            mapPts.forEach(pt => {
-                                const m = L.marker([pt.lat, pt.lng]).bindPopup(`<b>${escapeHTML(pt.title || 'Info')}</b><br>${escapeHTML(pt.desc || '')}`);
-                                aiAgentClusterGroup.addLayer(m);
-                                bounds.push([pt.lat, pt.lng]);
-                            });
+                    // 1. TAMBAH REKOD SEBENAR DARI DATABASE DALAM ZON INI
+                    allRecordsForAi.forEach(r => {
+                        if (!isNaN(r._lat) && !isNaN(r._lng)) {
+                            const m = L.marker([r._lat, r._lng]).bindPopup(`<b>${escapeHTML(r['No Aduan'])}</b><br>${escapeHTML(r['Lokasi / Tempat'])}`);
+                            aiAgentClusterGroup.addLayer(m);
+                            bounds.push([r._lat, r._lng]);
                         }
+                    });
 
-                        if (bounds.length > 0) {
-                            aiAgentMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
-                        } else {
-                            document.getElementById('ai-map-status').innerText = "Tiada lokasi dijumpai.";
+                    // 2. EKSTRAK KOORDINAT DARI TEKS AI JIKA ADA
+                    const coordRegex = /([0-9]+\.[0-9]+),\s*([0-9]+\.[0-9]+)/g;
+                    let match;
+                    while ((match = coordRegex.exec(aiReplyText)) !== null) {
+                        let lat = parseFloat(match[1]);
+                        let lng = parseFloat(match[2]);
+                        if (lat > 1 && lat < 7 && lng > 99 && lng < 105) {
+                            bounds.push([lat, lng]);
                         }
                     }
-                } else {
-                    throw new Error(data.message || 'Ralat pelayan AI');
+
+                    // 3. ZUM KE SEMPADAN POLIGON GIS RASMI
+                    let matchedPolygonFound = false;
+                    if (selectedDistrict && window.koleksiPoligonDMZ) {
+                        window.koleksiPoligonDMZ.forEach(feature => {
+                            let fName = (feature.properties._fileName || '').trim();
+                            if (fName.toLowerCase() === selectedDistrict.toLowerCase() || selectedDistrict.toLowerCase().includes(fName.toLowerCase())) {
+                                let tempLayer = L.geoJSON(feature);
+                                let polyBounds = tempLayer.getBounds();
+                                if (polyBounds.isValid()) {
+                                    aiAgentMap.fitBounds(polyBounds, { padding: [50, 50], maxZoom: 15 });
+                                    matchedPolygonFound = true;
+                                    document.getElementById('ai-map-status').innerText = `Peta dizum ke sempadan GIS rasmi: ${fName}`;
+                                }
+                            }
+                        });
+                    }
+
+                    if (!matchedPolygonFound) {
+                        if (bounds.length > 0) {
+                            aiAgentMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+                            document.getElementById('ai-map-status').innerText = `Dipaparkan ${bounds.length} titik lokasi pada peta.`;
+                        } else {
+                            document.getElementById('ai-map-status').innerText = "Analisis selesai (Sempadan GIS sedia rujukan).";
+                        }
+                    }
                 }
+
             } catch(err) {
                 document.getElementById(loadingId).remove();
                 messagesContainer.innerHTML += `
