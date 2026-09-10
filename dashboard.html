@@ -228,7 +228,7 @@
             <button id="nav-daily" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="Laporan Harian">
                 <i class="fa-solid fa-calendar-day w-6 text-center"></i> <span class="sidebar-text ml-3 font-medium">Laporan Harian</span>
             </button>
-            <button id="nav-ai" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="Co Pilot">
+            <button id="nav-ai" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="AI Agent">
                 <i class="fa-solid fa-robot w-6 text-center text-purple-500"></i> <span class="sidebar-text ml-3 font-medium">AI Agent</span>
             </button>
             <button id="nav-kolam" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="Automasi Kolam">
@@ -527,11 +527,11 @@
             </section>
         </div>
 
-        <!-- TAB 5: Co Pilot (KHAS ADMIN) - SUSUN ATUR ATAS (PROMPTS & PARAMETER), BAWAH (RESPON AI DENGAN SKROL) -->
+        <!-- TAB 5: AI AGENT (KHAS ADMIN) - SUSUN ATUR ATAS (PROMPTS & PARAMETER), BAWAH (RESPON AI DENGAN SKROL) -->
         <div id="ai-agent-content" class="hidden pb-24 h-[calc(100vh-90px)] flex flex-col">
             <header class="mb-2 flex justify-between items-center shrink-0">
                 <div>
-                    <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><i class="fa-solid fa-user-tie text-purple-500"></i> Co Pilot (Engineer & Planner)</h2>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><i class="fa-solid fa-user-tie text-purple-500"></i> AI Agent (Engineer & Planner)</h2>
                     <p class="text-slate-500 dark:text-gray-400 text-xs">Pembantu analitikal operasi NRW. Jana rumusan, pemetaan automatik, dan cadangan aset berdasarkan District Metered Area.</p>
                 </div>
             </header>
@@ -2423,7 +2423,6 @@
             }
         }
 
-        // Tampal fungsi carian koordinat di sini:
         window.searchLatLngOnMap = function() {
             const inputVal = document.getElementById('map-search-latlng').value.trim();
             if (!inputVal) {
@@ -2461,7 +2460,6 @@
                     })
                 }).addTo(aiAgentMap).bindPopup(`<b>Carian Koordinat</b><br>Lat: ${lat}<br>Lng: ${lng}`).openPopup();
 
-                document.getElementById('ai-map-status').innerText = `Zum ke koordinat: ${lat}, ${lng}`;
                 showToast("Peta berjaya dizum ke koordinat!", "success");
             }
         };
@@ -2514,7 +2512,6 @@
                 flowData: flowDataArray 
             };
 
-            // CARI OBJEK POLIGON GIS SEBENAR UNTUK DMA YANG DIPILIH
             let targetPolygonFeature = null;
             let polygonCenterLat = 2.5225;
             let polygonCenterLng = 101.7946;
@@ -2533,7 +2530,6 @@
                 }
             }
 
-            // PENAPISAN REKOD MENGGUNAKAN GIS & STRING MATCHING
             let allRecordsForAi = (window.rawData || []).map(r => {
                 let districtAreaVal = r['District Metered Area'] || r['DISTRICT METERED AREA'] || r['districtMeteredArea'] || '';
                 if (parentFolders && parentFolders.includes(String(districtAreaVal).trim().toLowerCase())) districtAreaVal = '';
@@ -2628,14 +2624,12 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
                 `;
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-                // PENGURUSAN PETA & ZUM GIS RASMI
                 if (aiAgentMap) {
                     if (aiAgentClusterGroup) aiAgentClusterGroup.clearLayers();
                     if (aiHeatLayer) { aiAgentMap.removeLayer(aiHeatLayer); aiHeatLayer = null; }
 
                     const bounds = [];
                     
-                    // 1. TAMBAH REKOD SEBENAR DARI DATABASE DALAM ZON INI
                     allRecordsForAi.forEach(r => {
                         if (!isNaN(r._lat) && !isNaN(r._lng)) {
                             const m = L.marker([r._lat, r._lng]).bindPopup(`<b>${escapeHTML(r['No Aduan'])}</b><br>${escapeHTML(r['Lokasi / Tempat'])}`);
@@ -2644,7 +2638,6 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
                         }
                     });
 
-                    // 2. EKSTRAK KOORDINAT DARI TEKS AI JIKA ADA
                     const coordRegex = /([0-9]+\.[0-9]+),\s*([0-9]+\.[0-9]+)/g;
                     let match;
                     while ((match = coordRegex.exec(aiReplyText)) !== null) {
@@ -2655,7 +2648,6 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
                         }
                     }
 
-                    // 3. ZUM KE SEMPADAN POLIGON GIS RASMI
                     let matchedPolygonFound = false;
                     if (selectedDistrict && window.koleksiPoligonDMZ) {
                         window.koleksiPoligonDMZ.forEach(feature => {
@@ -2666,7 +2658,6 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
                                 if (polyBounds.isValid()) {
                                     aiAgentMap.fitBounds(polyBounds, { padding: [50, 50], maxZoom: 15 });
                                     matchedPolygonFound = true;
-                                    document.getElementById('ai-map-status').innerText = `Peta dizum ke sempadan GIS rasmi: ${fName}`;
                                 }
                             }
                         });
@@ -2675,9 +2666,6 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
                     if (!matchedPolygonFound) {
                         if (bounds.length > 0) {
                             aiAgentMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-                            document.getElementById('ai-map-status').innerText = `Dipaparkan ${bounds.length} titik lokasi pada peta.`;
-                        } else {
-                            document.getElementById('ai-map-status').innerText = "Analisis selesai (Sempadan GIS sedia rujukan).";
                         }
                     }
                 }
@@ -3203,15 +3191,15 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
 
 *4).* Bkt. Kepong (ST) - *111303* : {Bkt. Kepong (ST)}
 
-*5).* Bkt. Kuau Lama - *111223* : {Bkt. Kuau Lama}
+*5).* Bkt. Kuau Lama - *111223* : {Bukit Kuah}
 
-*6).* Bkt. Kuau Baru - *111221* : {Bkt. Kuau Baru}
+*6).* Bkt. Kuau Baru - *111221* : {Bukit Kuau Baru}
 
-*7).* Bkt. Kunyit 2 - *111229* : {Bkt. Kunyit 2}
+*7).* Bkt. Kunyit 2 - *111229* : {Bukit Kunyit 2}
 
-*8).* Bkt. Pelandok - *111230* : {Bkt. Pelandok}
+*8).* Bkt. Pelandok - *111230* : {Bukit Pelandok A}
 
-*9).* Bkt. Tunggal (BARU) - *110539* : {Bkt. Tunggal (BARU)}
+*9).* Bkt. Tunggal (BARU) - *110539* : {Bukit Tunggal Balancing New}
 
 *10).* Chuah - *111208* : {Chuah}
 
@@ -3251,7 +3239,7 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
 
 *28).* Politeknik (RSVR) - *111269* : {Politeknik (RSVR)}
 
-*29).* Kolam PD - *111206* : {Kolam PD}
+*29).* Kolam PD - *111206* : {Port Dickson}
 
 *30).* PPR Desa Tanjung (RSVR) - *0676* : {PPR Desa Tanjung (RSVR)}
 
@@ -3281,15 +3269,15 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
 
 *43).* Sirusa 5B - *111203* : {Sirusa 5B}
 
-*44).* Springhill (NEW) - *110788* : {Springhill (NEW)}
+*44).* Springhill (NEW) - *110788* : {Bandar Springhill RSVR}
 
-*45).* Springhill (COMP 1) - *111209* : {Springhill (COMP 1)}
+*45).* Springhill (COMP 1) - *111209* : {Springhill 1)}
 
-*46).* Springhill (COMP 2) - *110347* : {Springhill (COMP 2)}
+*46).* Springhill (COMP 2) - *110347* : {Springhill 2 Rsvr}
 
-*47).* Springhill (COMP 3) - *110348* : {Springhill (COMP 3)}
+*47).* Springhill (COMP 3) - *110348* : {Springhill 3 Rsvr)}
 
-*48).* Kolam Sunggala - *111231* : {Kolam Sunggala}
+*48).* Kolam Sunggala - *111231* : {Sunggala}
 
 *49).* Tmn. Sunggala Hartamas - *110876* : {Tmn. Sunggala Hartamas}
 
