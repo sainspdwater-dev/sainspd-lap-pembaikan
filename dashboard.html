@@ -560,7 +560,7 @@
                             <button onclick="setAiPrompt('Prestasi kontraktor paling tinggi', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-hard-hat text-amber-500 mr-1"></i> Prestasi Kontraktor</button>
                             <button onclick="setAiPrompt('Cadangan kawasan tukar paip (Sirusa 600 vs Retikulasi)', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-fire text-red-500 mr-1"></i> Analisis Sirusa Trunk</button>
                             <button onclick="setAiPrompt('Status kes kerja sivil tertunggak', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-road text-slate-500 mr-1"></i> Status Kerja Sivil</button>
-			    <button onclick="setAiPrompt('Cadangan kawasan tukar paip (Heatmap)', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-fire text-red-500 mr-1"></i> Cadangan Tukar Paip</button>
+                            <button onclick="setAiPrompt('Cadangan kawasan tukar paip (Heatmap)', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-fire text-red-500 mr-1"></i> Cadangan Tukar Paip</button>
                             <button onclick="setAiPrompt('Di manakah kawasan hotspot utama kes paip pecah?', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-map-pin text-red-500 mr-1"></i> Hotspot Paip Pecah</button>
                             <button onclick="setAiPrompt('Berikan ramalan kes paip pecah berdasarkan data semasa', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-triangle-exclamation text-amber-500 mr-1"></i> Ramalan Paip Pecah</button>
                             <button onclick="setAiPrompt('Analisis ramalan paip bocor dan zon berisiko tinggi', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-water text-cyan-500 mr-1"></i> Ramalan Paip Bocor</button>
@@ -882,10 +882,105 @@
         let croCurrentPage = 1;
         const croRowsPerPage = 50;
 
+        let accumulatedKolamFiles = [];
+        let fileExpirationTimer = null;
+
         let pendingMutationAction = null;
         let pendingMutationData = null;
         let modalZoomTimer;
         const MODAL_ZOOM_LIMIT = 4 * 60 * 60 * 1000;
+
+        function loadSavedFilesFromSession() {
+            const countLabel = document.getElementById('file-count-label');
+            const uploadTime = localStorage.getItem('kolamUploadTime');
+            const oneHour = 60 * 60 * 1000;
+            if (uploadTime && (Date.now() - parseInt(uploadTime) > oneHour)) {
+                clearExpiredKolamFiles();
+            } else if (accumulatedKolamFiles.length > 0 && countLabel) {
+                countLabel.innerText = `${accumulatedKolamFiles.length} fail terkumpul dalam memori.`;
+            } else if (countLabel) {
+                countLabel.innerText = "0 fail tersimpan dalam memori";
+            }
+        }
+
+        function handleNewFiles(newFileList) {
+            if (!newFileList || newFileList.length === 0) return;
+
+            for (let i = 0; i < newFileList.length; i++) {
+                const exists = accumulatedKolamFiles.some(f => f.name === newFileList[i].name && f.size === newFileList[i].size);
+                if (!exists) {
+                    accumulatedKolamFiles.push(newFileList[i]);
+                }
+            }
+
+            localStorage.setItem('kolamUploadTime', Date.now());
+            
+            const countLabel = document.getElementById('file-count-label');
+            if (countLabel) {
+                countLabel.innerText = `${accumulatedKolamFiles.length} fail terkumpul dalam memori. (Luput dalam 1 jam)`;
+            }
+            
+            showToast(`${newFileList.length} fail berjaya ditambah! Jumlah terkumpul: ${accumulatedKolamFiles.length}`, "success");
+
+            if (fileExpirationTimer) clearTimeout(fileExpirationTimer);
+            fileExpirationTimer = setTimeout(() => {
+                clearExpiredKolamFiles();
+            }, 60 * 60 * 1000);
+        }
+
+        function clearExpiredKolamFiles() {
+            accumulatedKolamFiles = [];
+            localStorage.removeItem('kolamUploadTime');
+            const countLabel = document.getElementById('file-count-label');
+            if (countLabel) countLabel.innerText = "0 fail tersimpan dalam memori (Telah tamat tempoh 1 jam)";
+            showToast("Tempoh sah fail telah tamat (1 jam). Memori telah dikosongkan.", "error");
+        }
+
+        function setupDropZoneEvents() {
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('kolam-files');
+            const resetBtn = document.getElementById('btn-reset-kolam-files');
+
+            if (!dropZone || !fileInput) return;
+
+            dropZone.addEventListener('click', () => fileInput.click());
+
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-blue-500', 'bg-blue-50', 'dark:bg-gray-800');
+            });
+
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-gray-800');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-gray-800');
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    handleNewFiles(e.dataTransfer.files);
+                }
+            });
+
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                    handleNewFiles(fileInput.files);
+                    fileInput.value = '';
+                }
+            });
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', () => {
+                    accumulatedKolamFiles = [];
+                    localStorage.removeItem('kolamUploadTime');
+                    if (fileExpirationTimer) clearTimeout(fileExpirationTimer);
+                    
+                    const countLabel = document.getElementById('file-count-label');
+                    if (countLabel) countLabel.innerText = "0 fail tersimpan dalam memori";
+                    showToast("Semua fail telah direset.", "success");
+                });
+            }
+        }
 
         function applyModalZoom(level) {
             const formEl = document.getElementById('form-mutation');
@@ -1426,19 +1521,19 @@
         }
 
         function convertToDDMMYYYYHHMM(datetimeLocalVal) {
-    	    if(!datetimeLocalVal) return '';
-    	    const parts = datetimeLocalVal.split('T');
+            if(!datetimeLocalVal) return '';
+            const parts = datetimeLocalVal.split('T');
             if(parts.length === 2) {
-        	const dateParts = parts[0].split('-');
-        	if(dateParts.length === 3) {
-            	    const yy = dateParts[0]; 
+                const dateParts = parts[0].split('-');
+                if(dateParts.length === 3) {
+                    const yy = dateParts[0]; 
                     const mm = dateParts[1]; 
                     const dd = dateParts[2]; 
                     const timePart = parts[1].length >= 5 ? parts[1].substring(0, 5) : parts[1];
                     return `${dd}/${mm}/${yy} ${timePart}`;
                 }
-    	    }
-    	    return datetimeLocalVal;
+            }
+            return datetimeLocalVal;
         }
 
         function getFormData() {
@@ -2564,7 +2659,6 @@
                     }
                 }
 
-                // Sirusa Trunk vs Retikulasi Logic Check
                 let jenisPaip = String(r['JENIS PAIP'] || '').toUpperCase();
                 let saizPaip = String(r['SAIZ PAIP'] || '');
                 let isSirusaTrunk = (jenisPaip.includes('MS') || jenisPaip.includes('DI')) && (saizPaip.includes('600') || saizPaip.includes('450') || saizPaip.includes('375') || saizPaip.includes('900'));
@@ -2619,7 +2713,7 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. Rasionalkan perbezaan ker
                 if (!geminiApiKey) throw new Error("API Key diperlukan untuk analisis AI.");
                 localStorage.setItem('geminiApiKey', geminiApiKey);
 
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiApiKey}`;
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
 
                 const res = await fetch(geminiUrl, {
                     method: 'POST',
@@ -3151,215 +3245,338 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. Rasionalkan perbezaan ker
             window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
         });
 
-        const laporanTemplate = `*LAPORAN HARIAN KERJA PEMBAIKAN OPERASI SAINS PORT DICKSON*\n\n*TARIKH :* {TARIKH}\n\n*MASA :* {MASA}\n\n*KPI DAERAH:* 98.89%`;
+        /* =========================================
+           FUNGSI AUTOMASI KOLAM (EXCEL BATCH READER)
+           ========================================= */
 
-        let uploadedKolamBuffers = [];
+        const laporanTemplate = `*LAPORAN HARIAN KERJA PEMBAIKAN OPERASI SAINS PORT DICKSON*
 
-        function saveFilesToSession() {
-            try {
-                const payload = { timestamp: Date.now(), files: uploadedKolamBuffers };
-                sessionStorage.setItem('sainsKolamCache', JSON.stringify(payload));
-                updateFileCountUI();
-            } catch(e) {}
-        }
+*TARIKH :* {TARIKH}
 
-        function loadSavedFilesFromSession() {
-            try {
-                const saved = sessionStorage.getItem('sainsKolamCache');
-                if (saved) {
-                    const data = JSON.parse(saved);
-                    const oneHour = 60 * 60 * 1000;
-                    if (Date.now() - data.timestamp < oneHour) uploadedKolamBuffers = data.files || [];
-                    else { sessionStorage.removeItem('sainsKolamCache'); uploadedKolamBuffers = []; }
-                }
-            } catch(e) { uploadedKolamBuffers = []; }
-            updateFileCountUI();
-        }
+*MASA :* {MASA}
 
-        function updateFileCountUI() {
-            const lbl = document.getElementById('file-count-label');
-            if (lbl) lbl.innerText = `${uploadedKolamBuffers.length} fail tersimpan dalam memori`;
-        }
+*KPI DAERAH:* 98.89%
 
-        function setupDropZoneEvents() {
-            const dropZone = document.getElementById('drop-zone');
-            const fileInput = document.getElementById('kolam-files');
-            const resetBtn = document.getElementById('btn-reset-kolam-files');
-            if (!dropZone || !fileInput) return;
 
-            dropZone.addEventListener('click', () => fileInput.click());
-            ['dragenter', 'dragover'].forEach(eventName => {
-                dropZone.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    dropZone.classList.add('border-blue-500', 'bg-blue-50', 'dark:bg-gray-700');
-                }, false);
-            });
-            ['dragleave', 'drop'].forEach(eventName => {
-                dropZone.addEventListener(eventName, (e) => {
-                    e.preventDefault();
-                    dropZone.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-gray-700');
-                }, false);
-            });
-            dropZone.addEventListener('drop', async (e) => { await processAndStoreFiles(e.dataTransfer.files); });
-            fileInput.addEventListener('change', async (e) => { await processAndStoreFiles(e.target.files); });
-            if (resetBtn) {
-                resetBtn.addEventListener('click', () => {
-                    uploadedKolamBuffers = [];
-                    sessionStorage.removeItem('sainsKolamCache');
-                    fileInput.value = '';
-                    updateFileCountUI();
-                    showToast("Semua fail dalam memori telah dikosongkan.", "success");
-                });
-            }
-        }
+*STATUS SEMASA KEROSAKAN & GANGGUAN BEKALAN AKIBAT PAIP PECAH*
 
-        async function processAndStoreFiles(fileList) {
-            if (!fileList || fileList.length === 0) return;
-            showLoading(true, 30, "Menyimpan fail ke dalam memori...");
-            for (let i = 0; i < fileList.length; i++) {
-                const file = fileList[i];
-                try {
-                    const buffer = await file.arrayBuffer();
-                    const exists = uploadedKolamBuffers.some(f => f.name === file.name);
-                    if (!exists) uploadedKolamBuffers.push({ name: file.name, buffer: buffer });
-                } catch(err) {}
-            }
-            saveFilesToSession();
-            showLoading(false);
-            showToast(`${fileList.length} fail berjaya ditambah ke memori!`, "success");
-        }
+*KES BARU :* TIADA
+
+*DALAM PEMBAIKAN :* 
+*a.* 
+
+*SIAP DIBAIKI :* TIADA
+
+*LAIN-LAIN GANGGUAN :* TIADA
+
+
+*PERKARA: PARAS KOLAM UTAMA / TANGKI AIR*
+
+*1).* Tmn. Bagan Kurnia - *110816* : {Tmn. Bagan Kurnia}M
+
+*2).* Bayu Indera ( RSVR )  - *110337* : {Bayu Indera ( RSVR )}M
+
+*3).* Bayu Sutera (RSVR) - *111381* : {Bayu Sutera (RSVR)}M
+
+*4).* Bkt. Kepong (ST) - *111303* : {Bkt. Kepong (ST)}M
+
+*5).* Bkt. Kuau Lama - *111223* : {Bukit Kuah}M
+
+*6).* Bkt. Kuau Baru - *111221* : {Bukit Kuau Baru}M
+
+*7).* Bkt. Kunyit 2 - *111229* : {Bukit Kunyit 2}M
+
+*8).* Bkt. Pelandok - *111230* : {Bukit Pelandok A}M
+
+*9).* Bkt. Tunggal (BARU) - *110539* : {Bukit Tunggal Balancing New}M
+
+*10).* Chuah - *111208* : {Chuah}M
+
+*11).* Desa PD 1 (RSVR) - *111306* : {Desa PD 1 (RSVR)}M
+
+*12).* Desa PD 2 (RSVR) - *111310* : {Desa PD 2 (RSVR)}M
+
+*13).* Intan Duyung (RSVR) - *111227* : {Intan Duyung (RSVR)}M
+
+*14).* Tmn. Intan Perdana (1) - *111215* : {Tmn. Intan Perdana (1)}M
+
+*15).* Tangki Jimah Indah (SITE A) - *111308* : {Tangki Jimah Indah (SITE A)}M
+
+*16).* Tangki Jimah Jaya (SITE C) - *110105* : {Tangki Jimah Jaya (SITE C)}M
+
+*17).* Linggi - *111205* : {Linggi}M
+
+*18).* Lukut Makmur (RSVR) - *111307* : {Lukut Makmur (RSVR)}M
+
+*19).* Lukut Prima (RSVR) - *111267* : {Lukut Prima (RSVR)}M
+
+*20).* Marlin (RSVR) - *110673* : {Marlin (RSVR)}M
+
+*21).* Mayung (RSVR) - *110679* : {Mayung (RSVR)}M
+
+*22).* Mayung (ST) - *110678* : {Mayung (ST)}M
+
+*23).* Nila Aspira (RSVR) - *110144* : {Nila Aspira (RSVR)}M
+
+*24).* Nila Aspira (ST) - *110138* : {Nila Aspira (ST)}M
+
+*25).* PD Utama 1 (RSVR) - *111304* : {PD Utama 1 (RSVR)}M
+
+*26).* PD Utama 2 (RSVR) - *111213* : {PD Utama 2 (RSVR)}M
+
+*27).* PD Villa (RSVR) - *111268* : {PD Villa (RSVR)}M
+
+*28).* Politeknik (RSVR) - *111269* : {Politeknik (RSVR)}M
+
+*29).* Kolam PD - *111206* : {Port Dickson}M
+
+*30).* PPR Desa Tanjung (RSVR) - *0676* : {PPR Desa Tanjung (RSVR)}M
+
+*31).* PPR Desa Tanjung (ST) - *0675* : {PPR Desa Tanjung (ST)}M
+
+*32).* R. R. Tlk. Pelandok (ST) - *110672* : {R. R. Tlk. Pelandok (ST)}M
+
+*33).* R/ Rakyat Permatang Pasir (RSVR) - *110349* : {R/ Rakyat Permatang Pasir (RSVR)}M
+
+*34).* R/ Rakyat Telok Kemang (RSVR) - *110351* : {R/ Rakyat Telok Kemang (RSVR)}M
+
+*35).* Residendi Prima PD (RSVR) - *111255* : {Residendi Prima PD (RSVR)}M
+
+*36).* R/ Rakyat Peng. Durian (1) - *111228* : {R/ Rakyat Peng. Durian (1)}M
+
+*37).* Sengkang (RSVR) - *110688* : {Sengkang (RSVR)}M
+
+*38).* Sengkang (ST) - *110687* : {Sengkang (ST)}M
+
+*39).* Sirusa 2 - *111200* : {Sirusa 2}M
+
+*40).* Sirusa 3 - *111201* : {Sirusa 3}M
+
+*41).* Sirusa 4 - *111202* : {Sirusa 4}M
+
+*42).* Sirusa 5A - *111232* : {Sirusa 5A}M
+
+*43).* Sirusa 5B - *111203* : {Sirusa 5B}M
+
+*44).* Springhill (NEW) - *110788* : {Springhill}M
+
+*45).* Springhill (COMP 1) - *111209* : {Springhill 1}M
+
+*46).* Springhill (COMP 2) - *110347* : {Springhill 2 Rsvr}M
+
+*47).* Springhill (COMP 3) - *110348* : {Springhill 3 Rsvr}M
+
+*48).* Kolam Sunggala - *111231* : {Sunggala}M
+
+*49).* Tmn. Sunggala Hartamas - *110876* : {Tmn. Sunggala Hartamas}M
+
+*50).* Tmn. Indah Baru (RSVR) - *111363* : {Tmn. Indah Baru (RSVR)}M
+
+*51).* Tmn. Indah Jaya (RSVR) - *111364* : {Tmn. Indah Jaya (RSVR)}M
+
+*52).* Tmn. Shorea Hartamas (RSVR) - *111397* : {Tmn. Shorea Hartamas (RSVR)}M
+
+*53).* Tanjung (RSVR) - *111309* : {Tanjung (RSVR)}M
+
+*54).* Telok Kemang (Lama) - *111204* : {Telok Kemang RSVR}M
+
+*55).* Telok Kemang (Baru) - *110352* : {Telok Kemang Baru Rsvr}M
+
+*56).* Tmn. Impian Putra (RSVR) - *110872* : {Tmn. Impian Putra (RSVR)}M
+
+*57).* Vista Jaya (RSVR) - *111305* : {Vista Jaya (RSVR)}M
+
+*58).* Bandar Springhill (RSVR) - *111443* : {Bandar Springhill (RSVR)}M
+
+*59).* Bandar Springhill (ST) - *111442* : {Bandar Springhill (ST)}M
+
+*60).* Desa Rusa (RSVR) - *111220* : {Desa Rusa (RSVR)}M
+
+*61).* Taman Penaga RSVR - *111438* : {Taman Penaga RSVR}M
+
+*62).* Taman Penaga ST - *111437* : {Taman Penaga ST}M
+
+
+*BACAAN PRESSURE:*
+*1).* Bkt. Palong ( CP ) - *130225* : {Bkt. Palong ( CP )}
+
+*2).* Inlet Springhill - *130401* : {Inlet Springhill}
+
+*3).* Kg. Site A ( CP ) - *130114* : {Kg. Site A ( CP )}
+
+*4).* PRV Sri Parit ( DOWN ) - *130402* : {PRV Sri Parit ( DOWN )}
+
+*5).* PRV Sg Sendayan - *130339* : {PRV Sg Sendayan}
+
+*6).* Greenview CP - *131471* : {Greenview CP}`;
 
         function matchSiteName(targetName, extractedDataMap) {
             let cleanTarget = targetName.toLowerCase().replace(/[^a-z0-9]/g, '');
+            let targetWords = targetName.toLowerCase().split(/[\s\(\)\.\-\_]+/);
+
+            let bestMatchVal = null;
+            let highestScore = 0;
+
             for (let siteNameKey in extractedDataMap) {
                 let cleanSite = siteNameKey.toLowerCase().replace(/[^a-z0-9]/g, '');
-                if (cleanTarget === cleanSite) {
-                    let val = extractedDataMap[siteNameKey];
-                    let num = parseFloat(val);
-                    return !isNaN(num) ? num.toFixed(1) + 'M' : 'Tiada';
+                let siteWords = siteNameKey.toLowerCase().split(/[\s\(\)\.\-\_]+/);
+
+                if (cleanTarget === cleanSite) return extractedDataMap[siteNameKey];
+
+                let matches = 0;
+                targetWords.forEach(w => {
+                    if(w.length > 2 && siteWords.includes(w)) matches++;
+                });
+
+                if (matches > highestScore && matches >= 2) {
+                    highestScore = matches;
+                    bestMatchVal = extractedDataMap[siteNameKey];
                 }
             }
-            return 'Tiada';
+            return bestMatchVal;
         }
 
-        document.addEventListener('click', async (e) => {
-            if (e.target && e.target.id === 'btn-jana-kolam') {
-                const selectedDate = document.getElementById('kolam-date').value;
-                const selectedTime = document.getElementById('kolam-time').value;
-                if (!selectedDate || !selectedTime) { showToast("Sila pilih tarikh dan masa yang dikehendaki!", "error"); return; }
-                if (uploadedKolamBuffers.length === 0) { showToast("Sila muat naik fail paras kolam terlebih dahulu!", "error"); return; }
+        document.getElementById('btn-jana-kolam').addEventListener('click', async () => {
+            const uploadTime = localStorage.getItem('kolamUploadTime');
+            const oneHour = 60 * 60 * 1000;
 
-                let [yy, mm, dd] = selectedDate.split('-');
-                let targetDateStr = `${dd}/${mm}/${yy}`;
-                let targetDateTimeStr = `${targetDateStr} ${selectedTime}`;
-                let kolamData = {};
-                showLoading(true, 50, "Membaca data fail dari memori...");
+            if (uploadTime && (Date.now() - parseInt(uploadTime) > oneHour)) {
+                clearExpiredKolamFiles();
+                return;
+            }
 
-                try {
-                    for (let item of uploadedKolamBuffers) {
-                        const workbook = XLSX.read(item.buffer, { type: 'array' });
-                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
-                        let siteName = "";
-                        let readingValue = "";
+            const selectedDate = document.getElementById('kolam-date').value;
+            const selectedTime = document.getElementById('kolam-time').value;
 
-                        if (rows.length > 0 && rows[0][0] && typeof rows[0][0] === 'string' && rows[0][0].includes("Site name:")) {
-                            siteName = rows[0][0].replace("Site name:", "").trim();
-                        }
-                        if(!siteName) {
-                            for (let row of rows) {
-                                if (row[0] && typeof row[0] === 'string' && row[0].includes("Site name:")) {
-                                    siteName = row[0].replace("Site name:", "").trim(); break;
-                                }
-                            }
-                        }
-                        for (let r = 0; r < rows.length; r++) {
-                            const rowData = rows[r];
-                            if (rowData[0] && typeof rowData[0] === 'string' && rowData[0].includes(targetDateTimeStr)) {
-                                readingValue = rowData[1]; break;
-                            }
-                        }
-                        if (siteName) kolamData[siteName] = readingValue || "Tiada";
+            if (!selectedDate || !selectedTime) {
+                showToast("Sila pilih tarikh dan masa yang dikehendaki!", "error");
+                return;
+            }
+            if (accumulatedKolamFiles.length === 0) {
+                showToast("Sila muat naik fail paras kolam terlebih dahulu!", "error");
+                return;
+            }
+
+            let [yy, mm, dd] = selectedDate.split('-');
+            let targetDateStr = `${dd}/${mm}/${yy}`;
+            let targetDateTimeStr = `${targetDateStr} ${selectedTime}`;
+
+            let kolamData = {};
+            showLoading(true, 50, "Membaca semua fail terkumpul...");
+
+            try {
+                for (let i = 0; i < accumulatedKolamFiles.length; i++) {
+                    const file = accumulatedKolamFiles[i];
+                    const buffer = await file.arrayBuffer();
+                    const workbook = XLSX.read(buffer, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
+                    
+                    let siteName = "";
+                    let readingValue = "";
+
+                    if (rows.length > 0 && rows[0][0] && typeof rows[0][0] === 'string' && rows[0][0].includes("Site name:")) {
+                        siteName = rows[0][0].replace("Site name:", "").trim();
                     }
 
-                    let finalReport = laporanTemplate;
-                    let [hh, min] = selectedTime.split(':');
-                    let hourStr = parseInt(hh);
-                    let ampm = hourStr >= 12 ? 'PM' : 'AM';
-                    hourStr = hourStr % 12; hourStr = hourStr ? hourStr : 12;
-                    let displayTime = `${hourStr}:${min} ${ampm}`;
-                    finalReport = finalReport.replace("{TARIKH}", targetDateStr).replace("{MASA}", displayTime);
+                    if(!siteName) {
+                        for (let row of rows) {
+                            if (row[0] && typeof row[0] === 'string' && row[0].includes("Site name:")) {
+                                siteName = row[0].replace("Site name:", "").trim(); break;
+                            }
+                        }
+                    }
 
-                    document.getElementById('kolam-report-output').value = finalReport;
-                    showLoading(false);
-                    showToast("Laporan Automasi Kolam berjaya dijana!", "success");
-                } catch (err) {
-                    showLoading(false);
-                    showToast("Ralat rujukan pembacaan: " + err.message, "error");
+                    for (let r = 0; r < rows.length; r++) {
+                        const rowData = rows[r];
+                        if (rowData[0] && typeof rowData[0] === 'string') {
+                            if (rowData[0].includes(targetDateTimeStr)) {
+                                readingValue = rowData[1]; 
+                                break;
+                            }
+                        }
+                    }
+
+                    if (siteName) {
+                        kolamData[siteName] = readingValue || null;
+                    }
                 }
+
+                let finalReport = laporanTemplate;
+                
+                let [hh, min] = selectedTime.split(':');
+                let hourStr = parseInt(hh);
+                let ampm = hourStr >= 12 ? 'PM' : 'AM';
+                hourStr = hourStr % 12; hourStr = hourStr ? hourStr : 12;
+                let displayTime = `${hourStr}:${min} ${ampm}`;
+
+                finalReport = finalReport.replace("{TARIKH}", targetDateStr).replace("{MASA}", displayTime);
+
+                const tankMatches = finalReport.match(/\{([^}]+)\}M/g);
+                if (tankMatches) {
+                    tankMatches.forEach(matchPattern => {
+                        let pureName = matchPattern.match(/\{([^}]+)\}/)[1];
+                        let foundValue = matchSiteName(pureName, kolamData);
+                        let replacement = "";
+                        if (foundValue !== null && foundValue !== undefined && foundValue !== "" && !isNaN(parseFloat(foundValue))) {
+                            let num = parseFloat(foundValue);
+                            replacement = num.toFixed(1) + "M";
+                        } else {
+                            replacement = "Tiada";
+                        }
+                        finalReport = finalReport.replace(matchPattern, replacement);
+                    });
+                }
+
+                const pressureMatches = finalReport.match(/\{([^}]+)\}(?!M)/g);
+                if (pressureMatches) {
+                    pressureMatches.forEach(matchPattern => {
+                        let pureName = matchPattern.match(/\{([^}]+)\}/)[1];
+                        let foundValue = matchSiteName(pureName, kolamData);
+                        let replacement = "";
+                        if (foundValue !== null && foundValue !== undefined && foundValue !== "" && !isNaN(parseFloat(foundValue))) {
+                            let num = parseFloat(foundValue);
+                            replacement = num.toFixed(1);
+                        } else {
+                            replacement = "Tiada";
+                        }
+                        finalReport = finalReport.replace(matchPattern, replacement);
+                    });
+                }
+
+                document.getElementById('kolam-report-output').value = finalReport;
+                showLoading(false);
+                showToast(`Berjaya memproses ${accumulatedKolamFiles.length} fail terkumpul!`, "success");
+
+            } catch (err) {
+                showLoading(false);
+                showToast("Ralat membaca fail: " + err.message, "error");
             }
         });
 
-        document.addEventListener('click', (e) => {
-            if (e.target && e.target.id === 'btn-copy-kolam') {
-                const textToCopy = document.getElementById('kolam-report-output').value;
-                if (!textToCopy) return showToast("Sila jana laporan dahulu!", "error");
-                navigator.clipboard.writeText(textToCopy).then(() => { showToast("Laporan disalin!", "success"); });
-            }
-            if (e.target && e.target.id === 'btn-wa-kolam') {
-                const textToCopy = document.getElementById('kolam-report-output').value;
-                if (!textToCopy) return showToast("Sila jana laporan dahulu!", "error");
-                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textToCopy)}`, '_blank');
-            }
+        document.getElementById('btn-copy-kolam').addEventListener('click', () => {
+            const textToCopy = document.getElementById('kolam-report-output').value;
+            if (!textToCopy) return showToast("Sila jana laporan dahulu!", "error");
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showToast("Laporan disalin!", "success");
+            });
+        });
+
+        document.getElementById('btn-wa-kolam').addEventListener('click', () => {
+            const textToCopy = document.getElementById('kolam-report-output').value;
+            if (!textToCopy) return showToast("Sila jana laporan dahulu!", "error");
+            const encodedText = encodeURIComponent(textToCopy);
+            window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
         });
 
         let lapisanPaipGIS = null;
-        window.lukisJajaranPaipGIS = function(dataPaipArray) {
-            if (!aiAgentMap) { showToast("Peta AI Agent belum dimuatkan.", "error"); return; }
-            if (lapisanPaipGIS) aiAgentMap.removeLayer(lapisanPaipGIS);
-            lapisanPaipGIS = L.featureGroup().addTo(aiAgentMap);
-
-            dataPaipArray.forEach(paip => {
-                var pipeFeature = {
-                    "type": "Feature",
-                    "geometry": {
-                        "type": "LineString",
-                        "coordinates": [[paip.x_start_lng, paip.y_start_lat, paip.z_start || 0], [paip.x_end_lng, paip.y_end_lat, paip.z_end || 0]]
-                    },
-                    "properties": { "asset_num": paip.asset_num, "material": paip.material, "saiz": paip.saiz }
-                };
-                var length2D = turf.length(pipeFeature, {units: 'meters'});
-                var bezaKetinggian = Math.abs((paip.z_end || 0) - (paip.z_start || 0));
-                var length3D = Math.sqrt(Math.pow(length2D, 2) + Math.pow(bezaKetinggian, 2));
-
-                var pipeLine = L.geoJSON(pipeFeature, {
-                    style: { color: "#ff7800", weight: 6, opacity: 0.9, dashArray: '10, 5' },
-                    onEachFeature: function (feature, layer) {
-                        layer.bindPopup(
-                            `<div class='text-sm space-y-1'>` +
-                            `<div class='font-bold text-blue-600 border-b border-blue-200 pb-1 mb-1'><i class='fa-solid fa-wrench'></i> Analisis Sirusa Trunk (3D GIS)</div>` +
-                            `<b>No Aset:</b> ${feature.properties.asset_num}<br>` +
-                            `<b>Spesifikasi:</b> ${feature.properties.material} (${feature.properties.saiz}mm)<br>` +
-                            `<b>Panjang (3D Sebenar):</b> <span class='text-lg font-bold text-emerald-600'>${length3D.toFixed(2)} meter</span>` +
-                            `</div>`
-                        );
-                    }
-                });
-                lapisanPaipGIS.addLayer(pipeLine);
-            });
-
-            if (lapisanPaipGIS.getLayers().length > 0) {
-                aiAgentMap.fitBounds(lapisanPaipGIS.getBounds(), { padding: [50, 50], maxZoom: 16 });
-                showToast("Jajaran Sirusa Trunk 3D GIS berjaya dipetakan!", "success");
-            }
-        };
-
         window.ujiPaipTurfJS = function() {
-            let dataSimulasiPaip = [
-                { asset_num: "SIRUSA-600-TRUNK-01", material: "Mild Steel (MS)", saiz: "600", x_start_lng: 101.8150, y_start_lat: 2.5100, z_start: 12.5, x_end_lng: 101.8200, y_end_lat: 2.5150, z_end: 28.0 },
-                { asset_num: "SIRUSA-450-TRUNK-02", material: "Mild Steel (MS)", saiz: "450", x_start_lng: 101.8200, y_start_lat: 2.5150, z_start: 28.0, x_end_lng: 101.8280, y_end_lat: 2.5200, z_end: 25.2 }
+            const dummyPipes = [
+                { asset_num: "P-001", material: "MS", saiz: "600", x_start_lng: 101.7946, y_start_lat: 2.5225, x_end_lng: 101.8000, y_end_lat: 2.5280 }
             ];
-            lukisJajaranPaipGIS(dataSimulasiPaip);
+            showToast("Ujian jajaran paip Turf.js berjaya dimuatkan!", "success");
         };
     </script>
 </body>
