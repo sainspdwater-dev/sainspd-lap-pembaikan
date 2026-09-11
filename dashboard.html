@@ -2713,7 +2713,7 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. Rasionalkan perbezaan ker
                 if (!geminiApiKey) throw new Error("API Key diperlukan untuk analisis AI.");
                 localStorage.setItem('geminiApiKey', geminiApiKey);
 
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`;
+                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiApiKey}`;
 
                 const res = await fetch(geminiUrl, {
                     method: 'POST',
