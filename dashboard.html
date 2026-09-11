@@ -544,15 +544,15 @@
         </div>
 
         <!-- TAB 5: AI AGENT (KHAS ADMIN) -->
-        <div id="ai-agent-content" class="hidden pb-24 h-[calc(100vh-90px)] flex flex-col">
+        <div id="ai-agent-content" class="hidden pb-24 flex flex-col">
             <header class="mb-2 flex justify-between items-center shrink-0">
                 <div>
                     <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><i class="fa-solid fa-user-tie text-purple-500"></i> AI Agent (Engineer & Planner)</h2>
                     <p class="text-slate-500 dark:text-gray-400 text-xs">Pembantu analitikal operasi NRW. Jana rumusan, pemetaan automatik, dan cadangan aset berdasarkan D1 master & fail spatial KML/KMZ.</p>
                 </div>
             </header>
-            <div class="dashboard-card flex-1 flex flex-col lg:flex-row overflow-hidden p-0">
-                <div class="w-full lg:w-3/5 flex flex-col border-r border-slate-200 dark:border-gray-700 h-full bg-slate-50 dark:bg-gray-900 overflow-hidden">
+            <div class="dashboard-card flex flex-col lg:flex-row overflow-visible p-0 min-h-[1000px]">
+                <div class="w-full lg:w-3/5 flex flex-col border-r border-slate-200 dark:border-gray-700 min-h-[1000px] bg-slate-50 dark:bg-gray-900 overflow-hidden">
                     
                     <div class="p-3 bg-slate-100 dark:bg-gray-800 border-b border-slate-200 dark:border-gray-700 flex flex-col gap-2 shrink-0">
                         <div id="ai-prompt-chips" class="flex flex-wrap gap-1">
@@ -567,7 +567,7 @@
                             <button onclick="setAiPrompt('Cadangan jadual Active Leakage Detection (ALD) mengikut zon', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-magnifying-glass-chart text-emerald-500 mr-1"></i> Penjadualan ALD</button>
                         </div>
 
-                        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+                        <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs">
                             <div>
                                 <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]">Tapis Bulan</label>
                                 <select id="ai-filter-bulan" class="filter-select w-full py-1 text-xs"><option value="">Semua</option></select>
@@ -585,8 +585,12 @@
                                 <input type="number" step="any" id="ai-avg-mnf" class="form-input py-1 text-xs" placeholder="Cth: 25.5">
                             </div>
                             <div>
-                                <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]">Jumlah Bil Sehari (m³)</label>
+                                <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]">Jumlah Bil/Hari (m³)</label>
                                 <input type="number" step="any" id="ai-jumlah-bil" class="form-input py-1 text-xs" placeholder="Cth: 950">
+                            </div>
+                            <div>
+                                <label class="font-bold text-emerald-600 dark:text-emerald-400 mb-0.5 block text-[10px]">Pekali Hazen (C)</label>
+                                <input type="number" step="any" id="ai-hazen-c" class="form-input py-1 text-xs border-emerald-400" placeholder="Cth: 130 (MS) / 100 (AC)" value="120">
                             </div>
                         </div>
 
@@ -602,18 +606,38 @@
                             </div>
                         </div>
 
+                        <div class="rounded border border-cyan-200 dark:border-cyan-800 bg-cyan-50/60 dark:bg-cyan-950/20 p-2 text-xs">
+                            <div class="font-bold text-cyan-700 dark:text-cyan-300 mb-1"><i class="fa-solid fa-gauge-high mr-1"></i>Pemantauan Tekanan DMA & ALD</div>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                                <div><label class="font-semibold text-[10px]">Tekanan Inlet (bar)</label><input id="ai-pressure-inlet" type="number" step="any" class="form-input py-1 text-xs" placeholder="Cth: 2.8"></div>
+                                <div><label class="font-semibold text-[10px]">Tekanan CP (bar)</label><input id="ai-pressure-cp" type="number" step="any" class="form-input py-1 text-xs" placeholder="Cth: 1.9"></div>
+                                <div><label class="font-semibold text-[10px]">Penggunaan Sah Malam (m³/h)</label><input id="ai-legitimate-night-use" type="number" step="any" class="form-input py-1 text-xs" placeholder="Cth: 5"></div>
+                                <div><label class="font-semibold text-[10px]">Masa Bacaan</label><input id="ai-monitoring-time" type="datetime-local" class="form-input py-1 text-xs"></div>
+                                <div><label class="font-semibold text-[10px]">Koordinat Flow Meter</label><input id="ai-flow-meter-coord" class="form-input py-1 text-xs" placeholder="lat, lng"></div>
+                                <div><label class="font-semibold text-[10px]">Koordinat Pressure CP</label><input id="ai-cp-coord" class="form-input py-1 text-xs" placeholder="lat, lng"></div>
+                                <div><label class="font-semibold text-[10px]">Koordinat PRV</label><input id="ai-prv-coord" class="form-input py-1 text-xs" placeholder="lat, lng"></div>
+                                <div><label class="font-semibold text-[10px]">Keputusan ALD</label><select id="ai-ald-result" class="form-input py-1 text-xs"><option value="">Belum diperiksa</option><option value="CONFIRMED_LEAK">Leak disahkan</option><option value="NO_LEAK">Tiada leak ditemui</option><option value="SUSPECTED">Disyaki leak</option></select></div>
+                            </div>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+                                <input id="ai-ald-location" class="form-input py-1 text-xs" placeholder="Lokasi keputusan ALD">
+                                <input id="ai-ald-leak-rate" type="number" step="any" class="form-input py-1 text-xs" placeholder="Kadar leak anggaran (m³/h)">
+                                <button type="button" id="btn-save-dma-monitoring" class="px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-xs font-bold"><i class="fa-solid fa-floppy-disk"></i> Simpan Pemantauan / ALD</button>
+                            </div>
+                            <p id="ai-flow-upload-status" class="mt-1 text-[10px] text-cyan-700 dark:text-cyan-300">CSV/Excel aliran boleh mengandungi: timestamp, flow_m3h, pressure_inlet_bar, pressure_cp_bar, legitimate_night_use_m3h.</p>
+                        </div>
+
                         <div class="flex gap-2 pt-1">
                             <input type="text" id="ai-chat-input" aria-label="Soalan kepada AI Agent" class="form-input flex-1 text-xs bg-white dark:bg-gray-900 py-1.5" placeholder="Pilih prompt di atas atau taip soalan..." autocomplete="off">
                             <button type="button" onclick="resetAiInputs()" class="px-3 py-1.5 bg-slate-500 hover:bg-slate-600 text-white rounded-md text-xs font-bold flex items-center gap-1 transition shadow-sm" title="Reset">
                                 <i class="fa-solid fa-rotate-right"></i> Reset
                             </button>
-                            <button id="ai-send-btn" aria-label="Hantar mesej AI" class="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-md text-xs font-bold flex items-center gap-1.5 transition shadow-sm">
+                            <button id="ai-send-btn" aria-label="Hantar mesej AI" class="px-4 py-1.5 bg-purple-600 hover:bg-purple-50 text-white rounded-md text-xs font-bold flex items-center gap-1.5 transition shadow-sm">
                                 Submit <i class="fa-solid fa-paper-plane"></i>
                             </button>
                         </div>
                     </div>
 
-                    <div id="ai-chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm bg-white dark:bg-gray-900">
+                    <div id="ai-chat-messages" class="flex-1 min-h-[360px] overflow-y-auto p-4 space-y-3 text-sm bg-white dark:bg-gray-900">
                         <div class="bg-slate-50 dark:bg-gray-800 p-3.5 rounded-lg border border-slate-200 dark:border-gray-700 shadow-sm text-slate-800 dark:text-slate-200">
                             <b class="text-purple-600 dark:text-purple-400"><i class="fa-solid fa-robot"></i> Sains AI Planner:</b> Selamat sejahtera. Sistem diaktifkan dengan senibina D1 Fallback Master Database dan sokongan KML/KMZ spatial. Sila muat naik fail KML atau gunakan rujukan master D1 sedia ada untuk analisis jajaran Sirusa (Trunk vs Retikulasi).
                         </div>
@@ -621,16 +645,17 @@
 
                 </div>
                 
-                <div class="w-full lg:w-2/5 h-64 lg:h-full relative flex flex-col">
+                <div class="w-full lg:w-2/5 min-h-[520px] lg:min-h-0 lg:self-stretch relative flex flex-col">
                     <div class="p-2 bg-slate-100 dark:bg-gray-800 text-xs font-semibold text-slate-700 dark:text-gray-300 border-b border-slate-200 dark:border-gray-700 flex justify-between items-center gap-2">
                         <span><i class="fa-solid fa-map-location-dot text-blue-500 mr-1"></i> Peta Analisis Visual AI (D1 / KML Hybrid)</span>
                         <div class="flex items-center gap-1">
                             <button type="button" onclick="ujiPaipTurfJS()" class="px-2 py-0.5 bg-amber-500 hover:bg-amber-400 text-white rounded text-[11px] font-bold transition shadow whitespace-nowrap" title="Papar Jajaran Paip Sirusa 3D"><i class="fa-solid fa-route"></i> Uji Paip 3D</button>
                             <input type="text" id="map-search-latlng" placeholder="Cari Lat, Lng..." class="form-input py-0.5 px-2 text-[11px] w-44 bg-white dark:bg-gray-900" autocomplete="off">
-                            <button type="button" onclick="searchLatLngOnMap()" class="px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-[11px] font-bold transition"><i class="fa-solid fa-magnifying-glass"></i></button>
+                            <button type="button" onclick="searchLatLngOnMap()" class="px-2 py-0.5 bg-blue-600 hover:bg-blue-50 text-white rounded text-[11px] font-bold transition"><i class="fa-solid fa-magnifying-glass"></i></button>
                         </div>
                     </div>
                     <div id="ai-agent-map" class="flex-1 w-full h-full min-h-[300px] z-10"></div>
+                    <div id="ai-risk-map-legend" class="absolute bottom-3 left-3 z-[500] hidden rounded-md border border-slate-200 bg-white/95 px-2 py-1.5 text-[10px] shadow dark:border-slate-600 dark:bg-slate-800/95"></div>
                 </div>
             </div>
         </div>
@@ -668,7 +693,7 @@
                             <button id="btn-reset-kolam-files" class="text-xs text-red-500 hover:text-red-700 font-bold underline"><i class="fa-solid fa-trash-can mr-1"></i> Reset Fail</button>
                         </div>
                     </div>
-                    <button id="btn-jana-kolam" class="mt-auto px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-bold flex justify-center items-center gap-2 shadow-sm transition">
+                    <button id="btn-jana-kolam" class="mt-auto px-4 py-3 bg-blue-600 hover:bg-blue-50 text-white rounded-md text-sm font-bold flex justify-center items-center gap-2 shadow-sm transition">
                         <i class="fa-solid fa-gears"></i> Baca & Jana Laporan
                     </button>
                 </div>
@@ -878,7 +903,8 @@
         const WORKER_URL = 'https://laporanpembaikan.sainspdwater.workers.dev/';
 
         let rawData = [], filteredData = [], dropdownOptions = {}, charts = {};
-        let map, aiAgentMap, aiAgentClusterGroup = null, aiHeatLayer = null, markerClusterGroup, heatLayer = null, isHeatmapMode = false, dataTable, managementTable, currentMode = 'add';
+        let map, aiAgentMap, aiAgentClusterGroup = null, aiHeatLayer = null, aiRiskLayerGroup = null, markerClusterGroup, heatLayer = null, isHeatmapMode = false, dataTable, managementTable, currentMode = 'add';
+        let aiTelemetryRows = [];
         let croCurrentPage = 1;
         const croRowsPerPage = 50;
 
@@ -2391,6 +2417,84 @@
             if(spatialFileInput) {
                 spatialFileInput.addEventListener('change', handleSpatialFileUpload);
             }
+            const flowFileInput = document.getElementById('ai-flow-file');
+            if (flowFileInput) flowFileInput.addEventListener('change', handleAiFlowUpload);
+            const saveMonitoringBtn = document.getElementById('btn-save-dma-monitoring');
+            if (saveMonitoringBtn) saveMonitoringBtn.addEventListener('click', saveDmaMonitoring);
+        }
+
+        async function handleAiFlowUpload(event) {
+            const file = event.target.files?.[0];
+            const status = document.getElementById('ai-flow-upload-status');
+            aiTelemetryRows = [];
+            if (!file) return;
+            try {
+                const buffer = await file.arrayBuffer();
+                const workbook = XLSX.read(buffer, { type: 'array' });
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                aiTelemetryRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+                if (!aiTelemetryRows.length) throw new Error('Fail tidak mengandungi baris data.');
+                status.textContent = `${aiTelemetryRows.length} bacaan daripada ${file.name} sedia untuk disimpan. Pastikan District Metered Area dipilih.`;
+                status.className = 'mt-1 text-[10px] text-emerald-600 dark:text-emerald-300 font-semibold';
+            } catch (error) {
+                status.textContent = `Gagal membaca fail: ${error.message}`;
+                status.className = 'mt-1 text-[10px] text-red-600 dark:text-red-300 font-semibold';
+                aiTelemetryRows = [];
+            }
+        }
+
+        function parseMonitoringCoordinate(value) {
+            const pair = String(value || '').split(',').map(item => Number(item.trim()));
+            return pair.length === 2 && Number.isFinite(pair[0]) && Number.isFinite(pair[1]) && Math.abs(pair[0]) <= 90 && Math.abs(pair[1]) <= 180 ? pair : null;
+        }
+
+        async function saveDmaMonitoring() {
+            const dma = document.getElementById('ai-filter-district').value.trim();
+            if (!dma) { showToast('Pilih District Metered Area sebelum menyimpan pemantauan.', 'error'); return; }
+            const timestamp = document.getElementById('ai-monitoring-time').value || new Date().toISOString().slice(0, 16);
+            const asNumber = id => {
+                const value = document.getElementById(id).value;
+                return value === '' ? null : Number(value);
+            };
+            const sensors = [
+                ['FLOW_METER', 'Flow Meter', 'ai-flow-meter-coord'],
+                ['PRESSURE_CP', 'Pressure Critical Point', 'ai-cp-coord'],
+                ['PRV', 'Pressure Reducing Valve', 'ai-prv-coord']
+            ].map(([type, name, field]) => {
+                const coordinate = parseMonitoringCoordinate(document.getElementById(field).value);
+                return coordinate ? { sensor_type: type, sensor_name: name, latitude: coordinate[0], longitude: coordinate[1] } : null;
+            }).filter(Boolean);
+            const manualTelemetry = {
+                recorded_at: timestamp,
+                flow_m3h: asNumber('ai-avg-mnf'),
+                pressure_inlet_bar: asNumber('ai-pressure-inlet'),
+                pressure_cp_bar: asNumber('ai-pressure-cp'),
+                legitimate_night_use_m3h: asNumber('ai-legitimate-night-use'),
+                source: 'manual_dashboard'
+            };
+            const aldResult = document.getElementById('ai-ald-result').value;
+            const ald = aldResult ? {
+                inspected_at: timestamp,
+                location: document.getElementById('ai-ald-location').value.trim(),
+                result_status: aldResult,
+                estimated_leak_m3h: asNumber('ai-ald-leak-rate'),
+                notes: ''
+            } : null;
+            try {
+                const response = await fetch(WORKER_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('sainsToken')}` },
+                    body: JSON.stringify({ action: 'saveDmaMonitoring', dma, telemetryRows: aiTelemetryRows, manualTelemetry, sensors, ald })
+                });
+                const result = await response.json();
+                if (!response.ok || result.status !== 'success') throw new Error(result.message || 'Gagal menyimpan data.');
+                showToast(result.message, 'success');
+                aiTelemetryRows = [];
+                document.getElementById('ai-flow-file').value = '';
+                document.getElementById('ai-flow-upload-status').textContent = 'Data pemantauan telah disimpan dalam D1.';
+            } catch (error) {
+                showToast(error.message, 'error');
+            }
         }
 
         window.setAiPrompt = function(text, btnElement) {
@@ -2399,6 +2503,14 @@
             let avgFlow = document.getElementById('ai-avg-flow').value;
             let avgMnf = document.getElementById('ai-avg-mnf').value;
             let jumlahBil = document.getElementById('ai-jumlah-bil').value;
+            let pressureInlet = document.getElementById('ai-pressure-inlet').value;
+            let pressureCp = document.getElementById('ai-pressure-cp').value;
+            let legitimateNightUse = document.getElementById('ai-legitimate-night-use').value;
+            let monitoringTime = document.getElementById('ai-monitoring-time').value;
+            let flowMeterCoordinate = document.getElementById('ai-flow-meter-coord').value.trim();
+            let pressureCpCoordinate = document.getElementById('ai-cp-coord').value.trim();
+            let prvCoordinate = document.getElementById('ai-prv-coord').value.trim();
+            let aldResult = document.getElementById('ai-ald-result').value;
             let fileInput = document.getElementById('ai-flow-file');
             let spatialInput = document.getElementById('ai-spatial-file');
             let fileName = (fileInput && fileInput.files.length > 0) ? fileInput.files[0].name : '';
@@ -2410,6 +2522,14 @@
             if (avgFlow) extraParts.push(`Avg Flow/Day: ${avgFlow} m³`);
             if (avgMnf) extraParts.push(`Avg MNF: ${avgMnf} m³/h`);
             if (jumlahBil) extraParts.push(`Jumlah Bil Sehari: ${jumlahBil} m³`);
+            if (pressureInlet) extraParts.push(`Tekanan Inlet: ${pressureInlet} bar`);
+            if (pressureCp) extraParts.push(`Tekanan CP: ${pressureCp} bar`);
+            if (legitimateNightUse) extraParts.push(`Penggunaan Sah Malam: ${legitimateNightUse} m³/h`);
+            if (monitoringTime) extraParts.push(`Masa Bacaan: ${monitoringTime}`);
+            if (flowMeterCoordinate) extraParts.push(`Koordinat Flow Meter: ${flowMeterCoordinate}`);
+            if (pressureCpCoordinate) extraParts.push(`Koordinat Pressure CP: ${pressureCpCoordinate}`);
+            if (prvCoordinate) extraParts.push(`Koordinat PRV: ${prvCoordinate}`);
+            if (aldResult) extraParts.push(`Keputusan ALD: ${aldResult}`);
             extraParts.push(`Spatial Source: ${spatialName}`);
 
             let combinedText = text;
@@ -2435,6 +2555,18 @@
             document.getElementById('ai-avg-flow').value = '';
             document.getElementById('ai-avg-mnf').value = '';
             document.getElementById('ai-jumlah-bil').value = '';
+            document.getElementById('ai-pressure-inlet').value = '';
+            document.getElementById('ai-pressure-cp').value = '';
+            document.getElementById('ai-legitimate-night-use').value = '';
+            document.getElementById('ai-monitoring-time').value = '';
+            document.getElementById('ai-flow-meter-coord').value = '';
+            document.getElementById('ai-cp-coord').value = '';
+            document.getElementById('ai-prv-coord').value = '';
+            document.getElementById('ai-ald-result').value = '';
+            document.getElementById('ai-ald-location').value = '';
+            document.getElementById('ai-ald-leak-rate').value = '';
+            aiTelemetryRows = [];
+            if (document.getElementById('ai-hazen-c')) document.getElementById('ai-hazen-c').value = '120';
             document.getElementById('ai-flow-file').value = '';
             document.getElementById('ai-spatial-file').value = '';
             document.getElementById('ai-chat-input').value = '';
@@ -2460,10 +2592,12 @@
             
             aiAgentClusterGroup = L.markerClusterGroup();
             aiAgentMap.addLayer(aiAgentClusterGroup);
+            aiRiskLayerGroup = L.layerGroup().addTo(aiAgentMap);
+            window.aiDmaPolygonFeatures = [];
 
             if (window.koleksiPoligonDMZ && window.koleksiPoligonDMZ.length > 0) {
                 window.koleksiPoligonDMZ.forEach(feature => {
-                    L.geoJSON(feature, {
+                    const polygonLayer = L.geoJSON(feature, {
                         style: { color: '#10b981', weight: 2, dashArray: '4,4', fillOpacity: 0.15 },
                         onEachFeature: (f, layer) => {
                             let nama = f.properties._fileName || 'Kawasan DMZ';
@@ -2471,7 +2605,51 @@
                             layer.bindPopup(`<b>District Metered Area (${mainArea}):</b> ${escapeHTML(nama)}`);
                         }
                     }).addTo(aiAgentMap);
+                    const props = feature.properties || {};
+                    window.aiDmaPolygonFeatures.push({ feature, name: props._fileName || props.name || props.Name || '', layer: polygonLayer });
                 });
+            }
+        }
+
+        function normaliseMapDma(value) {
+            return String(value || '').toUpperCase().replace(/\.GEOJSON$|\.KML$|\.CSV$/g, '').replace(/[^A-Z0-9]+/g, ' ').replace(/\bDMA\b/g, '').trim();
+        }
+
+        function doesMapDmaMatch(polygonName, dma) {
+            const polygon = normaliseMapDma(polygonName);
+            const selected = normaliseMapDma(dma);
+            if (!polygon || !selected) return false;
+            if (polygon.includes(selected) || selected.includes(polygon)) return true;
+            const tokens = selected.split(' ').filter(token => token.length >= 4 && !/^\d+MM$/.test(token));
+            return tokens.length > 0 && tokens.filter(token => polygon.includes(token)).length >= Math.min(2, tokens.length);
+        }
+
+        function renderAiRiskZones(riskZones) {
+            if (!aiAgentMap || !aiRiskLayerGroup) return;
+            aiRiskLayerGroup.clearLayers();
+            const legend = document.getElementById('ai-risk-map-legend');
+            const zones = Array.isArray(riskZones) ? riskZones.filter(zone => zone && zone.dma) : [];
+            if (!zones.length) {
+                if (legend) legend.classList.add('hidden');
+                return;
+            }
+            let drawn = 0;
+            (window.aiDmaPolygonFeatures || []).forEach(item => {
+                const zone = zones.find(candidate => doesMapDmaMatch(item.name, candidate.dma));
+                if (!zone) return;
+                L.geoJSON(item.feature, {
+                    style: { color: zone.color || '#f97316', weight: 3, fillColor: zone.color || '#f97316', fillOpacity: 0.38 },
+                    onEachFeature: (feature, layer) => layer.bindPopup(`<b>${escapeHTML(zone.dma)}</b><br>Skor risiko: <b>${escapeHTML(String(zone.score))}/100</b><br>Status: ${escapeHTML(zone.label || zone.status)}`)
+                }).addTo(aiRiskLayerGroup);
+                drawn++;
+            });
+            const zone = zones[0];
+            if (window.customSpatialLayer && zones.length === 1) {
+                window.customSpatialLayer.setStyle({ color: zone.color || '#f97316', weight: 3, fillColor: zone.color || '#f97316', fillOpacity: 0.30 });
+            }
+            if (legend) {
+                legend.innerHTML = `<div class="font-bold" style="color:${escapeHTML(zone.color || '#f97316')}"><i class="fa-solid fa-location-crosshairs"></i> ${escapeHTML(zone.label || zone.status)}</div><div class="text-slate-600 dark:text-slate-300">${escapeHTML(zone.dma)} • Skor ${escapeHTML(String(zone.score))}/100${drawn ? '' : ' • Sempadan belum dipadankan'}</div>`;
+                legend.classList.remove('hidden');
             }
         }
 
@@ -2574,10 +2752,12 @@
             }
         };
 
+        // --- UPDATED AI AGENT UI RENDERER FOR STRUCTURED JSON RESPONSES ---
         async function sendAiMessage() {
             const inputEl = document.getElementById('ai-chat-input');
             const messagesContainer = document.getElementById('ai-chat-messages');
             const userPrompt = inputEl.value.trim();
+            
             if(!userPrompt) {
                 showToast("Sila taip soalan atau pilih prompt terlebih dahulu.", "error");
                 return;
@@ -2594,199 +2774,174 @@
             const loadingId = 'ai-loading-' + Date.now();
             messagesContainer.innerHTML += `
                 <div id="${loadingId}" class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-slate-200 dark:border-gray-700 text-slate-500 italic shadow-sm flex items-center gap-2">
-                    <i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Menilai Senibina Sirusa (Trunk vs Retikulasi) & Sumber D1 Master Fallback...
+                    <i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> AI Orchestrator sedang menganalisis intent, memanggil database, dan menjana rumusan...
                 </div>
             `;
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-            let flowDataArray = [];
-            const fileInput = document.getElementById('ai-flow-file');
-            if (fileInput && fileInput.files.length > 0) {
-                try {
-                    const buffer = await fileInput.files[0].arrayBuffer();
-                    const workbook = XLSX.read(buffer, { type: 'array' });
-                    flowDataArray = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: null });
-                } catch(e) {}
-            }
-
-            const spatialFileInput = document.getElementById('ai-spatial-file');
-            const hasSpatialFile = spatialFileInput && spatialFileInput.files.length > 0;
-            const spatialSourceNote = hasSpatialFile ? `Custom KML/KMZ Spatial Upload (${spatialFileInput.files[0].name})` : `D1 Master Database (Automatic Fallback Source of Truth)`;
-
             const selectedDistrict = document.getElementById('ai-filter-district').value.trim();
             const aiParams = {
                 bulan: document.getElementById('ai-filter-bulan').value,
-                district: selectedDistrict,
+                dma: selectedDistrict,
                 avgFlow: document.getElementById('ai-avg-flow').value,
                 avgMnf: document.getElementById('ai-avg-mnf').value,
                 jumlahBil: document.getElementById('ai-jumlah-bil').value,
-                flowData: flowDataArray 
+                pressureInlet: document.getElementById('ai-pressure-inlet').value,
+                pressureCp: document.getElementById('ai-pressure-cp').value,
+                legitimateNightUse: document.getElementById('ai-legitimate-night-use').value,
+                monitoringTime: document.getElementById('ai-monitoring-time').value,
+                flowMeterCoordinate: document.getElementById('ai-flow-meter-coord').value.trim(),
+                pressureCpCoordinate: document.getElementById('ai-cp-coord').value.trim(),
+                prvCoordinate: document.getElementById('ai-prv-coord').value.trim(),
+                aldResult: document.getElementById('ai-ald-result').value,
+                pekaliHazen: document.getElementById('ai-hazen-c')?.value || 120
             };
 
-            let targetPolygonFeature = null;
-            let polygonCenterLat = 2.5225;
-            let polygonCenterLng = 101.7946;
-            if (selectedDistrict && window.koleksiPoligonDMZ) {
-                for (let feature of window.koleksiPoligonDMZ) {
-                    let fName = (feature.properties._fileName || '').trim();
-                    if (fName.toLowerCase() === selectedDistrict.toLowerCase() || selectedDistrict.toLowerCase().includes(fName.toLowerCase())) {
-                        targetPolygonFeature = feature;
-                        try {
-                            let centroid = turf.centroid(feature);
-                            polygonCenterLng = centroid.geometry.coordinates[0];
-                            polygonCenterLat = centroid.geometry.coordinates[1];
-                        } catch(e) {}
-                        break;
-                    }
-                }
-            }
-
-            let allRecordsForAi = (window.rawData || []).map(r => {
-                let districtAreaVal = r['District Metered Area'] || r['DISTRICT METERED AREA'] || r['districtMeteredArea'] || '';
-                if (parentFolders && parentFolders.includes(String(districtAreaVal).trim().toLowerCase())) districtAreaVal = '';
-
-                let kord = r['KORDINAT'] || '';
-                let lat = '', lng = '';
-                let parts = kord.split(',');
-                if (parts.length === 2) {
-                    lat = parseFloat(parts[0].trim());
-                    lng = parseFloat(parts[1].trim());
-                    if (!isNaN(lat) && !isNaN(lng) && !districtAreaVal && window.koleksiPoligonDMZ) {
-                        let resDMZ = semakPointInDMZ(lat, lng);
-                        if (resDMZ.zone && !parentFolders.includes(resDMZ.zone.toLowerCase())) {
-                            districtAreaVal = resDMZ.zone;
-                        }
-                    }
-                }
-
-                let jenisPaip = String(r['JENIS PAIP'] || '').toUpperCase();
-                let saizPaip = String(r['SAIZ PAIP'] || '');
-                let isSirusaTrunk = (jenisPaip.includes('MS') || jenisPaip.includes('DI')) && (saizPaip.includes('600') || saizPaip.includes('450') || saizPaip.includes('375') || saizPaip.includes('900'));
-
-                return {
-                    "No Aduan": r['NO ADUAN'] || r['noAduan'] || '',
-                    "Zon": r['ZON'] || r['Zon'] || '',
-                    "Bulan": r['BULAN'] || r['bulan'] || '',
-                    "District Metered Area": districtAreaVal,
-                    "Kategori": r['KATEGORI'] || r['kategori'] || '',
-                    "Lokasi / Tempat": r['LOKASI / TEMPAT'] || r['LOKASI'] || '',
-                    "Kordinat": kord,
-                    "_lat": lat,
-                    "_lng": lng,
-                    "Jenis Paip": jenisPaip,
-                    "Saiz Paip": saizPaip,
-                    "Klasifikasi Jajaran": isSirusaTrunk ? "Main Trunk (Utama)" : "Retikulasi (Taman/Agihan)"
-                };
-            });
-
-            if (aiParams.bulan) {
-                allRecordsForAi = allRecordsForAi.filter(r => String(r.Bulan).toLowerCase() === String(aiParams.bulan).toLowerCase());
-            }
-
-            if (selectedDistrict) {
-                const targetDist = selectedDistrict.toLowerCase();
-                allRecordsForAi = allRecordsForAi.filter(r => {
-                    let matchText = String(r["District Metered Area"]).toLowerCase().includes(targetDist) || 
-                                    String(r.DMA).toLowerCase().includes(targetDist);
-                    if (matchText) return true;
-                    if (!isNaN(r._lat) && !isNaN(r._lng) && targetPolygonFeature) {
-                        try {
-                            let pt = turf.point([r._lng, r._lat]);
-                            return turf.booleanPointInPolygon(pt, targetPolygonFeature);
-                        } catch(e) {}
-                    }
-                    return false;
-                });
-            }
-
-            const systemPrompt = `Anda adalah Sains AI Planner, pakar jurutera utiliti air dan perancang operasi NRW (Non-Revenue Water) SAINS Port Dickson. 
-Analisis data operasi berikut dengan mengambilkira pengasingan logik jajaran Main Trunk (Utama) Cth: Sirusa 600 dan Sirusa 450 berbanding Retikulasi (Agihan Taman) menggunakan senibina D1 Master Fallback (${spatialSourceNote}).
-Zon Rasmi GIS/D1: [${selectedDistrict || 'Semua Daerah'} - Pusat Koordinat Lat: ${polygonCenterLat}, Lng: ${polygonCenterLng}].
-Parameter Rujukan: Bulan: ${aiParams.bulan || 'Tidak ditetapkan'}, DMA: ${selectedDistrict || 'Semua'}, Avg Flow: ${aiParams.avgFlow || 0} m3/d, Avg MNF: ${aiParams.avgMnf || 0} m3/h, Bil Sehari: ${aiParams.jumlahBil || 0} m3/d.
-Soalan Pengguna: ${userPrompt}
-Senarai Rekod Aduan Sah dalam Zon Ini (${allRecordsForAi.length} rekod): ${JSON.stringify(allRecordsForAi.slice(0, 30))}
-
-Berikan jawapan teknikal mendalam dalam Bahasa Melayu. Rasionalkan perbezaan kerosakan antara Main Trunk (seperti Sirusa 600) dan Retikulasi, serta sahkan koordinat hotspot berhampiran pusat koordinat Lat: ${polygonCenterLat}, Lng: ${polygonCenterLng}.`;
-
             try {
-                const geminiApiKey = localStorage.getItem('geminiApiKey') || window.prompt("Sila masukkan Google Gemini API Key anda untuk sesi ini:");
-                if (!geminiApiKey) throw new Error("API Key diperlukan untuk analisis AI.");
-                localStorage.setItem('geminiApiKey', geminiApiKey);
-
-                const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiApiKey}`;
-
-                const res = await fetch(geminiUrl, {
+                const res = await fetch(WORKER_URL, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('sainsToken')}`
+                    },
                     body: JSON.stringify({
-                        contents: [{ parts: [{ text: systemPrompt }] }]
+                        action: 'aiAgent',
+                        prompt: userPrompt,
+                        params: aiParams,
+                        // rawData ialah pemboleh ubah aplikasi. Jangan guna window.rawData
+                        // kerana ia tidak wujud bagi deklarasi `let rawData` dan akan
+                        // menyebabkan Worker menerima senarai rekod kosong.
+                        records: Array.isArray(rawData) ? rawData : [],
+                        agentType: 'nrw_agent',
+                        sessionId: localStorage.getItem('sainsUserEmail') || localStorage.getItem('sainsUsername') || localStorage.getItem('sainsUserLevel') || 'user_session'
                     })
                 });
 
                 const jsonRes = await res.json();
-                if (!res.ok) throw new Error(jsonRes.error?.message || 'Gagal berhubung dengan Gemini API.');
-
-                const aiReplyText = jsonRes.candidates?.[0]?.content?.parts?.[0]?.text || 'Tiada maklum balas dijana.';
                 document.getElementById(loadingId).remove();
 
+                if (!res.ok || jsonRes.status !== 'success') {
+                    throw new Error(jsonRes.message || 'Gagal menjana respons AI.');
+                }
+
+                let confidenceColor = jsonRes.confidence?.level === 'HIGH' ? 'text-emerald-500' : (jsonRes.confidence?.level === 'MEDIUM' ? 'text-amber-500' : 'text-red-500');
+                
+                let metricsHtml = '';
+                if (jsonRes.metrics && jsonRes.metrics.length > 0) {
+                    metricsHtml = `<div class="grid grid-cols-2 md:grid-cols-3 gap-2 mt-3">`;
+                    jsonRes.metrics.forEach(m => {
+                        metricsHtml += `
+                        <div class="bg-slate-50 dark:bg-gray-700 p-2 rounded border border-slate-200 dark:border-gray-600">
+                            <div class="text-[10px] uppercase font-bold text-slate-500 dark:text-gray-400">${escapeHTML(m.label)}</div>
+                            <div class="text-lg font-bold text-slate-800 dark:text-white">${escapeHTML(String(m.value))} <span class="text-xs font-normal text-slate-500">${escapeHTML(m.unit || '')}</span></div>
+                        </div>`;
+                    });
+                    metricsHtml += `</div>`;
+                }
+
+                let evidenceHtml = '';
+                if (jsonRes.evidence && jsonRes.evidence.length > 0) {
+                    evidenceHtml = `<div class="mt-3 text-xs bg-slate-100 dark:bg-gray-900 p-2 rounded">
+                        <b class="text-slate-600 dark:text-gray-400"><i class="fa-solid fa-database"></i> Sumber Evidens:</b>
+                        <ul class="list-disc pl-4 mt-1 text-slate-700 dark:text-gray-300">`;
+                    jsonRes.evidence.forEach(e => {
+                        evidenceHtml += `<li><b>${escapeHTML(e.source)}</b>: ${escapeHTML(e.description)} (Rekod: ${e.record_count || 0})</li>`;
+                    });
+                    evidenceHtml += `</ul></div>`;
+                }
+
+                let recommendationsHtml = '';
+                if (jsonRes.recommendations && jsonRes.recommendations.length > 0) {
+                    recommendationsHtml = `<div class="mt-3 space-y-2">
+                        <b class="text-slate-800 dark:text-white text-xs"><i class="fa-solid fa-lightbulb text-amber-500"></i> Cadangan Tindakan:</b>`;
+                    jsonRes.recommendations.forEach(r => {
+                        let badge = r.priority === 'HIGH' ? 'bg-red-100 text-red-600' : (r.priority === 'MEDIUM' ? 'bg-amber-100 text-amber-600' : 'bg-blue-100 text-blue-600');
+                        recommendationsHtml += `
+                        <div class="p-2 border-l-2 border-slate-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-xs">
+                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${badge}">${escapeHTML(r.priority)}</span>
+                            <span class="ml-2 font-semibold text-slate-800 dark:text-white">${escapeHTML(r.action)}</span>
+                            <p class="mt-1 text-slate-500 dark:text-gray-400 italic">${escapeHTML(r.reason)}</p>
+                        </div>`;
+                    });
+                    recommendationsHtml += `</div>`;
+                }
+
+                let findingsHtml = '';
+                if (jsonRes.findings && jsonRes.findings.length > 0) {
+                    findingsHtml = `<div class="mt-3 space-y-1">
+                        <b class="text-slate-800 dark:text-white text-xs"><i class="fa-solid fa-magnifying-glass-chart text-blue-500"></i> Penemuan (Findings):</b>
+                        <ul class="list-disc pl-4 text-xs text-slate-700 dark:text-gray-300">`;
+                    jsonRes.findings.forEach(f => {
+                        findingsHtml += `<li>${escapeHTML(f)}</li>`;
+                    });
+                    findingsHtml += `</ul></div>`;
+                }
+
+                let calcHtml = '';
+                if (jsonRes.calculations && jsonRes.calculations.length > 0) {
+                    jsonRes.calculations.forEach(c => {
+                        calcHtml += `<div class="mt-3 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded text-xs">
+                            <b class="text-blue-700 dark:text-blue-300"><i class="fa-solid fa-calculator"></i> ${escapeHTML(c.name)}</b>
+                            <div class="font-mono mt-1 text-[10px] text-slate-600 dark:text-gray-400">Formula: ${escapeHTML(c.formula)}</div>
+                            <div class="mt-1 font-bold text-blue-800 dark:text-blue-200">Hasil: ${escapeHTML(String(c.result))} ${escapeHTML(c.unit)}</div>
+                        </div>`;
+                    });
+                }
+
+                const mappedHotspotCount = jsonRes.map?.markers?.length || 0;
+                const mappedRiskZoneCount = jsonRes.map?.risk_zones?.length || 0;
+                const mapStatusHtml = `<div class="mt-3 text-xs rounded p-2 ${mappedHotspotCount ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300' : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300'}">
+                    <i class="fa-solid fa-map-location-dot"></i> ${mappedRiskZoneCount ? `Lapisan zon risiko DMA telah diwarnakan (${escapeHTML(jsonRes.map.risk_zones[0].label || jsonRes.map.risk_zones[0].status)}). ` : ''}${mappedHotspotCount ? `${mappedHotspotCount} hotspot respons AI dipaparkan pada peta. Klik penanda untuk melihat kes, jenis dan saiz paip.` : (mappedRiskZoneCount ? 'Jika sempadan tidak berubah warna, muat naik KML/GeoJSON zon atau semak nama District Metered Area.' : 'Tiada koordinat sah untuk dipetakan bagi respons ini. Lengkapkan medan Kordinat pada Pengurusan Data.')}
+                </div>`;
+
                 messagesContainer.innerHTML += `
-                    <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border-l-4 border-l-purple-500 border-y border-r border-slate-200 dark:border-gray-700 shadow-sm text-slate-800 dark:text-slate-200">
-                        <b class="text-purple-600 dark:text-purple-400 font-bold mb-2 block"><i class="fa-solid fa-robot"></i> Rumusan Analisis (Sains AI Planner - Sirusa Trunk & D1 Fallback):</b>
-                        <div class="leading-relaxed whitespace-pre-wrap">${escapeHTML(aiReplyText).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')}</div>
+                    <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border-l-4 border-l-purple-500 border-y border-r border-slate-200 dark:border-gray-700 shadow-sm">
+                        <div class="flex justify-between items-center mb-2">
+                            <b class="text-purple-600 dark:text-purple-400 text-sm font-bold"><i class="fa-solid fa-robot"></i> AI Engineer & Planner</b>
+                            <span class="text-[10px] font-bold ${confidenceColor} border border-current px-1.5 py-0.5 rounded shadow-sm" title="${escapeHTML(jsonRes.confidence?.reason || '')}">
+                                CONFIDENCE: ${escapeHTML(jsonRes.confidence?.level || 'N/A')}
+                            </span>
+                        </div>
+                        <div class="text-sm text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-wrap">${escapeHTML(jsonRes.answer).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')}</div>
+                        ${jsonRes.confidence?.reason ? `<div class="mt-2 text-[11px] text-slate-500 dark:text-gray-400"><i class="fa-solid fa-circle-info text-purple-500"></i> Asas keyakinan: ${escapeHTML(jsonRes.confidence.reason)}</div>` : ''}
+                        ${metricsHtml}
+                        ${findingsHtml}
+                        ${calcHtml}
+                        ${recommendationsHtml}
+                        ${evidenceHtml}
+                        ${mapStatusHtml}
                     </div>
                 `;
                 messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-                if (aiAgentMap) {
-                    if (aiAgentClusterGroup) aiAgentClusterGroup.clearLayers();
-                    if (aiHeatLayer) { aiAgentMap.removeLayer(aiHeatLayer); aiHeatLayer = null; }
-
+                renderAiRiskZones(jsonRes.map?.risk_zones || []);
+                if (aiAgentClusterGroup) aiAgentClusterGroup.clearLayers();
+                if (aiAgentMap && jsonRes.map && jsonRes.map.enabled && jsonRes.map.markers && jsonRes.map.markers.length > 0) {
                     const bounds = [];
-                    allRecordsForAi.forEach(r => {
-                        if (!isNaN(r._lat) && !isNaN(r._lng)) {
-                            const m = L.marker([r._lat, r._lng]).bindPopup(`<b>${escapeHTML(r['No Aduan'])}</b><br>Klasifikasi: ${escapeHTML(r['Klasifikasi Jajaran'])}<br>${escapeHTML(r['Lokasi / Tempat'])}`);
+                    jsonRes.map.markers.forEach(r => {
+                        if (!isNaN(r.lat) && !isNaN(r.lng)) {
+                            const markerColor = r.severity > 3 ? '#ef4444' : '#f59e0b';
+                            const m = L.circleMarker([r.lat, r.lng], {
+                                radius: 8, fillColor: markerColor, color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.9
+                            }).bindPopup(`<b>${escapeHTML(r.title)}</b><br>${escapeHTML(r.summary || '')}<br>Kekerapan Kes: ${r.severity}`);
                             aiAgentClusterGroup.addLayer(m);
-                            bounds.push([r._lat, r._lng]);
+                            bounds.push([r.lat, r.lng]);
                         }
                     });
-
-                    const coordRegex = /([0-9]+\.[0-9]+),\s*([0-9]+\.[0-9]+)/g;
-                    let match;
-                    while ((match = coordRegex.exec(aiReplyText)) !== null) {
-                        let lat = parseFloat(match[1]);
-                        let lng = parseFloat(match[2]);
-                        if (lat > 1 && lat < 7 && lng > 99 && lng < 105) {
-                            bounds.push([lat, lng]);
-                        }
-                    }
-
-                    let matchedPolygonFound = false;
-                    if (selectedDistrict && window.koleksiPoligonDMZ) {
-                        window.koleksiPoligonDMZ.forEach(feature => {
-                            let fName = (feature.properties._fileName || '').trim();
-                            if (fName.toLowerCase() === selectedDistrict.toLowerCase() || selectedDistrict.toLowerCase().includes(fName.toLowerCase())) {
-                                let tempLayer = L.geoJSON(feature);
-                                let polyBounds = tempLayer.getBounds();
-                                if (polyBounds.isValid()) {
-                                    aiAgentMap.fitBounds(polyBounds, { padding: [50, 50], maxZoom: 15 });
-                                    matchedPolygonFound = true;
-                                }
-                            }
-                        });
-                    }
-
-                    if (!matchedPolygonFound && bounds.length > 0) {
-                        aiAgentMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+                    if (bounds.length > 0) {
+                        aiAgentMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 16 });
+                        showToast("Peta AI telah dikemas kini berdasarkan pangkalan data sebenar.", "success");
                     }
                 }
 
             } catch(err) {
-                document.getElementById(loadingId).remove();
+                if (document.getElementById(loadingId)) document.getElementById(loadingId).remove();
                 messagesContainer.innerHTML += `
-                    <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 shadow-sm">
-                        <b>Ralat Analisis:</b> ${escapeHTML(err.message)}
+                    <div class="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 shadow-sm text-xs">
+                        <b><i class="fa-solid fa-triangle-exclamation"></i> Ralat Analisis AI:</b> ${escapeHTML(err.message)}
                     </div>
                 `;
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }
         }
 
@@ -2965,7 +3120,7 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. Rasionalkan perbezaan ker
             document.getElementById('kpi-civil').innerText = validCivil.length;
 
             const kpiAchievedCount = filteredData.filter(d => {
-                const kpiVal = String(d['KPI ADUAN'] || '').trim();
+                const kpiVal = String(d['KPI Aduan'] || d['KPI ADUAN'] || '').trim();
                 return kpiVal.includes('✓') || kpiVal.includes('√') || (kpiVal !== '' && kpiVal !== '-');
             }).length;
             document.getElementById('kpi-achievement').innerText = (filteredData.length > 0 ? Math.round((kpiAchievedCount / filteredData.length) * 100) : 0) + '%';
@@ -3026,26 +3181,78 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. Rasionalkan perbezaan ker
             markerClusterGroup.clearLayers();
             if(heatLayer) map.removeLayer(heatLayer);
             const markers = [], heatPts = [];
+            
             filteredData.forEach(r => {
-                const lat = parseFloat(r['LATITUDE']||r['LATITUTE']);
-                const lng = parseFloat(r['LONGITUDE']||r['LONGITUTE']);
+                let lat = parseFloat(r['LATITUDE'] || r['LATITUTE']);
+                let lng = parseFloat(r['LONGITUDE'] || r['LONGITUTE']);
+                
+                if (isNaN(lat) || isNaN(lng)) {
+                    const kordParts = String(r['KORDINAT'] || '').split(',');
+                    if (kordParts.length === 2) {
+                        lat = parseFloat(kordParts[0].trim());
+                        lng = parseFloat(kordParts[1].trim());
+                    }
+                }
+
                 if(!isNaN(lat) && !isNaN(lng)) {
-                    markers.push(L.marker([lat, lng]).bindPopup(`<b>${escapeHTML(r['NO ADUAN'])}</b><br>${escapeHTML(r['LOKASI / TEMPAT'])}`));
+                    const kategori = String(r['KATEGORI'] || '').trim().toUpperCase();
+                    let markerColor = '#10b981';
+
+                    if (kategori.includes('PECAH')) {
+                        markerColor = '#ef4444';
+                    } else if (kategori.includes('BOCOR')) {
+                        markerColor = '#eab308';
+                    }
+
+                    const marker = L.circleMarker([lat, lng], {
+                        radius: 8,
+                        fillColor: markerColor,
+                        color: '#ffffff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.9
+                    }).bindPopup(`
+                        <div style="font-family: sans-serif; font-size: 13px; line-height: 1.4;">
+                            <b>No. Aduan:</b> ${escapeHTML(r['NO ADUAN'] || '-')}<br>
+                            <b>DMA:</b> ${escapeHTML(r['DMA'] || '-')}<br>
+                            <b>Kategori:</b> <span style="color: ${markerColor}; font-weight: bold;">${escapeHTML(r['KATEGORI'] || '-')}</span><br>
+                            <b>Lokasi:</b> ${escapeHTML(r['LOKASI / TEMPAT'] || r['LOKASI'] || '-')}<br>
+                            <b>Pelaksana:</b> ${escapeHTML(r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || '-')}
+                        </div>
+                    `);
+
+                    markers.push(marker);
                     heatPts.push([lat, lng, 1]);
                 }
             });
+
             if(isHeatmapMode) {
                 heatLayer = L.heatLayer(heatPts, {radius: 25, blur: 15, gradient:{0.4:'blue',0.65:'lime',1:'red'}}).addTo(map);
-            } else { markerClusterGroup.addLayers(markers); }
+            } else { 
+                markerClusterGroup.addLayers(markers); 
+            }
         }
 
         function updateTable() {
-            const tbData = filteredData.map(r => {
-                const linkMaps = r['LINK MAPS'] ? `<a href="${escapeHTML(r['LINK MAPS'])}" aria-label="Buka Peta Lokasi" target="_blank" class="text-blue-500"><i class="fa-solid fa-map-location-dot"></i></a>` : '-';
-                return [escapeHTML(r['NO ADUAN']||'-'), escapeHTML(r['KPI ADUAN']||'-'), escapeHTML((r['LOKASI / TEMPAT']||r['LOKASI']||'-').substring(0,30)), escapeHTML(r['DMA']||'-'), formatKategori(r['KATEGORI']), linkMaps, escapeHTML(r['KORDINAT']||'-')];
-            });
-            if($.fn.DataTable.isDataTable('#dataTable')) { dataTable.clear().rows.add(tbData).draw(); } 
-            else { dataTable = $('#dataTable').DataTable({ data: tbData, pageLength: 5, responsive: true, dom: 'Bfrtip', buttons: ['excel', 'pdf', 'print'] }); }
+            const tableData = filteredData.map(r => [
+                escapeHTML(r['NO ADUAN'] || '-'),
+                escapeHTML(r['KPI Aduan'] || r['KPI ADUAN'] || '-'),
+                escapeHTML(r['LOKASI / TEMPAT'] || r['LOKASI'] || '-'),
+                escapeHTML(r['DMA'] || '-'),
+                formatKategori(r['KATEGORI']),
+                r['LINK MAPS'] ? `<a href="${escapeHTML(r['LINK MAPS'])}" target="_blank" class="text-blue-500 hover:underline"><i class="fa-solid fa-map-location-dot"></i> Buka</a>` : '-',
+                escapeHTML(r['KORDINAT'] || '-')
+            ]);
+
+            if ($.fn.DataTable.isDataTable('#dataTable')) {
+                dataTable.clear().rows.add(tableData).draw(false);
+            } else {
+                dataTable = $('#dataTable').DataTable({
+                    data: tableData,
+                    pageLength: 10,
+                    scrollX: true
+                });
+            }
         }
 
         function updateManagementTable() {
@@ -3244,10 +3451,6 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. Rasionalkan perbezaan ker
             const encodedText = encodeURIComponent(previewBox.value);
             window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
         });
-
-        /* =========================================
-           FUNGSI AUTOMASI KOLAM (EXCEL BATCH READER)
-           ========================================= */
 
         const laporanTemplate = `*LAPORAN HARIAN KERJA PEMBAIKAN OPERASI SAINS PORT DICKSON*
 
@@ -3519,65 +3722,36 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. Rasionalkan perbezaan ker
                     tankMatches.forEach(matchPattern => {
                         let pureName = matchPattern.match(/\{([^}]+)\}/)[1];
                         let foundValue = matchSiteName(pureName, kolamData);
-                        let replacement = "";
-                        if (foundValue !== null && foundValue !== undefined && foundValue !== "" && !isNaN(parseFloat(foundValue))) {
-                            let num = parseFloat(foundValue);
-                            replacement = num.toFixed(1) + "M";
-                        } else {
-                            replacement = "Tiada";
-                        }
-                        finalReport = finalReport.replace(matchPattern, replacement);
-                    });
-                }
-
-                const pressureMatches = finalReport.match(/\{([^}]+)\}(?!M)/g);
-                if (pressureMatches) {
-                    pressureMatches.forEach(matchPattern => {
-                        let pureName = matchPattern.match(/\{([^}]+)\}/)[1];
-                        let foundValue = matchSiteName(pureName, kolamData);
-                        let replacement = "";
-                        if (foundValue !== null && foundValue !== undefined && foundValue !== "" && !isNaN(parseFloat(foundValue))) {
-                            let num = parseFloat(foundValue);
-                            replacement = num.toFixed(1);
-                        } else {
-                            replacement = "Tiada";
-                        }
+                        let replacement = foundValue !== null && foundValue !== undefined && foundValue !== "" ? foundValue : "-";
                         finalReport = finalReport.replace(matchPattern, replacement);
                     });
                 }
 
                 document.getElementById('kolam-report-output').value = finalReport;
                 showLoading(false);
-                showToast(`Berjaya memproses ${accumulatedKolamFiles.length} fail terkumpul!`, "success");
+                showToast("Laporan kolam berjaya dijana!", "success");
 
             } catch (err) {
                 showLoading(false);
-                showToast("Ralat membaca fail: " + err.message, "error");
+                showToast("Ralat membaca fail kolam: " + err.message, "error");
             }
         });
 
         document.getElementById('btn-copy-kolam').addEventListener('click', () => {
-            const textToCopy = document.getElementById('kolam-report-output').value;
-            if (!textToCopy) return showToast("Sila jana laporan dahulu!", "error");
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                showToast("Laporan disalin!", "success");
-            });
+            const previewBox = document.getElementById('kolam-report-output');
+            if (!previewBox.value) { showToast("Sila jana laporan kolam terlebih dahulu!", "error"); return; }
+            previewBox.select();
+            navigator.clipboard.writeText(previewBox.value).then(() => {
+                showToast("Teks laporan kolam berjaya disalin!", "success");
+            }).catch(() => { showToast("Gagal menyalin teks.", "error"); });
         });
 
         document.getElementById('btn-wa-kolam').addEventListener('click', () => {
-            const textToCopy = document.getElementById('kolam-report-output').value;
-            if (!textToCopy) return showToast("Sila jana laporan dahulu!", "error");
-            const encodedText = encodeURIComponent(textToCopy);
+            const previewBox = document.getElementById('kolam-report-output');
+            if (!previewBox.value) { showToast("Sila jana laporan kolam terlebih dahulu!", "error"); return; }
+            const encodedText = encodeURIComponent(previewBox.value);
             window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
         });
-
-        let lapisanPaipGIS = null;
-        window.ujiPaipTurfJS = function() {
-            const dummyPipes = [
-                { asset_num: "P-001", material: "MS", saiz: "600", x_start_lng: 101.7946, y_start_lat: 2.5225, x_end_lng: 101.8000, y_end_lat: 2.5280 }
-            ];
-            showToast("Ujian jajaran paip Turf.js berjaya dimuatkan!", "success");
-        };
     </script>
 </body>
 </html>
