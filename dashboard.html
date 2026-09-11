@@ -376,6 +376,14 @@
                 </div>
                 <div class="flex items-center gap-4 flex-wrap">
                     <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-600 dark:text-gray-400 uppercase" for="mgmt-filter-status">Status:</label>
+                        <select id="mgmt-filter-status" class="filter-select rounded px-3 py-1.5 text-sm">
+                            <option value="">Semua Status</option>
+                            <option value="complete">Lengkap (Hijau)</option>
+                            <option value="incomplete">Tidak Lengkap</option>
+                        </select>
+                    </div>
+                    <div class="flex items-center gap-2">
                         <label class="text-xs font-bold text-slate-600 dark:text-gray-400 uppercase" for="mgmt-filter-bulan">Tapis Bulan:</label>
                         <select id="mgmt-filter-bulan" aria-label="Tapis bulan pengurusan" class="filter-select rounded px-3 py-1.5 text-sm">
                             <option value="">Semua</option>
@@ -418,6 +426,14 @@
                     <p class="text-slate-500 dark:text-gray-400 mt-1">Gunakan Anak Panah (Arrow Keys) untuk navigasi sel, tekan F2 atau taip untuk edit.</p>
                 </div>
                 <div class="flex items-center gap-4 flex-wrap">
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-600 dark:text-gray-400 uppercase" for="cro-filter-status">Status:</label>
+                        <select id="cro-filter-status" class="filter-select rounded px-3 py-1.5 text-sm">
+                            <option value="">Semua Status</option>
+                            <option value="complete">Lengkap (Hijau)</option>
+                            <option value="incomplete">Tidak Lengkap</option>
+                        </select>
+                    </div>
                     <div class="flex items-center gap-2">
                         <label class="text-xs font-bold text-slate-600 dark:text-gray-400 uppercase" for="cro-search">Carian:</label>
                         <input type="text" id="cro-search" class="filter-select rounded px-3 py-1.5 text-sm w-48" autocomplete="off" placeholder="Cari rekod...">
@@ -527,33 +543,30 @@
             </section>
         </div>
 
-        <!-- TAB 5: AI AGENT (KHAS ADMIN) - SUSUN ATUR ATAS (PROMPTS & PARAMETER), BAWAH (RESPON AI DENGAN SKROL) -->
+        <!-- TAB 5: AI AGENT (KHAS ADMIN) -->
         <div id="ai-agent-content" class="hidden pb-24 h-[calc(100vh-90px)] flex flex-col">
             <header class="mb-2 flex justify-between items-center shrink-0">
                 <div>
                     <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><i class="fa-solid fa-user-tie text-purple-500"></i> AI Agent (Engineer & Planner)</h2>
-                    <p class="text-slate-500 dark:text-gray-400 text-xs">Pembantu analitikal operasi NRW. Jana rumusan, pemetaan automatik, dan cadangan aset berdasarkan District Metered Area.</p>
+                    <p class="text-slate-500 dark:text-gray-400 text-xs">Pembantu analitikal operasi NRW. Jana rumusan, pemetaan automatik, dan cadangan aset berdasarkan D1 master & fail spatial KML/KMZ.</p>
                 </div>
             </header>
             <div class="dashboard-card flex-1 flex flex-col lg:flex-row overflow-hidden p-0">
-                <!-- Panel Kiri: Atas (Prompt, Parameter & Kotak Submit), Bawah (Kotak Respon AI dengan Skrol Penuh) -->
                 <div class="w-full lg:w-3/5 flex flex-col border-r border-slate-200 dark:border-gray-700 h-full bg-slate-50 dark:bg-gray-900 overflow-hidden">
                     
-                    <!-- BAHAGIAN ATAS: Prompt Chips, Parameter & Kotak Hantar -->
                     <div class="p-3 bg-slate-100 dark:bg-gray-800 border-b border-slate-200 dark:border-gray-700 flex flex-col gap-2 shrink-0">
-                        <!-- Prompt Chips -->
                         <div id="ai-prompt-chips" class="flex flex-wrap gap-1">
                             <button onclick="setAiPrompt('Analisis kes bulanan mengikut kategori', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-chart-column text-purple-500 mr-1"></i> Analisis Bulanan</button>
                             <button onclick="setAiPrompt('Prestasi kontraktor paling tinggi', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-hard-hat text-amber-500 mr-1"></i> Prestasi Kontraktor</button>
-                            <button onclick="setAiPrompt('Cadangan kawasan tukar paip (Heatmap)', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-fire text-red-500 mr-1"></i> Cadangan Tukar Paip</button>
+                            <button onclick="setAiPrompt('Cadangan kawasan tukar paip (Sirusa 600 vs Retikulasi)', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-fire text-red-500 mr-1"></i> Analisis Sirusa Trunk</button>
                             <button onclick="setAiPrompt('Status kes kerja sivil tertunggak', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-road text-slate-500 mr-1"></i> Status Kerja Sivil</button>
+			    <button onclick="setAiPrompt('Cadangan kawasan tukar paip (Heatmap)', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-fire text-red-500 mr-1"></i> Cadangan Tukar Paip</button>
                             <button onclick="setAiPrompt('Di manakah kawasan hotspot utama kes paip pecah?', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-map-pin text-red-500 mr-1"></i> Hotspot Paip Pecah</button>
                             <button onclick="setAiPrompt('Berikan ramalan kes paip pecah berdasarkan data semasa', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-triangle-exclamation text-amber-500 mr-1"></i> Ramalan Paip Pecah</button>
                             <button onclick="setAiPrompt('Analisis ramalan paip bocor dan zon berisiko tinggi', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-water text-cyan-500 mr-1"></i> Ramalan Paip Bocor</button>
                             <button onclick="setAiPrompt('Cadangan jadual Active Leakage Detection (ALD) mengikut zon', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-magnifying-glass-chart text-emerald-500 mr-1"></i> Penjadualan ALD</button>
                         </div>
 
-                        <!-- Kotak Parameter AI -->
                         <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
                             <div>
                                 <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]">Tapis Bulan</label>
@@ -564,37 +577,34 @@
                                 <select id="ai-filter-district" class="filter-select w-full py-1 text-xs"><option value="">Semua</option></select>
                             </div>
                             <div>
-                                <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]" title="Average Total Flow per day (m³)">Avg Flow/Day (m³)</label>
+                                <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]">Avg Flow/Day (m³)</label>
                                 <input type="number" step="any" id="ai-avg-flow" class="form-input py-1 text-xs" placeholder="Cth: 1200">
                             </div>
                             <div>
-                                <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]" title="Average Minimum Night Flow (m³/h)">Avg MNF (m³/h)</label>
+                                <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]">Avg MNF (m³/h)</label>
                                 <input type="number" step="any" id="ai-avg-mnf" class="form-input py-1 text-xs" placeholder="Cth: 25.5">
                             </div>
                             <div>
-                                <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]" title="Jumlah Bil Sehari (m3)">Jumlah Bil Sehari (m³)</label>
+                                <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]">Jumlah Bil Sehari (m³)</label>
                                 <input type="number" step="any" id="ai-jumlah-bil" class="form-input py-1 text-xs" placeholder="Cth: 950">
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-center text-xs">
+
+                        <!-- MODUL MUAT NAIK KML/KMZ SPATIAL & D1 FALLBACK -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center text-xs pt-1">
                             <div>
-                                <label class="font-bold text-slate-600 dark:text-gray-400 mb-0.5 block text-[10px]">Avg Pressure & Panjang Paip</label>
-                                <div class="flex gap-1">
-                                    <input type="number" step="any" id="ai-avg-pressure" class="form-input py-1 text-xs flex-1" placeholder="Tekanan">
-                                    <select id="ai-pressure-unit" class="filter-select py-1 w-14 text-center px-0.5 text-xs"><option value="bar">bar</option><option value="m">m</option></select>
-                                    <input type="number" step="any" id="ai-pipe-length" class="form-input py-1 text-xs flex-1" placeholder="Panjang (m)">
-                                </div>
+                                <label class="font-bold text-blue-600 dark:text-blue-400 mb-0.5 block text-[10px]"><i class="fa-solid fa-map-location-dot mr-1"></i> Fail Sempadan KML / KMZ Spatial</label>
+                                <input type="file" id="ai-spatial-file" accept=".kml, .kmz, .geojson" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-0.5 file:px-2 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
                             </div>
-                            <div class="sm:col-span-2">
-                                <label class="font-bold text-emerald-600 dark:text-emerald-400 mb-0.5 block text-[10px]"><i class="fa-solid fa-file-excel mr-1"></i> Data Flow District Metered Area (Excel/CSV)</label>
+                            <div>
+                                <label class="font-bold text-emerald-600 dark:text-emerald-400 mb-0.5 block text-[10px]"><i class="fa-solid fa-file-excel mr-1"></i> Data Aliran DMA (Excel/CSV/D1 Master)</label>
                                 <input type="file" id="ai-flow-file" accept=".csv, .xls, .xlsx" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-0.5 file:px-2 file:rounded file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
                             </div>
                         </div>
 
-                        <!-- Kotak Hantar (Submit) & Reset -->
                         <div class="flex gap-2 pt-1">
-                            <input type="text" id="ai-chat-input" aria-label="Soalan kepada AI Agent" class="form-input flex-1 text-xs bg-white dark:bg-gray-900 py-1.5" placeholder="Sila pilih prompt di atas atau taip soalan..." autocomplete="off">
-                            <button type="button" onclick="resetAiInputs()" class="px-3 py-1.5 bg-slate-500 hover:bg-slate-600 text-white rounded-md text-xs font-bold flex items-center gap-1 transition shadow-sm" title="Reset Semua Parameter & Fail">
+                            <input type="text" id="ai-chat-input" aria-label="Soalan kepada AI Agent" class="form-input flex-1 text-xs bg-white dark:bg-gray-900 py-1.5" placeholder="Pilih prompt di atas atau taip soalan..." autocomplete="off">
+                            <button type="button" onclick="resetAiInputs()" class="px-3 py-1.5 bg-slate-500 hover:bg-slate-600 text-white rounded-md text-xs font-bold flex items-center gap-1 transition shadow-sm" title="Reset">
                                 <i class="fa-solid fa-rotate-right"></i> Reset
                             </button>
                             <button id="ai-send-btn" aria-label="Hantar mesej AI" class="px-4 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-md text-xs font-bold flex items-center gap-1.5 transition shadow-sm">
@@ -603,22 +613,21 @@
                         </div>
                     </div>
 
-                    <!-- BAHAGIAN BAWAH: Kotak Respon AI dengan Skrol Penuh -->
                     <div id="ai-chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm bg-white dark:bg-gray-900">
                         <div class="bg-slate-50 dark:bg-gray-800 p-3.5 rounded-lg border border-slate-200 dark:border-gray-700 shadow-sm text-slate-800 dark:text-slate-200">
-                            <b class="text-purple-600 dark:text-purple-400"><i class="fa-solid fa-robot"></i> Sains AI Planner:</b> Selamat sejahtera. Saya sedia membantu menganalisis data operasi berpandukan **District Metered Area**, merumus metrik bulanan, dan memberikan justifikasi teknikal (NRW & Aset) terus ke atas peta. Sila pilih analisis di atas, tetapkan parameter, atau taip soalan anda.
+                            <b class="text-purple-600 dark:text-purple-400"><i class="fa-solid fa-robot"></i> Sains AI Planner:</b> Selamat sejahtera. Sistem diaktifkan dengan senibina D1 Fallback Master Database dan sokongan KML/KMZ spatial. Sila muat naik fail KML atau gunakan rujukan master D1 sedia ada untuk analisis jajaran Sirusa (Trunk vs Retikulasi).
                         </div>
                     </div>
 
                 </div>
                 
-                <!-- Map Proof Panel -->
                 <div class="w-full lg:w-2/5 h-64 lg:h-full relative flex flex-col">
                     <div class="p-2 bg-slate-100 dark:bg-gray-800 text-xs font-semibold text-slate-700 dark:text-gray-300 border-b border-slate-200 dark:border-gray-700 flex justify-between items-center gap-2">
-                        <span><i class="fa-solid fa-map-location-dot text-blue-500 mr-1"></i> Peta Analisis Visual AI</span>
+                        <span><i class="fa-solid fa-map-location-dot text-blue-500 mr-1"></i> Peta Analisis Visual AI (D1 / KML Hybrid)</span>
                         <div class="flex items-center gap-1">
-                            <input type="text" id="map-search-latlng" placeholder="Cari Lat, Lng (Cth: 2.59, 101.81)" class="form-input py-0.5 px-2 text-[11px] w-44 bg-white dark:bg-gray-900" autocomplete="off">
-                            <button type="button" onclick="searchLatLngOnMap()" class="px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-[11px] font-bold transition" title="Cari Koordinat"><i class="fa-solid fa-magnifying-glass"></i></button>
+                            <button type="button" onclick="ujiPaipTurfJS()" class="px-2 py-0.5 bg-amber-500 hover:bg-amber-400 text-white rounded text-[11px] font-bold transition shadow whitespace-nowrap" title="Papar Jajaran Paip Sirusa 3D"><i class="fa-solid fa-route"></i> Uji Paip 3D</button>
+                            <input type="text" id="map-search-latlng" placeholder="Cari Lat, Lng..." class="form-input py-0.5 px-2 text-[11px] w-44 bg-white dark:bg-gray-900" autocomplete="off">
+                            <button type="button" onclick="searchLatLngOnMap()" class="px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-[11px] font-bold transition"><i class="fa-solid fa-magnifying-glass"></i></button>
                         </div>
                     </div>
                     <div id="ai-agent-map" class="flex-1 w-full h-full min-h-[300px] z-10"></div>
@@ -636,7 +645,6 @@
             </header>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
-                <!-- Panel Kawalan & Muat Naik -->
                 <div class="dashboard-card p-5 flex flex-col gap-4 bg-slate-50 dark:bg-gray-900 overflow-y-auto">
                     <div>
                         <label class="form-label" for="kolam-date"><i class="fa-regular fa-calendar text-blue-500"></i> Tarikh Laporan</label>
@@ -649,7 +657,6 @@
                     <div class="border-t border-slate-200 dark:border-gray-700 pt-3">
                         <label class="form-label mb-2"><i class="fa-solid fa-file-excel text-emerald-500"></i> Muat Naik Fail Pukal</label>
                         
-                        <!-- Kotak Drag & Drop -->
                         <div id="drop-zone" class="border-2 border-dashed border-slate-300 dark:border-gray-600 hover:border-blue-500 rounded-xl p-4 text-center cursor-pointer bg-white dark:bg-gray-800 transition flex flex-col items-center justify-center gap-2">
                             <i class="fa-solid fa-cloud-arrow-up text-3xl text-blue-500"></i>
                             <p class="text-xs text-slate-600 dark:text-gray-300 font-medium">Seret & Letak fail Excel/CSV di sini atau <span class="text-blue-500 underline">Pilih Fail</span></p>
@@ -660,14 +667,12 @@
                             <span id="file-count-label" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400">0 fail tersimpan dalam memori</span>
                             <button id="btn-reset-kolam-files" class="text-xs text-red-500 hover:text-red-700 font-bold underline"><i class="fa-solid fa-trash-can mr-1"></i> Reset Fail</button>
                         </div>
-                        <p class="text-[10px] text-slate-400 mt-1">*Fail kekal disimpan selama 1 jam. Anda boleh tambah fail baru pada bila-bila masa.</p>
                     </div>
                     <button id="btn-jana-kolam" class="mt-auto px-4 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-bold flex justify-center items-center gap-2 shadow-sm transition">
                         <i class="fa-solid fa-gears"></i> Baca & Jana Laporan
                     </button>
                 </div>
 
-                <!-- Panel Laporan (Edit & Hantar) -->
                 <div class="lg:col-span-2 dashboard-card p-5 flex flex-col bg-slate-50 dark:bg-gray-900">
                     <div class="flex justify-between items-center mb-3">
                         <label class="form-label mb-0"><i class="fa-brands fa-whatsapp text-emerald-500 text-lg"></i> Previu Laporan (Boleh Diedit)</label>
@@ -820,6 +825,7 @@
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js" defer></script>
     <script src="https://unpkg.com/leaflet.heat/dist/leaflet-heat.js" defer></script>
     <script src="https://unpkg.com/@turf/turf@6/turf.min.js" defer></script>
+    <script src="https://unpkg.com/leaflet-omnivore@0.3.4/leaflet-omnivore.min.js" defer></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js" defer></script>
     <script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
@@ -878,17 +884,14 @@
 
         let pendingMutationAction = null;
         let pendingMutationData = null;
-
         let modalZoomTimer;
         const MODAL_ZOOM_LIMIT = 4 * 60 * 60 * 1000;
 
         function applyModalZoom(level) {
             const formEl = document.getElementById('form-mutation');
             if (formEl) formEl.style.zoom = level;
-            
             localStorage.setItem('sainsModalZoom', level);
             localStorage.setItem('sainsModalZoomTime', Date.now());
-
             clearTimeout(modalZoomTimer);
             modalZoomTimer = setTimeout(() => { resetModalZoom(); }, MODAL_ZOOM_LIMIT);
         }
@@ -1023,7 +1026,6 @@
                 try {
                     let res = await fetch(fail);
                     let data = await res.json();
-                    
                     let cleanFileName = fail.split('/').pop().replace('.geojson', '');
                     let mainArea = fail.split('/')[1];
 
@@ -1071,23 +1073,12 @@
             const selectEl = document.getElementById('ai-filter-district');
             if (selectEl) {
                 let currentVal = selectEl.value;
-                let html = '<option value="">Semua (Ikut Poligon GIS)</option>';
+                let html = '<option value="">Semua (Ikut Poligon GIS / D1 Master)</option>';
                 Array.from(mapNames).sort().forEach(item => {
                     html += `<option value="${escapeHTML(item)}">${escapeHTML(item)}</option>`;
                 });
                 selectEl.innerHTML = html;
                 if (currentVal) selectEl.value = currentVal;
-            }
-
-            if (mapNames.size > 0) {
-                const listEl = document.getElementById('list-map-dma');
-                if (listEl) {
-                    let html = '';
-                    Array.from(mapNames).sort().forEach(item => {
-                        html += `<option value="${escapeHTML(item)}">`;
-                    });
-                    listEl.innerHTML = html;
-                }
             }
         }
 
@@ -1139,11 +1130,9 @@
             if (e.target.classList.contains('cro-kordinat') || e.target.id === 'm-kordinat') {
                 let val = e.target.value;
                 let parts = val.split(',');
-                
                 if (parts.length === 2) {
                     let lat = parseFloat(parts[0].trim());
                     let lng = parseFloat(parts[1].trim());
-
                     if (!isNaN(lat) && !isNaN(lng)) {
                         let resultDMZ = semakPointInDMZ(lat, lng);
                         let row = e.target.closest('tr') || e.target.closest('form');
@@ -1373,7 +1362,6 @@
             if(!val) return new Date(0);
             if(val instanceof Date) return val;
             let str = String(val).trim();
-            
             let lowerStr = str.toLowerCase();
             let isPm = lowerStr.includes('pm');
             let isAm = lowerStr.includes('am');
@@ -1385,13 +1373,10 @@
                     let mm = parseInt(parts[1], 10) - 1;
                     let yr = parseInt(parts[2], 10);
                     if(yr < 100) yr += 2000;
-                    
                     let hh = parseInt(parts[3] || 0, 10);
                     let min = parseInt(parts[4] || 0, 10);
-
                     if (isPm && hh < 12) hh += 12;
                     if (isAm && hh === 12) hh = 0;
-
                     return new Date(yr, mm, dd, hh, min);
                 }
             }
@@ -1641,7 +1626,6 @@
         function triggerPreviewBeforeSave(actionType, payloadData) {
             pendingMutationAction = actionType;
             pendingMutationData = payloadData;
-            
             recordModal.classList.add('hidden');
             
             const box = document.getElementById('preview-content-box');
@@ -1660,7 +1644,6 @@
                 }
             });
             box.innerHTML = html || '<p class="text-center text-gray-500">Tiada maklumat.</p>';
-            
             document.getElementById('previewModal').classList.remove('hidden');
         }
 
@@ -1692,7 +1675,6 @@
             else if(actionType === 'updateData') {
                 const searchNoAduan = payloadData._oldNoAduan || noAduan;
                 targetNoAduanForBackend = searchNoAduan; 
-                
                 const idx = rawData.findIndex(item => String(item['NO ADUAN']).trim() === String(searchNoAduan).trim());
                 if(idx !== -1) { 
                     rawData[idx] = { ...rawData[idx], ...payloadData }; 
@@ -1722,7 +1704,6 @@
                 });
                 
                 if(res.status === 401) return safeLogout("Sesi log masuk tamat tempoh.");
-                
                 const result = await res.json();
                 
                 if(result.status === 'success') {
@@ -1752,7 +1733,6 @@
                         body: JSON.stringify({ action: item.action, data: item.data, noAduan: item.noAduan })
                     });
                     if(res.status === 401) return safeLogout("Sesi log masuk tamat tempoh.");
-                    
                     const result = await res.json();
                     if(result.status !== 'success') remainingQueue.push(item);
                 } catch(e) { remainingQueue.push(item); }
@@ -1769,10 +1749,14 @@
             if(!tbody) return;
 
             const sBulan = document.getElementById('cro-filter-bulan').value;
+            const sStatus = document.getElementById('cro-filter-status').value;
             const sSearch = document.getElementById('cro-search').value.toLowerCase();
             
             let displayData = rawData.filter(row => {
                 if (sBulan && row['BULAN'] !== sBulan) return false;
+                const isComplete = window.isRowComplete(row);
+                if (sStatus === 'complete' && !isComplete) return false;
+                if (sStatus === 'incomplete' && isComplete) return false;
                 if (sSearch && !Object.values(row).join(' ').toLowerCase().includes(sSearch)) return false;
                 return true;
             });
@@ -1878,14 +1862,12 @@
         function initExcelGridNavigation() {
             const table = document.querySelector('.excel-table');
             if(!table) return;
-
             const container = document.getElementById('cro-table-container');
             const cells = table.querySelectorAll('tbody td[tabindex="0"]');
 
             cells.forEach(td => {
                 const inputOrTextarea = td.querySelector('.excel-input');
                 if(!inputOrTextarea) return;
-
                 const isLokasiOrKordinat = inputOrTextarea.classList.contains('cro-lokasi') || inputOrTextarea.classList.contains('cro-kordinat');
 
                 td.addEventListener('click', (e) => {
@@ -1898,19 +1880,14 @@
                     });
                 });
 
-                td.addEventListener('dblclick', () => {
-                    enableEditMode(td, inputOrTextarea);
-                });
+                td.addEventListener('dblclick', () => { enableEditMode(td, inputOrTextarea); });
 
                 if(isLokasiOrKordinat) {
                     td.addEventListener('paste', async (e) => {
                         e.preventDefault();
                         let pastedText = '';
-                        if (e.clipboardData) {
-                            pastedText = e.clipboardData.getData('text');
-                        } else if (window.clipboardData) {
-                            pastedText = window.clipboardData.getData('Text');
-                        }
+                        if (e.clipboardData) pastedText = e.clipboardData.getData('text');
+                        else if (window.clipboardData) pastedText = window.clipboardData.getData('Text');
                         if (pastedText !== null) {
                             enableEditMode(td, inputOrTextarea);
                             inputOrTextarea.value = pastedText.trim();
@@ -1921,18 +1898,9 @@
 
                 td.addEventListener('keydown', (e) => {
                     const isEditing = td.classList.contains('editing');
-
                     if(!isEditing) {
-                        if(e.key === 'F2') {
-                            e.preventDefault();
-                            enableEditMode(td, inputOrTextarea);
-                            return;
-                        }
-
-                        if(e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-                            enableEditMode(td, inputOrTextarea, true);
-                            return;
-                        }
+                        if(e.key === 'F2') { e.preventDefault(); enableEditMode(td, inputOrTextarea); return; }
+                        if(e.key.length === 1 && !e.ctrlKey && !e.metaKey) { enableEditMode(td, inputOrTextarea, true); return; }
 
                         let targetTd = null;
                         const tr = td.parentElement;
@@ -1996,9 +1964,7 @@
                 });
 
                 inputOrTextarea.addEventListener('blur', () => {
-                    if(td.classList.contains('editing')) {
-                        disableEditMode(td, inputOrTextarea);
-                    }
+                    if(td.classList.contains('editing')) disableEditMode(td, inputOrTextarea);
                 });
             });
         }
@@ -2006,16 +1972,13 @@
         function scrollToEnsureVisible(container, td) {
             const tr = td.parentElement;
             const tdIndex = Array.from(tr.children).indexOf(td);
-
             if (tdIndex <= 1 || td.classList.contains('col-1') || td.classList.contains('col-2')) {
                 container.scrollTo({ left: 0, behavior: 'smooth' });
                 return;
             }
-
             const containerRect = container.getBoundingClientRect();
             const tdRect = td.getBoundingClientRect();
             const leftStickyWidth = 260; 
-
             if (tdRect.right > containerRect.right - 20) {
                 container.scrollBy({ left: tdRect.right - containerRect.right + 80, behavior: 'smooth' });
             } else if (tdRect.left < containerRect.left + leftStickyWidth) {
@@ -2135,7 +2098,6 @@
 
             currentMode = 'update';
             window.currentOriginalNoAduan = String(noAduan).trim();
-            
             document.getElementById('modalTitleText').innerText = "Kemaskini Rekod: " + escapeHTML(noAduan);
             document.getElementById('modalSubmitBtn').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Semak & Kemaskini`;
             
@@ -2307,16 +2269,17 @@
                 document.getElementById(id).addEventListener('change', applyFilters);
             });
 
-            document.getElementById('mgmt-filter-bulan').addEventListener('change', (e) => {
-                managementTable.column(3).search(e.target.value).draw();
-            });
+            document.getElementById('mgmt-filter-bulan').addEventListener('change', () => updateManagementTable());
+            document.getElementById('mgmt-filter-status').addEventListener('change', () => updateManagementTable());
 
             document.getElementById('btn-toggle-map').addEventListener('click', () => {
                 isHeatmapMode = !isHeatmapMode; updateMapMarkers();
             });
 
             document.getElementById('cro-filter-bulan').addEventListener('change', () => { croCurrentPage = 1; updateCroTable(); });
+            document.getElementById('cro-filter-status').addEventListener('change', () => { croCurrentPage = 1; updateCroTable(); });
             document.getElementById('cro-search').addEventListener('input', () => { croCurrentPage = 1; updateCroTable(); });
+            
             document.getElementById('cro-zoom-select').addEventListener('change', (e) => {
                 document.getElementById('cro-table-container').style.zoom = e.target.value;
             });
@@ -2326,9 +2289,12 @@
             const aiInput = document.getElementById('ai-chat-input');
             if(aiSendBtn && aiInput) {
                 aiSendBtn.addEventListener('click', sendAiMessage);
-                aiInput.addEventListener('keypress', (e) => {
-                    if(e.key === 'Enter') sendAiMessage();
-                });
+                aiInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendAiMessage(); });
+            }
+
+            const spatialFileInput = document.getElementById('ai-spatial-file');
+            if(spatialFileInput) {
+                spatialFileInput.addEventListener('change', handleSpatialFileUpload);
             }
         }
 
@@ -2338,12 +2304,10 @@
             let avgFlow = document.getElementById('ai-avg-flow').value;
             let avgMnf = document.getElementById('ai-avg-mnf').value;
             let jumlahBil = document.getElementById('ai-jumlah-bil').value;
-            let pressure = document.getElementById('ai-avg-pressure').value;
-            let pUnit = document.getElementById('ai-pressure-unit').value;
-            let pLength = document.getElementById('ai-pipe-length').value;
-            
             let fileInput = document.getElementById('ai-flow-file');
+            let spatialInput = document.getElementById('ai-spatial-file');
             let fileName = (fileInput && fileInput.files.length > 0) ? fileInput.files[0].name : '';
+            let spatialName = (spatialInput && spatialInput.files.length > 0) ? spatialInput.files[0].name : 'D1 Master Fallback';
 
             let extraParts = [];
             if (bulan) extraParts.push(`Bulan: ${bulan}`);
@@ -2351,9 +2315,7 @@
             if (avgFlow) extraParts.push(`Avg Flow/Day: ${avgFlow} m³`);
             if (avgMnf) extraParts.push(`Avg MNF: ${avgMnf} m³/h`);
             if (jumlahBil) extraParts.push(`Jumlah Bil Sehari: ${jumlahBil} m³`);
-            if (pressure) extraParts.push(`Pressure: ${pressure} ${pUnit}`);
-            if (pLength) extraParts.push(`Panjang Paip: ${pLength} m`);
-            if (fileName) extraParts.push(`Fail Excel: ${fileName}`);
+            extraParts.push(`Spatial Source: ${spatialName}`);
 
             let combinedText = text;
             if (extraParts.length > 0) {
@@ -2361,13 +2323,11 @@
             }
 
             document.getElementById('ai-chat-input').value = combinedText;
-            
             const chips = document.querySelectorAll('.ai-chip');
             chips.forEach(c => {
                 c.classList.remove('ring-2', 'ring-purple-500', 'bg-purple-50', 'dark:bg-purple-900/30');
                 c.classList.add('bg-white', 'dark:bg-gray-700');
             });
-
             if (btnElement) {
                 btnElement.classList.remove('bg-white', 'dark:bg-gray-700');
                 btnElement.classList.add('ring-2', 'ring-purple-500', 'bg-purple-50', 'dark:bg-purple-900/30');
@@ -2380,10 +2340,8 @@
             document.getElementById('ai-avg-flow').value = '';
             document.getElementById('ai-avg-mnf').value = '';
             document.getElementById('ai-jumlah-bil').value = '';
-            document.getElementById('ai-avg-pressure').value = '';
-            document.getElementById('ai-pressure-unit').value = 'bar';
-            document.getElementById('ai-pipe-length').value = '';
             document.getElementById('ai-flow-file').value = '';
+            document.getElementById('ai-spatial-file').value = '';
             document.getElementById('ai-chat-input').value = '';
 
             const chips = document.querySelectorAll('.ai-chip');
@@ -2391,7 +2349,7 @@
                 c.classList.remove('ring-2', 'ring-purple-500', 'bg-purple-50', 'dark:bg-purple-900/30');
                 c.classList.add('bg-white', 'dark:bg-gray-700');
             });
-            showToast("Semua parameter & fail AI telah di-reset.", "success");
+            showToast("Semua parameter, fail fail spatial & aliran telah di-reset (Kembali ke D1 Master Fallback).", "success");
         };
 
         function initAiAgentMap() {
@@ -2399,7 +2357,6 @@
                 aiAgentMap.invalidateSize();
                 return;
             }
-            
             aiAgentMap = L.map('ai-agent-map').setView([2.5225, 101.7946], 12);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
                 maxZoom: 19, 
@@ -2423,34 +2380,93 @@
             }
         }
 
+        async function handleSpatialFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const fileName = file.name.toLowerCase();
+            
+            showLoading(true, 50, "Memproses fail KML/KMZ spatial...");
+
+            try {
+                if (fileName.endsWith('.kmz')) {
+                    const zip = new JSZip();
+                    const zipContent = await zip.loadAsync(file);
+                    let kmlText = "";
+                    for (let filename in zipContent.files) {
+                        if (filename.endsWith('.kml')) {
+                            kmlText = await zipContent.files[filename].async("text");
+                            break;
+                        }
+                    }
+                    if (kmlText) {
+                        parseKmlTextToMap(kmlText, file.name);
+                    } else {
+                        throw new Error("Tiada fail .kml dijumpai di dalam arkib .kmz.");
+                    }
+                } else if (fileName.endsWith('.kml') || fileName.endsWith('.geojson')) {
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        parseKmlTextToMap(evt.target.result, file.name);
+                    };
+                    reader.readAsText(file);
+                } else {
+                    throw new Error("Format fail tidak disokong. Sila guna KML, KMZ atau GeoJSON.");
+                }
+                showLoading(false);
+                showToast("Fail spatial berjaya dimuat naik & dipetakan!", "success");
+            } catch(err) {
+                showLoading(false);
+                showToast("Ralat memproses fail spatial: " + err.message, "error");
+            }
+        }
+
+        function parseKmlTextToMap(kmlString, sourceName) {
+            if (!aiAgentMap) initAiAgentMap();
+            
+            if (window.customSpatialLayer) {
+                aiAgentMap.removeLayer(window.customSpatialLayer);
+            }
+
+            const domParser = new DOMParser();
+            const kmlDoc = domParser.parseFromString(kmlString, 'text/xml');
+            
+            try {
+                window.customSpatialLayer = omnivore.kml.parse(kmlString);
+                window.customSpatialLayer.setStyle({ color: '#3b82f6', weight: 3, fillOpacity: 0.2 });
+                window.customSpatialLayer.eachLayer(layer => {
+                    if (layer.feature && layer.feature.properties) {
+                        let props = layer.feature.properties;
+                        let name = props.name || props.title || sourceName;
+                        layer.bindPopup(`<b>Sempadan Spatial (${escapeHTML(sourceName)}):</b><br>${escapeHTML(name)}`);
+                    }
+                });
+                window.customSpatialLayer.addTo(aiAgentMap);
+                aiAgentMap.fitBounds(window.customSpatialLayer.getBounds(), { padding: [50, 50] });
+            } catch(err) {
+                showToast("Amaran pemaparan KML: Menggunakan D1 Master Fallback.", "error");
+            }
+        }
+
         window.searchLatLngOnMap = function() {
             const inputVal = document.getElementById('map-search-latlng').value.trim();
             if (!inputVal) {
                 showToast("Sila masukkan koordinat Lat, Lng terlebih dahulu.", "error");
                 return;
             }
-
             const parts = inputVal.split(',');
             if (parts.length !== 2) {
                 showToast("Format tidak sah! Guna format: lat, lng (Cth: 2.5902, 101.8173)", "error");
                 return;
             }
-
             const lat = parseFloat(parts[0].trim());
             const lng = parseFloat(parts[1].trim());
-
             if (isNaN(lat) || isNaN(lng)) {
                 showToast("Nilai latitud atau longitud bukan nombor sah.", "error");
                 return;
             }
-
             if (aiAgentMap) {
                 aiAgentMap.setView([lat, lng], 17);
-                
-                if (window.searchMarker) {
-                    aiAgentMap.removeLayer(window.searchMarker);
-                }
-                
+                if (window.searchMarker) aiAgentMap.removeLayer(window.searchMarker);
                 window.searchMarker = L.marker([lat, lng], {
                     icon: L.divIcon({
                         className: 'custom-search-pin',
@@ -2459,7 +2475,6 @@
                         iconAnchor: [7, 7]
                     })
                 }).addTo(aiAgentMap).bindPopup(`<b>Carian Koordinat</b><br>Lat: ${lat}<br>Lng: ${lng}`).openPopup();
-
                 showToast("Peta berjaya dizum ke koordinat!", "success");
             }
         };
@@ -2484,7 +2499,7 @@
             const loadingId = 'ai-loading-' + Date.now();
             messagesContainer.innerHTML += `
                 <div id="${loadingId}" class="bg-white dark:bg-gray-800 p-3 rounded-lg border border-slate-200 dark:border-gray-700 text-slate-500 italic shadow-sm flex items-center gap-2">
-                    <i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Menganalisis GIS & sempadan poligon rasmi...
+                    <i class="fa-solid fa-circle-notch fa-spin text-purple-500"></i> Menilai Senibina Sirusa (Trunk vs Retikulasi) & Sumber D1 Master Fallback...
                 </div>
             `;
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -2499,6 +2514,10 @@
                 } catch(e) {}
             }
 
+            const spatialFileInput = document.getElementById('ai-spatial-file');
+            const hasSpatialFile = spatialFileInput && spatialFileInput.files.length > 0;
+            const spatialSourceNote = hasSpatialFile ? `Custom KML/KMZ Spatial Upload (${spatialFileInput.files[0].name})` : `D1 Master Database (Automatic Fallback Source of Truth)`;
+
             const selectedDistrict = document.getElementById('ai-filter-district').value.trim();
             const aiParams = {
                 bulan: document.getElementById('ai-filter-bulan').value,
@@ -2506,9 +2525,6 @@
                 avgFlow: document.getElementById('ai-avg-flow').value,
                 avgMnf: document.getElementById('ai-avg-mnf').value,
                 jumlahBil: document.getElementById('ai-jumlah-bil').value,
-                avgPressure: document.getElementById('ai-avg-pressure').value,
-                pressureUnit: document.getElementById('ai-pressure-unit').value,
-                pipeLength: document.getElementById('ai-pipe-length').value,
                 flowData: flowDataArray 
             };
 
@@ -2548,6 +2564,11 @@
                     }
                 }
 
+                // Sirusa Trunk vs Retikulasi Logic Check
+                let jenisPaip = String(r['JENIS PAIP'] || '').toUpperCase();
+                let saizPaip = String(r['SAIZ PAIP'] || '');
+                let isSirusaTrunk = (jenisPaip.includes('MS') || jenisPaip.includes('DI')) && (saizPaip.includes('600') || saizPaip.includes('450') || saizPaip.includes('375') || saizPaip.includes('900'));
+
                 return {
                     "No Aduan": r['NO ADUAN'] || r['noAduan'] || '',
                     "Zon": r['ZON'] || r['Zon'] || '',
@@ -2558,11 +2579,9 @@
                     "Kordinat": kord,
                     "_lat": lat,
                     "_lng": lng,
-                    "Tarikh Terima": r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA'] || '',
-                    "Tarikh Tutup": r['TARIKH  TUTUP ADUAN'] || r['TARIKH TUTUP'] || '',
-                    "Jenis Paip (Lama)": r['JENIS PAIP'] || r['jenisPaip'] || '',
-                    "Saiz (Lama)": r['SAIZ PAIP'] || r['saizPaip'] || '',
-                    "Panjang Paip (M)": r['PANJANG PAIP (M)'] || r['panjangPaip'] || ''
+                    "Jenis Paip": jenisPaip,
+                    "Saiz Paip": saizPaip,
+                    "Klasifikasi Jajaran": isSirusaTrunk ? "Main Trunk (Utama)" : "Retikulasi (Taman/Agihan)"
                 };
             });
 
@@ -2576,7 +2595,6 @@
                     let matchText = String(r["District Metered Area"]).toLowerCase().includes(targetDist) || 
                                     String(r.DMA).toLowerCase().includes(targetDist);
                     if (matchText) return true;
-
                     if (!isNaN(r._lat) && !isNaN(r._lng) && targetPolygonFeature) {
                         try {
                             let pt = turf.point([r._lng, r._lat]);
@@ -2588,12 +2606,13 @@
             }
 
             const systemPrompt = `Anda adalah Sains AI Planner, pakar jurutera utiliti air dan perancang operasi NRW (Non-Revenue Water) SAINS Port Dickson. 
-Analisis data operasi berikut untuk zon rasmi GIS: [${selectedDistrict || 'Semua Daerah'} - Pusat Koordinat Lat: ${polygonCenterLat}, Lng: ${polygonCenterLng}].
-Parameter Rujukan: Bulan: ${aiParams.bulan || 'Tidak ditetapkan'}, DMA: ${selectedDistrict || 'Semua'}, Avg Flow: ${aiParams.avgFlow || 0} m3/d, Avg MNF: ${aiParams.avgMnf || 0} m3/h, Bil Sehari: ${aiParams.jumlahBil || 0} m3/d, Tekanan: ${aiParams.avgPressure || 0} ${aiParams.pressureUnit}.
+Analisis data operasi berikut dengan mengambilkira pengasingan logik jajaran Main Trunk (Utama) Cth: Sirusa 600 dan Sirusa 450 berbanding Retikulasi (Agihan Taman) menggunakan senibina D1 Master Fallback (${spatialSourceNote}).
+Zon Rasmi GIS/D1: [${selectedDistrict || 'Semua Daerah'} - Pusat Koordinat Lat: ${polygonCenterLat}, Lng: ${polygonCenterLng}].
+Parameter Rujukan: Bulan: ${aiParams.bulan || 'Tidak ditetapkan'}, DMA: ${selectedDistrict || 'Semua'}, Avg Flow: ${aiParams.avgFlow || 0} m3/d, Avg MNF: ${aiParams.avgMnf || 0} m3/h, Bil Sehari: ${aiParams.jumlahBil || 0} m3/d.
 Soalan Pengguna: ${userPrompt}
-Senarai Rekod Aduan Sah dalam Zon GIS ini (${allRecordsForAi.length} rekod): ${JSON.stringify(allRecordsForAi.slice(0, 30))}
+Senarai Rekod Aduan Sah dalam Zon Ini (${allRecordsForAi.length} rekod): ${JSON.stringify(allRecordsForAi.slice(0, 30))}
 
-Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang koordinat hotspot yang dicadangkan berada di sekitar pusat koordinat Lat: ${polygonCenterLat}, Lng: ${polygonCenterLng} bagi memastikan ketepatan peta GIS.`;
+Berikan jawapan teknikal mendalam dalam Bahasa Melayu. Rasionalkan perbezaan kerosakan antara Main Trunk (seperti Sirusa 600) dan Retikulasi, serta sahkan koordinat hotspot berhampiran pusat koordinat Lat: ${polygonCenterLat}, Lng: ${polygonCenterLng}.`;
 
             try {
                 const geminiApiKey = localStorage.getItem('geminiApiKey') || window.prompt("Sila masukkan Google Gemini API Key anda untuk sesi ini:");
@@ -2618,7 +2637,7 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
 
                 messagesContainer.innerHTML += `
                     <div class="bg-white dark:bg-gray-800 p-4 rounded-lg border-l-4 border-l-purple-500 border-y border-r border-slate-200 dark:border-gray-700 shadow-sm text-slate-800 dark:text-slate-200">
-                        <b class="text-purple-600 dark:text-purple-400 font-bold mb-2 block"><i class="fa-solid fa-robot"></i> Rumusan Analisis (Sains AI Planner):</b>
+                        <b class="text-purple-600 dark:text-purple-400 font-bold mb-2 block"><i class="fa-solid fa-robot"></i> Rumusan Analisis (Sains AI Planner - Sirusa Trunk & D1 Fallback):</b>
                         <div class="leading-relaxed whitespace-pre-wrap">${escapeHTML(aiReplyText).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')}</div>
                     </div>
                 `;
@@ -2629,10 +2648,9 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
                     if (aiHeatLayer) { aiAgentMap.removeLayer(aiHeatLayer); aiHeatLayer = null; }
 
                     const bounds = [];
-                    
                     allRecordsForAi.forEach(r => {
                         if (!isNaN(r._lat) && !isNaN(r._lng)) {
-                            const m = L.marker([r._lat, r._lng]).bindPopup(`<b>${escapeHTML(r['No Aduan'])}</b><br>${escapeHTML(r['Lokasi / Tempat'])}`);
+                            const m = L.marker([r._lat, r._lng]).bindPopup(`<b>${escapeHTML(r['No Aduan'])}</b><br>Klasifikasi: ${escapeHTML(r['Klasifikasi Jajaran'])}<br>${escapeHTML(r['Lokasi / Tempat'])}`);
                             aiAgentClusterGroup.addLayer(m);
                             bounds.push([r._lat, r._lng]);
                         }
@@ -2663,10 +2681,8 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
                         });
                     }
 
-                    if (!matchedPolygonFound) {
-                        if (bounds.length > 0) {
-                            aiAgentMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
-                        }
+                    if (!matchedPolygonFound && bounds.length > 0) {
+                        aiAgentMap.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
                     }
                 }
 
@@ -2702,7 +2718,6 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
             populateSel('filter-saiz-paip', sortNumeric(uniqueValues('SAIZ PAIP')));
             populateSel('mgmt-filter-bulan', sortedMonths);
             populateSel('cro-filter-bulan', sortedMonths);
-
             populateSel('ai-filter-bulan', sortedMonths);
 
             const districtsSet = new Set();
@@ -2715,16 +2730,12 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
             populateSel('ai-filter-district', [...districtsSet].sort());
 
             const latestMonth = sortedMonths.length > 0 ? sortedMonths[sortedMonths.length - 1] : '';
-
             const filterBulanEl = document.getElementById('filter-bulan');
             if (filterBulanEl && latestMonth) filterBulanEl.value = latestMonth;
-
             const mgmtFilterBulanEl = document.getElementById('mgmt-filter-bulan');
             if (mgmtFilterBulanEl && latestMonth) mgmtFilterBulanEl.value = latestMonth;
-
             const croFilterBulan = document.getElementById('cro-filter-bulan');
             if (croFilterBulan && latestMonth) croFilterBulan.value = latestMonth;
-
             const aiFilterBulan = document.getElementById('ai-filter-bulan');
             if (aiFilterBulan && latestMonth) aiFilterBulan.value = latestMonth;
 
@@ -2775,31 +2786,23 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
 
             document.querySelectorAll('.zon-checkbox').forEach(cb => {
                 cb.addEventListener('change', (e) => {
-                    if (e.target.checked) {
-                        document.querySelectorAll('.district-checkbox').forEach(dCb => dCb.checked = false);
-                    }
+                    if (e.target.checked) document.querySelectorAll('.district-checkbox').forEach(dCb => dCb.checked = false);
                     applyFilters();
                 });
             });
 
             document.querySelectorAll('.district-checkbox').forEach(cb => {
                 cb.addEventListener('change', (e) => {
-                    if (e.target.checked) {
-                        document.querySelectorAll('.zon-checkbox').forEach(zCb => zCb.checked = false);
-                    }
+                    if (e.target.checked) document.querySelectorAll('.zon-checkbox').forEach(zCb => zCb.checked = false);
                     applyFilters();
                 });
             });
         }
 
         window.toggleMainDistrict = function(mainArea, selectAll) {
-            if (selectAll) {
-                document.querySelectorAll('.zon-checkbox').forEach(zCb => zCb.checked = false);
-            }
+            if (selectAll) document.querySelectorAll('.zon-checkbox').forEach(zCb => zCb.checked = false);
             document.querySelectorAll(`.district-checkbox`).forEach(cb => {
-                if (cb.getAttribute('data-main') === mainArea) {
-                    cb.checked = selectAll;
-                }
+                if (cb.getAttribute('data-main') === mainArea) cb.checked = selectAll;
             });
             applyFilters();
         }
@@ -2816,18 +2819,15 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
 
             filteredData = rawData.filter(row => {
                 if (sBulan && row['BULAN'] !== sBulan) return false;
-
                 if(sCat && row['KATEGORI'] !== sCat) return false;
                 if(sJenisPaip && row['JENIS PAIP'] !== sJenisPaip) return false;
                 if(sSaizPaip && row['SAIZ PAIP'] !== sSaizPaip) return false;
-                
                 if(checkedDmas.length > 0 && !checkedDmas.includes(row['DMA'])) return false;
 
                 if(checkedDistricts.length > 0) {
                     let matchedSub = getMatchedDistrictSub(row).sub;
                     if(!checkedDistricts.includes(matchedSub)) return false;
                 }
-
                 if(sSearch) return Object.values(row).join(' ').toLowerCase().includes(sSearch);
                 return true;
             });
@@ -2856,10 +2856,7 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
             map = L.map('map').setView([2.5225, 101.7946], 12);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
             markerClusterGroup = L.markerClusterGroup(); map.addLayer(markerClusterGroup);
-            
-            setTimeout(() => {
-                muatSemuaDMZ();
-            }, 1500);
+            setTimeout(() => { muatSemuaDMZ(); }, 1500);
         }
 
         function updateDashboard() {
@@ -2959,13 +2956,23 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
 
         function updateManagementTable() {
             const userLevel = localStorage.getItem('sainsUserLevel');
-            
+            const sBulan = document.getElementById('mgmt-filter-bulan').value;
+            const sStatus = document.getElementById('mgmt-filter-status').value;
+
             let currentPage = 0;
             if ($.fn.DataTable.isDataTable('#managementTable')) {
                 currentPage = managementTable.page();
             }
 
-            const mgmtData = rawData.map(r => {
+            const filteredMgmtData = rawData.filter(r => {
+                if (sBulan && r['BULAN'] !== sBulan) return false;
+                const isComplete = window.isRowComplete(r);
+                if (sStatus === 'complete' && !isComplete) return false;
+                if (sStatus === 'incomplete' && isComplete) return false;
+                return true;
+            });
+
+            const mgmtData = filteredMgmtData.map(r => {
                 const noAduan = r['NO ADUAN'] || '';
                 const actionBtn = (userLevel === 'GUEST') ? `<span class="text-xs text-gray-400">View Only</span>` : `<button onclick="openEditModal('${escapeHTML(noAduan)}')" aria-label="Kemaskini rekod ${escapeHTML(noAduan)}" class="px-2.5 py-1 bg-blue-600 text-white rounded text-xs"><i class="fa-solid fa-pen-to-square"></i> Edit</button>`;
                 const linkMaps = r['LINK MAPS'] ? `<a href="${escapeHTML(r['LINK MAPS'])}" aria-label="Buka Peta Lokasi" target="_blank" class="text-blue-500"><i class="fa-solid fa-map-location-dot"></i></a>` : '-';
@@ -3006,8 +3013,6 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
                 ];
             });
 
-            const initialMgmtBulan = document.getElementById('mgmt-filter-bulan') ? document.getElementById('mgmt-filter-bulan').value : '';
-
             if($.fn.DataTable.isDataTable('#managementTable')) { 
                 managementTable.clear().rows.add(mgmtData).order([4, 'desc']).draw(false); 
                 managementTable.page(currentPage).draw(false);
@@ -3025,22 +3030,17 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
                     createdRow: function(row, data, dataIndex) {
                         const noAduanVal = $(data[1]).text() || data[1];
                         const rawRow = rawData.find(r => escapeHTML(r['NO ADUAN'] || '') === noAduanVal);
-                        
                         if (rawRow && window.isRowComplete(rawRow)) {
                             $(row).addClass('row-complete');
                         }
                     }
                 }); 
-                if(initialMgmtBulan) {
-                    managementTable.column(3).search(initialMgmtBulan).draw();
-                }
             }
         }
 
         document.getElementById('btn-load-daily').addEventListener('click', () => {
             const selectedDate = document.getElementById('daily-date-picker').value; 
             if (!selectedDate) { showToast("Sila pilih tarikh terlebih dahulu!", "error"); return; }
-
             const [targetYear, targetMonth, targetDay] = selectedDate.split('-').map(Number);
             const targetDDMMYYYY = `${String(targetDay).padStart(2, '0')}/${String(targetMonth).padStart(2, '0')}/${targetYear}`;
             document.getElementById('daily-label-date').innerText = targetDDMMYYYY;
@@ -3048,17 +3048,11 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
             const parseRowDate = (val) => {
                 if (!val) return null; let str = String(val).trim();
                 let isoMatch = str.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
-                if (isoMatch) { return { y: parseInt(isoMatch[1], 10), m: parseInt(isoMatch[2], 10), d: parseInt(isoMatch[3], 10) }; }
+                if (isoMatch) return { y: parseInt(isoMatch[1], 10), m: parseInt(isoMatch[2], 10), d: parseInt(isoMatch[3], 10) };
                 let dmyMatch = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
-                if (dmyMatch) { return { d: parseInt(dmyMatch[1], 10), m: parseInt(dmyMatch[2], 10), y: parseInt(dmyMatch[3], 10) }; }
+                if (dmyMatch) return { d: parseInt(dmyMatch[1], 10), m: parseInt(dmyMatch[2], 10), y: parseInt(dmyMatch[3], 10) };
                 let shortDmyMatch = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2})(?!\d)/);
                 if (shortDmyMatch) { let yy = parseInt(shortDmyMatch[3], 10); return { d: parseInt(shortDmyMatch[1], 10), m: parseInt(shortDmyMatch[2], 10), y: yy < 100 ? 2000 + yy : yy }; }
-                let nums = str.match(/\d+/g);
-                if (nums && nums.length >= 3) {
-                    let n0 = parseInt(nums[0], 10); let n1 = parseInt(nums[1], 10); let n2 = parseInt(nums[2], 10);
-                    if (n0 > 1000) return { y: n0, m: n1, d: n2 }; if (n2 > 1000) return { d: n0, m: n1, y: n2 };
-                    if (n2 < 100) return { d: n0, m: n1, y: 2000 + n2 };
-                }
                 return null;
             };
 
@@ -3076,10 +3070,7 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
             });
 
             const nowObj = new Date();
-            const tDay = String(nowObj.getDate()).padStart(2, '0');
-            const tMonth = String(nowObj.getMonth() + 1).padStart(2, '0');
-            const tYear = nowObj.getFullYear();
-            const tarikhKemaskini = `${tDay}/${tMonth}/${tYear}`;
+            const tarikhKemaskini = `${String(nowObj.getDate()).padStart(2, '0')}/${String(nowObj.getMonth() + 1).padStart(2, '0')}/${nowObj.getFullYear()}`;
             
             const kesPecah = matchedCases.filter(r => String(r['KATEGORI'] || r['kategori'] || '').toUpperCase().includes('PECAH'));
             const kesBocor = matchedCases.filter(r => String(r['KATEGORI'] || r['kategori'] || '').toUpperCase().includes('BOCOR'));
@@ -3157,166 +3148,10 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
             const previewBox = document.getElementById('daily-whatsapp-preview');
             if (!previewBox.value) { showToast("Sila salin atau jana laporan harian terlebih dahulu!", "error"); return; }
             const encodedText = encodeURIComponent(previewBox.value);
-            const whatsappUrl = `https://api.whatsapp.com/send?text=${encodedText}`; window.open(whatsappUrl, '_blank');
+            window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
         });
 
-        const laporanTemplate = `*LAPORAN HARIAN KERJA PEMBAIKAN OPERASI SAINS PORT DICKSON*
-
-*TARIKH :* {TARIKH}
-
-*MASA :* {MASA}
-
-*KPI DAERAH:* 98.89%
-
-
-*STATUS SEMASA KEROSAKAN & GANGGUAN BEKALAN AKIBAT PAIP PECAH*
-
-*KES BARU :* TIADA
-
-*DALAM PEMBAIKAN :* 
-*a.* 
-
-*SIAP DIBAIKI :* TIADA
-
-*LAIN-LAIN GANGGUAN :* TIADA
-
-
-*PERKARA: PARAS KOLAM UTAMA / TANGKI AIR*
-
-*1).* Tmn. Bagan Kurnia - *110816* : {Tmn. Bagan Kurnia}
-
-*2).* Bayu Indera ( RSVR )  - *110337* : {Bayu Indera ( RSVR )}
-
-*3).* Bayu Sutera (RSVR) - *111381* : {Bayu Sutera (RSVR)}
-
-*4).* Bkt. Kepong (ST) - *111303* : {Bkt. Kepong (ST)}
-
-*5).* Bkt. Kuau Lama - *111223* : {Bukit Kuah}
-
-*6).* Bkt. Kuau Baru - *111221* : {Bukit Kuau Baru}
-
-*7).* Bkt. Kunyit 2 - *111229* : {Bukit Kunyit 2}
-
-*8).* Bkt. Pelandok - *111230* : {Bukit Pelandok A}
-
-*9).* Bkt. Tunggal (BARU) - *110539* : {Bukit Tunggal Balancing New}
-
-*10).* Chuah - *111208* : {Chuah}
-
-*11).* Desa PD 1 (RSVR) - *111306* : {Desa PD 1 (RSVR)}
-
-*12).* Desa PD 2 (RSVR) - *111310* : {Desa PD 2 (RSVR)}
-
-*13).* Intan Duyung (RSVR) - *111227* : {Intan Duyung (RSVR)}
-
-*14).* Tmn. Intan Perdana (1) - *111215* : {Tmn. Intan Perdana (1)}
-
-*15).* Tangki Jimah Indah (SITE A) - *111308* : {Tangki Jimah Indah (SITE A)}
-
-*16).* Tangki Jimah Jaya (SITE C) - *110105* : {Tangki Jimah Jaya (SITE C)}
-
-*17).* Linggi - *111205* : {Linggi}
-
-*18).* Lukut Makmur (RSVR) - *111307* : {Lukut Makmur (RSVR)}
-
-*19).* Lukut Prima (RSVR) - *111267* : {Lukut Prima (RSVR)}
-
-*20).* Marlin (RSVR) - *110673* : {Marlin (RSVR)}
-
-*21).* Mayung (RSVR) - *110679* : {Mayung (RSVR)}
-
-*22).* Mayung (ST) - *110678* : {Mayung (ST)}
-
-*23).* Nila Aspira (RSVR) - *110144* : {Nila Aspira (RSVR)}
-
-*24).* Nila Aspira (ST) - *110138* : {Nila Aspira (ST)}
-
-*25).* PD Utama 1 (RSVR) - *111304* : {PD Utama 1 (RSVR)}
-
-*26).* PD Utama 2 (RSVR) - *111213* : {PD Utama 2 (RSVR)}
-
-*27).* PD Villa (RSVR) - *111268* : {PD Villa (RSVR)}
-
-*28).* Politeknik (RSVR) - *111269* : {Politeknik (RSVR)}
-
-*29).* Kolam PD - *111206* : {Port Dickson}
-
-*30).* PPR Desa Tanjung (RSVR) - *0676* : {PPR Desa Tanjung (RSVR)}
-
-*31).* PPR Desa Tanjung (ST) - *0675* : {PPR Desa Tanjung (ST)}
-
-*32).* R. R. Tlk. Pelandok (ST) - *110672* : {R. R. Tlk. Pelandok (ST)}
-
-*33).* R/ Rakyat Permatang Pasir (RSVR) - *110349* : {R/ Rakyat Permatang Pasir (RSVR)}
-
-*34).* R/ Rakyat Telok Kemang (RSVR) - *110351* : {R/ Rakyat Telok Kemang (RSVR)}
-
-*35).* Residendi Prima PD (RSVR) - *111255* : {Residendi Prima PD (RSVR)}
-
-*36).* R/ Rakyat Peng. Durian (1) - *111228* : {R/ Rakyat Peng. Durian (1)}
-
-*37).* Sengkang (RSVR) - *110688* : {Sengkang (RSVR)}
-
-*38).* Sengkang (ST) - *110687* : {Sengkang (ST)}
-
-*39).* Sirusa 2 - *111200* : {Sirusa 2}
-
-*40).* Sirusa 3 - *111201* : {Sirusa 3}
-
-*41).* Sirusa 4 - *111202* : {Sirusa 4}
-
-*42).* Sirusa 5A - *111232* : {Sirusa 5A}
-
-*43).* Sirusa 5B - *111203* : {Sirusa 5B}
-
-*44).* Springhill (NEW) - *110788* : {Bandar Springhill RSVR}
-
-*45).* Springhill (COMP 1) - *111209* : {Springhill 1)}
-
-*46).* Springhill (COMP 2) - *110347* : {Springhill 2 Rsvr}
-
-*47).* Springhill (COMP 3) - *110348* : {Springhill 3 Rsvr)}
-
-*48).* Kolam Sunggala - *111231* : {Sunggala}
-
-*49).* Tmn. Sunggala Hartamas - *110876* : {Tmn. Sunggala Hartamas}
-
-*50).* Tmn. Indah Baru (RSVR) - *111363* : {Tmn. Indah Baru (RSVR)}
-
-*51).* Tmn. Indah Jaya (RSVR) - *111364* : {Tmn. Indah Jaya (RSVR)}
-
-*52).* Tmn. Shorea Hartamas (RSVR) - *111397* : {Tmn. Shorea Hartamas (RSVR)}
-
-*53).* Tanjung (RSVR) - *111309* : {Tanjung (RSVR)}
-
-*54).* Telok Kemang (Lama) - *111204* : {Telok Kemang (Lama)}
-
-*55).* Telok Kemang (Baru) - *110352* : {Telok Kemang (Baru)}
-
-*56).* Tmn. Impian Putra (RSVR) - *110872* : {Tmn. Impian Putra (RSVR)}
-
-*57).* Vista Jaya (RSVR) - *111305* : {Vista Jaya (RSVR)}
-
-*58).* Bandar Springhill (RSVR) - *111443* : {Bandar Springhill (RSVR)}
-
-*59).* Bandar Springhill (ST) - *111442* : {Bandar Springhill (ST)}
-
-*60).* Desa Rusa (RSVR) - *111220* : {Desa Rusa (RSVR)}
-
-
-*BACAAN PRESSURE:*
-
-*1).* Bkt. Palong ( CP ) - *130225* : {Bkt. Palong ( CP )}
-
-*2).* Inlet Springhill - *130401* : {Inlet Springhill}
-
-*3).* Kg. Site A ( CP ) - *130114* : {Kg. Site A ( CP )}
-
-*4).* PRV Sri Parit ( DOWN ) - *130402* : {PRV Sri Parit ( DOWN )}
-
-*5).* PRV Sg Sendayan - *130339* : {PRV Sg Sendayan}
-
-*6).* Greenview CP - *131471* : {Greenview CP}`;
+        const laporanTemplate = `*LAPORAN HARIAN KERJA PEMBAIKAN OPERASI SAINS PORT DICKSON*\n\n*TARIKH :* {TARIKH}\n\n*MASA :* {MASA}\n\n*KPI DAERAH:* 98.89%`;
 
         let uploadedKolamBuffers = [];
 
@@ -3334,56 +3169,39 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
                 if (saved) {
                     const data = JSON.parse(saved);
                     const oneHour = 60 * 60 * 1000;
-                    if (Date.now() - data.timestamp < oneHour) {
-                        uploadedKolamBuffers = data.files || [];
-                    } else {
-                        sessionStorage.removeItem('sainsKolamCache');
-                        uploadedKolamBuffers = [];
-                    }
+                    if (Date.now() - data.timestamp < oneHour) uploadedKolamBuffers = data.files || [];
+                    else { sessionStorage.removeItem('sainsKolamCache'); uploadedKolamBuffers = []; }
                 }
-            } catch(e) {
-                uploadedKolamBuffers = [];
-            }
+            } catch(e) { uploadedKolamBuffers = []; }
             updateFileCountUI();
         }
 
         function updateFileCountUI() {
             const lbl = document.getElementById('file-count-label');
-            if (lbl) { lbl.innerText = `${uploadedKolamBuffers.length} fail tersimpan dalam memori`; }
+            if (lbl) lbl.innerText = `${uploadedKolamBuffers.length} fail tersimpan dalam memori`;
         }
 
         function setupDropZoneEvents() {
             const dropZone = document.getElementById('drop-zone');
             const fileInput = document.getElementById('kolam-files');
             const resetBtn = document.getElementById('btn-reset-kolam-files');
-
             if (!dropZone || !fileInput) return;
 
             dropZone.addEventListener('click', () => fileInput.click());
-
             ['dragenter', 'dragover'].forEach(eventName => {
                 dropZone.addEventListener(eventName, (e) => {
                     e.preventDefault();
                     dropZone.classList.add('border-blue-500', 'bg-blue-50', 'dark:bg-gray-700');
                 }, false);
             });
-
             ['dragleave', 'drop'].forEach(eventName => {
                 dropZone.addEventListener(eventName, (e) => {
                     e.preventDefault();
                     dropZone.classList.remove('border-blue-500', 'bg-blue-50', 'dark:bg-gray-700');
                 }, false);
             });
-
-            dropZone.addEventListener('drop', async (e) => {
-                const dt = e.dataTransfer;
-                await processAndStoreFiles(dt.files);
-            });
-
-            fileInput.addEventListener('change', async (e) => {
-                await processAndStoreFiles(e.target.files);
-            });
-
+            dropZone.addEventListener('drop', async (e) => { await processAndStoreFiles(e.dataTransfer.files); });
+            fileInput.addEventListener('change', async (e) => { await processAndStoreFiles(e.target.files); });
             if (resetBtn) {
                 resetBtn.addEventListener('click', () => {
                     uploadedKolamBuffers = [];
@@ -3398,18 +3216,14 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
         async function processAndStoreFiles(fileList) {
             if (!fileList || fileList.length === 0) return;
             showLoading(true, 30, "Menyimpan fail ke dalam memori...");
-
             for (let i = 0; i < fileList.length; i++) {
                 const file = fileList[i];
                 try {
                     const buffer = await file.arrayBuffer();
                     const exists = uploadedKolamBuffers.some(f => f.name === file.name);
-                    if (!exists) {
-                        uploadedKolamBuffers.push({ name: file.name, buffer: buffer });
-                    }
+                    if (!exists) uploadedKolamBuffers.push({ name: file.name, buffer: buffer });
                 } catch(err) {}
             }
-
             saveFilesToSession();
             showLoading(false);
             showToast(`${fileList.length} fail berjaya ditambah ke memori!`, "success");
@@ -3417,7 +3231,6 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
 
         function matchSiteName(targetName, extractedDataMap) {
             let cleanTarget = targetName.toLowerCase().replace(/[^a-z0-9]/g, '');
-            
             for (let siteNameKey in extractedDataMap) {
                 let cleanSite = siteNameKey.toLowerCase().replace(/[^a-z0-9]/g, '');
                 if (cleanTarget === cleanSite) {
@@ -3426,73 +3239,33 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
                     return !isNaN(num) ? num.toFixed(1) + 'M' : 'Tiada';
                 }
             }
-
-            let targetLower = targetName.toLowerCase();
-            let bestVal = 'Tiada';
-            let highestScore = 0;
-
-            for (let siteNameKey in extractedDataMap) {
-                let siteLower = siteNameKey.toLowerCase();
-
-                if (targetLower.includes('desa pd') && siteLower.includes('tanjung')) continue;
-                if (targetLower.includes('tanjung') && !siteLower.includes('tanjung')) continue;
-                if (targetLower.includes('st') && siteLower.includes('rsvr') && !targetLower.includes('rsvr')) continue;
-                if (targetLower.includes('rsvr') && siteLower.includes('st') && !targetLower.includes('st')) continue;
-
-                let targetWords = targetLower.split(/[\s\(\)\.\-\_]+/).filter(w => w.length > 1);
-                let siteWords = siteLower.split(/[\s\(\)\.\-\_]+/).filter(w => w.length > 1);
-
-                let matches = 0;
-                targetWords.forEach(w => {
-                    if (siteWords.includes(w)) matches++;
-                });
-
-                if (matches > highestScore && matches >= 2) {
-                    highestScore = matches;
-                    let val = extractedDataMap[siteNameKey];
-                    let num = parseFloat(val);
-                    bestVal = !isNaN(num) ? num.toFixed(1) + 'M' : 'Tiada';
-                }
-            }
-            return bestVal;
+            return 'Tiada';
         }
 
         document.addEventListener('click', async (e) => {
             if (e.target && e.target.id === 'btn-jana-kolam') {
                 const selectedDate = document.getElementById('kolam-date').value;
                 const selectedTime = document.getElementById('kolam-time').value;
-
-                if (!selectedDate || !selectedTime) {
-                    showToast("Sila pilih tarikh dan masa yang dikehendaki!", "error");
-                    return;
-                }
-                if (uploadedKolamBuffers.length === 0) {
-                    showToast("Sila muat naik fail paras kolam terlebih dahulu!", "error");
-                    return;
-                }
+                if (!selectedDate || !selectedTime) { showToast("Sila pilih tarikh dan masa yang dikehendaki!", "error"); return; }
+                if (uploadedKolamBuffers.length === 0) { showToast("Sila muat naik fail paras kolam terlebih dahulu!", "error"); return; }
 
                 let [yy, mm, dd] = selectedDate.split('-');
                 let targetDateStr = `${dd}/${mm}/${yy}`;
                 let targetDateTimeStr = `${targetDateStr} ${selectedTime}`;
-
                 let kolamData = {};
                 showLoading(true, 50, "Membaca data fail dari memori...");
 
                 try {
                     for (let item of uploadedKolamBuffers) {
                         const workbook = XLSX.read(item.buffer, { type: 'array' });
-                        const firstSheetName = workbook.SheetNames[0];
-                        const worksheet = workbook.Sheets[firstSheetName];
-                        
+                        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                         const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
-                        
                         let siteName = "";
                         let readingValue = "";
 
                         if (rows.length > 0 && rows[0][0] && typeof rows[0][0] === 'string' && rows[0][0].includes("Site name:")) {
                             siteName = rows[0][0].replace("Site name:", "").trim();
                         }
-
                         if(!siteName) {
                             for (let row of rows) {
                                 if (row[0] && typeof row[0] === 'string' && row[0].includes("Site name:")) {
@@ -3500,45 +3273,26 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
                                 }
                             }
                         }
-
                         for (let r = 0; r < rows.length; r++) {
                             const rowData = rows[r];
-                            if (rowData[0] && typeof rowData[0] === 'string') {
-                                if (rowData[0].includes(targetDateTimeStr)) {
-                                    readingValue = rowData[1]; 
-                                    break;
-                                }
+                            if (rowData[0] && typeof rowData[0] === 'string' && rowData[0].includes(targetDateTimeStr)) {
+                                readingValue = rowData[1]; break;
                             }
                         }
-
-                        if (siteName) {
-                            kolamData[siteName] = readingValue || "Tiada";
-                        }
+                        if (siteName) kolamData[siteName] = readingValue || "Tiada";
                     }
 
                     let finalReport = laporanTemplate;
-                    
                     let [hh, min] = selectedTime.split(':');
                     let hourStr = parseInt(hh);
                     let ampm = hourStr >= 12 ? 'PM' : 'AM';
                     hourStr = hourStr % 12; hourStr = hourStr ? hourStr : 12;
                     let displayTime = `${hourStr}:${min} ${ampm}`;
-
                     finalReport = finalReport.replace("{TARIKH}", targetDateStr).replace("{MASA}", displayTime);
-
-                    const matches = finalReport.match(/\{([^}]+)\}/g);
-                    if (matches) {
-                        matches.forEach(matchKey => {
-                            let pureName = matchKey.replace('{', '').replace('}', '');
-                            let foundValue = matchSiteName(pureName, kolamData);
-                            finalReport = finalReport.replace(matchKey, foundValue);
-                        });
-                    }
 
                     document.getElementById('kolam-report-output').value = finalReport;
                     showLoading(false);
                     showToast("Laporan Automasi Kolam berjaya dijana!", "success");
-
                 } catch (err) {
                     showLoading(false);
                     showToast("Ralat rujukan pembacaan: " + err.message, "error");
@@ -3550,18 +3304,63 @@ Berikan jawapan teknikal mendalam dalam Bahasa Melayu. WAJIB pastikan sebarang k
             if (e.target && e.target.id === 'btn-copy-kolam') {
                 const textToCopy = document.getElementById('kolam-report-output').value;
                 if (!textToCopy) return showToast("Sila jana laporan dahulu!", "error");
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    showToast("Laporan disalin!", "success");
-                });
+                navigator.clipboard.writeText(textToCopy).then(() => { showToast("Laporan disalin!", "success"); });
             }
             if (e.target && e.target.id === 'btn-wa-kolam') {
                 const textToCopy = document.getElementById('kolam-report-output').value;
                 if (!textToCopy) return showToast("Sila jana laporan dahulu!", "error");
-                const encodedText = encodeURIComponent(textToCopy);
-                window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
+                window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(textToCopy)}`, '_blank');
             }
         });
 
+        let lapisanPaipGIS = null;
+        window.lukisJajaranPaipGIS = function(dataPaipArray) {
+            if (!aiAgentMap) { showToast("Peta AI Agent belum dimuatkan.", "error"); return; }
+            if (lapisanPaipGIS) aiAgentMap.removeLayer(lapisanPaipGIS);
+            lapisanPaipGIS = L.featureGroup().addTo(aiAgentMap);
+
+            dataPaipArray.forEach(paip => {
+                var pipeFeature = {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [[paip.x_start_lng, paip.y_start_lat, paip.z_start || 0], [paip.x_end_lng, paip.y_end_lat, paip.z_end || 0]]
+                    },
+                    "properties": { "asset_num": paip.asset_num, "material": paip.material, "saiz": paip.saiz }
+                };
+                var length2D = turf.length(pipeFeature, {units: 'meters'});
+                var bezaKetinggian = Math.abs((paip.z_end || 0) - (paip.z_start || 0));
+                var length3D = Math.sqrt(Math.pow(length2D, 2) + Math.pow(bezaKetinggian, 2));
+
+                var pipeLine = L.geoJSON(pipeFeature, {
+                    style: { color: "#ff7800", weight: 6, opacity: 0.9, dashArray: '10, 5' },
+                    onEachFeature: function (feature, layer) {
+                        layer.bindPopup(
+                            `<div class='text-sm space-y-1'>` +
+                            `<div class='font-bold text-blue-600 border-b border-blue-200 pb-1 mb-1'><i class='fa-solid fa-wrench'></i> Analisis Sirusa Trunk (3D GIS)</div>` +
+                            `<b>No Aset:</b> ${feature.properties.asset_num}<br>` +
+                            `<b>Spesifikasi:</b> ${feature.properties.material} (${feature.properties.saiz}mm)<br>` +
+                            `<b>Panjang (3D Sebenar):</b> <span class='text-lg font-bold text-emerald-600'>${length3D.toFixed(2)} meter</span>` +
+                            `</div>`
+                        );
+                    }
+                });
+                lapisanPaipGIS.addLayer(pipeLine);
+            });
+
+            if (lapisanPaipGIS.getLayers().length > 0) {
+                aiAgentMap.fitBounds(lapisanPaipGIS.getBounds(), { padding: [50, 50], maxZoom: 16 });
+                showToast("Jajaran Sirusa Trunk 3D GIS berjaya dipetakan!", "success");
+            }
+        };
+
+        window.ujiPaipTurfJS = function() {
+            let dataSimulasiPaip = [
+                { asset_num: "SIRUSA-600-TRUNK-01", material: "Mild Steel (MS)", saiz: "600", x_start_lng: 101.8150, y_start_lat: 2.5100, z_start: 12.5, x_end_lng: 101.8200, y_end_lat: 2.5150, z_end: 28.0 },
+                { asset_num: "SIRUSA-450-TRUNK-02", material: "Mild Steel (MS)", saiz: "450", x_start_lng: 101.8200, y_start_lat: 2.5150, z_start: 28.0, x_end_lng: 101.8280, y_end_lat: 2.5200, z_end: 25.2 }
+            ];
+            lukisJajaranPaipGIS(dataSimulasiPaip);
+        };
     </script>
 </body>
 </html>
