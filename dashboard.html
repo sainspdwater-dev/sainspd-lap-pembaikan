@@ -384,9 +384,14 @@
                         </select>
                     </div>
                     <div class="flex items-center gap-2">
-                        <label class="text-xs font-bold text-slate-600 dark:text-gray-400 uppercase" for="mgmt-filter-bulan">Tapis Bulan:</label>
-                        <select id="mgmt-filter-bulan" aria-label="Tapis bulan pengurusan" class="filter-select rounded px-3 py-1.5 text-sm">
-                            <option value="">Semua</option>
+                        <label class="text-xs font-bold text-slate-600 dark:text-gray-400 uppercase" for="mgmt-zoom-select">Zoom:</label>
+                        <select id="mgmt-zoom-select" aria-label="Zum paparan pengurusan" class="filter-select rounded px-3 py-1.5 text-sm">
+                            <option value="0.5">50%</option>
+                            <option value="0.75">75%</option>
+                            <option value="1" selected>100%</option>
+                            <option value="1.25">125%</option>
+                            <option value="1.5">150%</option>
+                            <option value="1.75">175%</option>
                         </select>
                     </div>
                     <button id="btn-mgmt-refresh" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-bold flex items-center gap-2 shadow-sm transition">
@@ -404,6 +409,7 @@
             </header>
 
             <section class="dashboard-card p-4 overflow-x-auto">
+            <div id="mgmt-table-zoom-wrapper" style="zoom: 1; transform-origin: top left; width: 100%;">
                 <table id="managementTable" class="display w-full text-xs text-left text-slate-700 dark:text-gray-300">
                     <thead class="bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-gray-300">
                         <tr>
@@ -415,6 +421,7 @@
                     </thead>
                     <tbody></tbody>
                 </table>
+            </div>
             </section>
         </div>
 
@@ -456,7 +463,7 @@
                             <option value="2">200%</option>
                         </select>
                     </div>
-                    <button id="btn-cro-add" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md text-sm font-bold flex items-center gap-2 shadow-sm transition">
+                    <button id="btn-cro-add" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-50 text-white rounded-md text-sm font-bold flex items-center gap-2 shadow-sm transition">
                         <i class="fa-solid fa-plus"></i> Baris Baru
                     </button>
                 </div>
@@ -913,9 +920,99 @@
 
         let pendingMutationAction = null;
         let pendingMutationData = null;
+
+        // ==========================================
+        // FUNGSI ZUM UNTUK MODAL (TAMBAH/KEMASKINI)
+        // ==========================================
         let modalZoomTimer;
         const MODAL_ZOOM_LIMIT = 4 * 60 * 60 * 1000;
 
+        function applyModalZoom(level) {
+            const formEl = document.getElementById('form-mutation');
+            if (formEl) formEl.style.zoom = level;
+            localStorage.setItem('sainsModalZoom', level);
+            localStorage.setItem('sainsModalZoomTime', Date.now());
+            clearTimeout(modalZoomTimer);
+            modalZoomTimer = setTimeout(() => { resetModalZoom(); }, MODAL_ZOOM_LIMIT);
+        }
+
+        function resetModalZoom() {
+            const formEl = document.getElementById('form-mutation');
+            const sel = document.getElementById('modal-zoom-select');
+            if (formEl) formEl.style.zoom = "1";
+            if (sel) sel.value = "1";
+            localStorage.removeItem('sainsModalZoom');
+            localStorage.removeItem('sainsModalZoomTime');
+        }
+
+        function initModalZoom() {
+            const savedZoom = localStorage.getItem('sainsModalZoom');
+            const savedTime = localStorage.getItem('sainsModalZoomTime');
+            const sel = document.getElementById('modal-zoom-select');
+
+            if (savedZoom && savedTime) {
+                if (Date.now() - parseInt(savedTime) < MODAL_ZOOM_LIMIT) {
+                    if (sel) sel.value = savedZoom;
+                    applyModalZoom(savedZoom);
+                } else {
+                    resetModalZoom();
+                }
+            }
+            if (sel) {
+                sel.addEventListener('change', (e) => applyModalZoom(e.target.value));
+            }
+        }
+
+        // ==========================================
+        // FUNGSI ZUM UNTUK JADUAL PENGURUSAN DATA
+        // ==========================================
+        let mgmtZoomTimer;
+        const MGMT_ZOOM_LIMIT = 8 * 60 * 60 * 1000; 
+
+        function applyMgmtZoom(level) {
+            const wrap = document.getElementById('mgmt-table-zoom-wrapper');
+            if (wrap) wrap.style.zoom = level;
+            localStorage.setItem('sainsMgmtZoom', level);
+            localStorage.setItem('sainsMgmtZoomTime', Date.now());
+            clearTimeout(mgmtZoomTimer);
+            mgmtZoomTimer = setTimeout(() => { resetMgmtZoom(); }, MGMT_ZOOM_LIMIT);
+            if (typeof managementTable !== 'undefined') {
+                setTimeout(() => managementTable.columns.adjust(), 100);
+            }
+        }
+
+        function resetMgmtZoom() {
+            const wrap = document.getElementById('mgmt-table-zoom-wrapper');
+            const sel = document.getElementById('mgmt-zoom-select');
+            if (wrap) wrap.style.zoom = "1";
+            if (sel) sel.value = "1";
+            localStorage.removeItem('sainsMgmtZoom');
+            localStorage.removeItem('sainsMgmtZoomTime');
+            if (typeof managementTable !== 'undefined') {
+                setTimeout(() => managementTable.columns.adjust(), 100);
+            }
+        }
+
+        function initMgmtZoom() {
+            const savedZoom = localStorage.getItem('sainsMgmtZoom');
+            const savedTime = localStorage.getItem('sainsMgmtZoomTime');
+            const sel = document.getElementById('mgmt-zoom-select');
+            if (savedZoom && savedTime) {
+                if (Date.now() - parseInt(savedTime) < MGMT_ZOOM_LIMIT) {
+                    if (sel) sel.value = savedZoom;
+                    applyMgmtZoom(savedZoom);
+                } else {
+                    resetMgmtZoom();
+                }
+            }
+            if (sel) {
+                sel.addEventListener('change', (e) => applyMgmtZoom(e.target.value));
+            }
+        }
+
+        // ==========================================
+        // FUNGSI FAIL & MUAT NAIK KOLAM
+        // ==========================================
         function loadSavedFilesFromSession() {
             const countLabel = document.getElementById('file-count-label');
             const uploadTime = localStorage.getItem('kolamUploadTime');
@@ -1005,42 +1102,6 @@
                     if (countLabel) countLabel.innerText = "0 fail tersimpan dalam memori";
                     showToast("Semua fail telah direset.", "success");
                 });
-            }
-        }
-
-        function applyModalZoom(level) {
-            const formEl = document.getElementById('form-mutation');
-            if (formEl) formEl.style.zoom = level;
-            localStorage.setItem('sainsModalZoom', level);
-            localStorage.setItem('sainsModalZoomTime', Date.now());
-            clearTimeout(modalZoomTimer);
-            modalZoomTimer = setTimeout(() => { resetModalZoom(); }, MODAL_ZOOM_LIMIT);
-        }
-
-        function resetModalZoom() {
-            const formEl = document.getElementById('form-mutation');
-            const sel = document.getElementById('modal-zoom-select');
-            if (formEl) formEl.style.zoom = "1";
-            if (sel) sel.value = "1";
-            localStorage.removeItem('sainsModalZoom');
-            localStorage.removeItem('sainsModalZoomTime');
-        }
-
-        function initModalZoom() {
-            const savedZoom = localStorage.getItem('sainsModalZoom');
-            const savedTime = localStorage.getItem('sainsModalZoomTime');
-            const sel = document.getElementById('modal-zoom-select');
-
-            if (savedZoom && savedTime) {
-                if (Date.now() - parseInt(savedTime) < MODAL_ZOOM_LIMIT) {
-                    if (sel) sel.value = savedZoom;
-                    applyModalZoom(savedZoom);
-                } else {
-                    resetModalZoom();
-                }
-            }
-            if (sel) {
-                sel.addEventListener('change', (e) => applyModalZoom(e.target.value));
             }
         }
 
@@ -1272,7 +1333,10 @@
         document.addEventListener('DOMContentLoaded', () => {
             if(localStorage.getItem('sainsLoggedIn') !== 'true') { window.location.replace('index.html'); return; }
             initSessionTimeouts();
-            initModalZoom(); 
+            
+            // AKTIFKAN ZUM MODAL DAN PENGURUSAN DATA
+            initModalZoom();
+            initMgmtZoom(); 
 
             if(localStorage.getItem('sainsTheme') === 'dark') {
                 document.documentElement.classList.add('dark');
@@ -1744,454 +1808,7 @@
             }
         }
 
-        function triggerPreviewBeforeSave(actionType, payloadData) {
-            pendingMutationAction = actionType;
-            pendingMutationData = payloadData;
-            recordModal.classList.add('hidden');
-            
-            const box = document.getElementById('preview-content-box');
-            const primaryKeys = [
-                "NO ADUAN", "ZON", "DMA", "District Metered Area", "KATEGORI", "LOKASI / TEMPAT", "KORDINAT",
-                "TARIKH & MASA TERIMA  ADUAN", "TARIKH  TUTUP ADUAN", 
-                "JENIS PAIP", "SAIZ PAIP", "JENIS PAIP BARU", "SAIZ", 
-                "PANJANG PAIP (M)", "SIVIL WORKS", "DILAKSANAKAN OLEH"
-            ];
-            
-            let html = '';
-            primaryKeys.forEach(key => {
-                const val = payloadData[key];
-                if(val) {
-                    html += `<div class="flex justify-between border-b border-slate-200 dark:border-gray-700/60 py-1"><span class="font-bold text-slate-500 dark:text-gray-400">${escapeHTML(key)}:</span><span class="text-slate-800 dark:text-gray-200 text-right">${escapeHTML(val)}</span></div>`;
-                }
-            });
-            box.innerHTML = html || '<p class="text-center text-gray-500">Tiada maklumat.</p>';
-            document.getElementById('previewModal').classList.remove('hidden');
-        }
-
-        document.getElementById('confirmActionBtn').addEventListener('click', () => {
-            document.getElementById('previewModal').classList.add('hidden');
-            if (pendingMutationAction && pendingMutationData) {
-                sendMutation(pendingMutationAction, pendingMutationData);
-                pendingMutationAction = null;
-                pendingMutationData = null;
-            }
-        });
-
-        document.getElementById('closePreviewBtn').addEventListener('click', () => {
-            document.getElementById('previewModal').classList.add('hidden');
-            if (pendingMutationAction === 'addData' || pendingMutationAction === 'updateData') {
-                if (currentMode === 'update' || currentMode === 'add') {
-                    recordModal.classList.remove('hidden');
-                }
-            }
-        });
-
-        async function sendMutation(actionType, payloadData) {
-            const noAduan = payloadData['NO ADUAN'] || payloadData.noAduan;
-            let targetNoAduanForBackend = noAduan; 
-
-            if(actionType === 'addData') { 
-                rawData.unshift(payloadData); 
-            } 
-            else if(actionType === 'updateData') {
-                const searchNoAduan = payloadData._oldNoAduan || noAduan;
-                targetNoAduanForBackend = searchNoAduan; 
-                const idx = rawData.findIndex(item => String(item['NO ADUAN']).trim() === String(searchNoAduan).trim());
-                if(idx !== -1) { 
-                    rawData[idx] = { ...rawData[idx], ...payloadData }; 
-                }
-            } else if(actionType === 'deleteData') {
-                rawData = rawData.filter(item => String(item['NO ADUAN']).trim() === String(noAduan).trim() === false);
-            }
-            
-            let cleanPayload = { ...payloadData };
-            delete cleanPayload._oldNoAduan;
-
-            localStorage.setItem('sainsRawData', JSON.stringify(rawData));
-            filteredData = [...rawData];
-            applyFilters(); updateManagementTable(); updateCroTable();
-            closeModals(); 
-
-            showToast("Perubahan disahkan & disimpan. Menyelaras dengan pelayan...", "success");
-
-            try {
-                const res = await fetch(WORKER_URL, {
-                    method: 'POST', 
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('sainsToken')}`
-                    },
-                    body: JSON.stringify({ action: actionType, data: cleanPayload, noAduan: targetNoAduanForBackend })
-                });
-                
-                if(res.status === 401) return safeLogout("Sesi log masuk tamat tempoh.");
-                const result = await res.json();
-                
-                if(result.status === 'success') {
-                    showToast(result.message || "Data berjaya diselaraskan dengan pelayan!", "success");
-                    fetchFreshData(false);
-                } else { throw new Error(result.message || "Ralat operasi pelayan"); }
-            } catch(err) {
-                let queue = JSON.parse(localStorage.getItem('sainsOfflineQueue') || '[]');
-                queue.push({ action: actionType, data: cleanPayload, noAduan: targetNoAduanForBackend });
-                localStorage.setItem('sainsOfflineQueue', JSON.stringify(queue));
-                showToast("Pelayan sibuk. Disimpan dalam giliran latar belakang.", "error");
-            }
-        }
-
-        async function processOfflineQueue() {
-            let queue = JSON.parse(localStorage.getItem('sainsOfflineQueue') || '[]');
-            if(queue.length === 0) return;
-            let remainingQueue = [];
-            for(let item of queue) {
-                try {
-                    const res = await fetch(WORKER_URL, {
-                        method: 'POST', 
-                        headers: { 
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${localStorage.getItem('sainsToken')}`
-                        },
-                        body: JSON.stringify({ action: item.action, data: item.data, noAduan: item.noAduan })
-                    });
-                    if(res.status === 401) return safeLogout("Sesi log masuk tamat tempoh.");
-                    const result = await res.json();
-                    if(result.status !== 'success') remainingQueue.push(item);
-                } catch(e) { remainingQueue.push(item); }
-            }
-            localStorage.setItem('sainsOfflineQueue', JSON.stringify(remainingQueue));
-            if(remainingQueue.length === 0) {
-                showToast("Semua data offline berjaya diselaraskan!");
-                await fetchFreshData(false);
-            }
-        }
-
-        function updateCroTable() {
-            const tbody = document.getElementById('cro-tbody');
-            if(!tbody) return;
-
-            const sBulan = document.getElementById('cro-filter-bulan').value;
-            const sStatus = document.getElementById('cro-filter-status').value;
-            const sSearch = document.getElementById('cro-search').value.toLowerCase();
-            
-            let displayData = rawData.filter(row => {
-                if (sBulan && row['BULAN'] !== sBulan) return false;
-                const isComplete = window.isRowComplete(row);
-                if (sStatus === 'complete' && !isComplete) return false;
-                if (sStatus === 'incomplete' && isComplete) return false;
-                if (sSearch && !Object.values(row).join(' ').toLowerCase().includes(sSearch)) return false;
-                return true;
-            });
-
-            const totalPages = Math.ceil(displayData.length / croRowsPerPage) || 1;
-            if (croCurrentPage > totalPages) croCurrentPage = totalPages;
-            if (croCurrentPage < 1) croCurrentPage = 1;
-
-            const startIndex = (croCurrentPage - 1) * croRowsPerPage;
-            const paginatedData = displayData.slice(startIndex, startIndex + croRowsPerPage);
-
-            let html = '';
-            paginatedData.forEach(row => {
-                const noAduan = row['NO ADUAN'] || '';
-                const tarikhTerimaVal = row['TARIKH & MASA TERIMA  ADUAN'] || row['TARIKH TERIMA'] || '';
-                const tarikhTutupVal = row['TARIKH  TUTUP ADUAN'] || row['TARIKH TUTUP'] || '';
-                const lokasiVal = row['LOKASI / TEMPAT'] || row['LOKASI'] || '';
-                const kordinatVal = row['KORDINAT'] || '';
-
-                const isComplete = window.isRowComplete(row);
-                const trClass = isComplete ? 'row-complete' : '';
-
-                html += `
-                    <tr class="${trClass}">
-                        <td class="col-1 text-center p-1 whitespace-nowrap" tabindex="-1">
-                            <button type="button" onclick="saveCroRow(this)" class="text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded text-xs mx-0.5 transition font-bold shadow-sm" title="Simpan"><i class="fa-solid fa-save"></i> SIMPAN</button>
-                            <button type="button" onclick="confirmDeleteCro('${escapeHTML(noAduan)}')" class="text-red-600 hover:text-red-800 bg-red-100 hover:bg-red-200 px-2 py-1 rounded text-xs mx-0.5 transition shadow-sm" title="Padam"><i class="fa-solid fa-trash"></i></button>
-                        </td>
-                        <td class="col-2" tabindex="0"><input type="text" class="excel-input cro-noAduan font-bold" value="${escapeHTML(noAduan)}" readonly autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-zon" list="list-zon" value="${escapeHTML(row['ZON']||'')}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-dma" list="list-dma" value="${escapeHTML(row['DMA']||'')}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-kategori" list="list-kategori" value="${escapeHTML(row['KATEGORI']||'')}" autocomplete="off"></td>
-                        <td class="col-lokasi" tabindex="0"><textarea class="excel-input cro-lokasi" autocomplete="off">${escapeHTML(lokasiVal)}</textarea></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-kordinat" value="${escapeHTML(kordinatVal)}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="datetime-local" class="excel-input cro-terima" value="${escapeHTML(formatForDateTimeInput(tarikhTerimaVal))}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="datetime-local" class="excel-input cro-tutup" value="${escapeHTML(formatForDateTimeInput(tarikhTutupVal))}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-jenis" list="list-jenisPaip" value="${escapeHTML(row['JENIS PAIP']||'')}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-saiz" list="list-saizPaip" value="${escapeHTML(row['SAIZ PAIP']||'')}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-jenisBaru" list="list-jenisPaipBaru" value="${escapeHTML(row['JENIS PAIP BARU']||'')}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-saizBaru" list="list-saiz" value="${escapeHTML(row['SAIZ']||'')}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-panjang" value="${escapeHTML(row['PANJANG PAIP (M)']||'')}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-sivil" list="list-sivilWorks" value="${escapeHTML(row['SIVIL WORKS']||'')}" autocomplete="off"></td>
-                        <td tabindex="0"><input type="text" class="excel-input cro-pelaksana" list="list-dilaksanakanOleh" value="${escapeHTML(row['DILAKSANAKAN OLEH']||'')}" autocomplete="off"></td>
-                    </tr>
-                `;
-            });
-            tbody.innerHTML = html;
-            renderCroPagination(totalPages, displayData.length);
-            initExcelGridNavigation();
-        }
-
-        function renderCroPagination(totalPages, totalRows) {
-            let pagerEl = document.getElementById('cro-pagination-bar');
-            if (!pagerEl) {
-                pagerEl = document.createElement('div');
-                pagerEl.id = 'cro-pagination-bar';
-                pagerEl.className = 'flex justify-between items-center p-3 bg-slate-100 dark:bg-gray-800 border-t border-slate-200 dark:border-gray-700 text-xs shrink-0';
-                document.getElementById('cro-content').appendChild(pagerEl);
-            }
-            pagerEl.innerHTML = `
-                <span class="text-slate-600 dark:text-gray-400">Jumlah Rekod: <b>${totalRows}</b> | Muka Surat <b>${croCurrentPage}</b> dari <b>${totalPages}</b></span>
-                <div class="flex gap-2">
-                    <button onclick="changeCroPage(-1)" class="px-3 py-1 bg-slate-200 dark:bg-gray-700 hover:bg-blue-600 hover:text-white rounded transition ${croCurrentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}">Sebelumnya</button>
-                    <button onclick="changeCroPage(1)" class="px-3 py-1 bg-slate-200 dark:bg-gray-700 hover:bg-blue-600 hover:text-white rounded transition ${croCurrentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}">Seterusnya</button>
-                </div>
-            `;
-        }
-
-        window.changeCroPage = function(direction) {
-            croCurrentPage += direction;
-            updateCroTable();
-        }
-
-        window.addCroBlankRow = function() {
-            const tbody = document.getElementById('cro-tbody');
-            const html = `
-                <tr class="new-row bg-emerald-50 dark:bg-emerald-900/20">
-                    <td class="col-1 text-center p-1 whitespace-nowrap" tabindex="-1">
-                        <button type="button" onclick="saveCroRow(this)" class="text-emerald-600 hover:text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-2 py-1 rounded text-xs mx-0.5 transition font-bold shadow-sm" title="Simpan"><i class="fa-solid fa-save"></i> SIMPAN</button>
-                        <button type="button" onclick="this.closest('tr').remove()" class="text-red-600 hover:text-red-800 bg-red-100 hover:bg-red-200 px-2 py-1 rounded text-xs mx-0.5 transition shadow-sm" title="Batal"><i class="fa-solid fa-times"></i></button>
-                    </td>
-                    <td class="col-2" tabindex="0"><input type="text" class="excel-input cro-noAduan font-bold text-blue-600 placeholder:text-gray-400" placeholder="NO ADUAN BARU" autocomplete="off"></td>
-                    <td tabindex="0"><input type="text" class="excel-input cro-zon" list="list-zon" autocomplete="off"></td>
-                    <td tabindex="0"><input type="text" class="excel-input cro-dma" list="list-dma" autocomplete="off"></td>
-                    <td tabindex="0"><input type="text" class="excel-input cro-kategori" list="list-kategori" autocomplete="off"></td>
-                    <td class="col-lokasi" tabindex="0"><textarea class="excel-input cro-lokasi" autocomplete="off" placeholder="Masukkan lokasi..."></textarea></td>
-                    <td tabindex="0"><input type="text" class="excel-input cro-kordinat" autocomplete="off"></td>
-                    <td tabindex="0"><input type="datetime-local" class="excel-input cro-terima" autocomplete="off"></td>
-                    <td tabindex="0"><input type="datetime-local" class="excel-input cro-tutup" autocomplete="off"></td>
-                    <td tabindex="0"><input type="text" class="excel-input cro-jenis" list="list-jenisPaip" autocomplete="off"></td>
-                    <td tabindex="0"><input type="text" class="excel-input cro-saiz" list="list-saizPaip" autocomplete="off"></td>
-                    <td tabindex="0"><input type="text" class="excel-input cro-jenisBaru" list="list-jenisPaipBaru" autocomplete="off"></td>
-                    <td tabindex="0"><input type="text" class="excel-input cro-saizBaru" list="list-saiz" autocomplete="off"></td>
-                    <td tabindex="0"><input type="text" class="excel-input cro-panjang" placeholder="Cth: 10 Meter" autocomplete="off"></td>
-                    <td tabindex="0"><input type="text" class="excel-input cro-sivil" list="list-sivilWorks" autocomplete="off"></td>
-                    <td tabindex="0"><input type="text" class="excel-input cro-pelaksana" list="list-dilaksanakanOleh" autocomplete="off"></td>
-                </tr>
-            `;
-            tbody.insertAdjacentHTML('afterbegin', html);
-            initExcelGridNavigation();
-        }
-
-        function initExcelGridNavigation() {
-            const table = document.querySelector('.excel-table');
-            if(!table) return;
-            const container = document.getElementById('cro-table-container');
-            const cells = table.querySelectorAll('tbody td[tabindex="0"]');
-
-            cells.forEach(td => {
-                const inputOrTextarea = td.querySelector('.excel-input');
-                if(!inputOrTextarea) return;
-                const isLokasiOrKordinat = inputOrTextarea.classList.contains('cro-lokasi') || inputOrTextarea.classList.contains('cro-kordinat');
-
-                td.addEventListener('click', (e) => {
-                    if(td.classList.contains('editing')) return;
-                    cells.forEach(c => {
-                        if(c !== td) {
-                            c.classList.remove('editing');
-                            c.querySelector('.excel-input').blur();
-                        }
-                    });
-                });
-
-                td.addEventListener('dblclick', () => { enableEditMode(td, inputOrTextarea); });
-
-                if(isLokasiOrKordinat) {
-                    td.addEventListener('paste', async (e) => {
-                        e.preventDefault();
-                        let pastedText = '';
-                        if (e.clipboardData) pastedText = e.clipboardData.getData('text');
-                        else if (window.clipboardData) pastedText = window.clipboardData.getData('Text');
-                        if (pastedText !== null) {
-                            enableEditMode(td, inputOrTextarea);
-                            inputOrTextarea.value = pastedText.trim();
-                            inputOrTextarea.dispatchEvent(new Event('input', { bubbles: true }));
-                        }
-                    });
-                }
-
-                td.addEventListener('keydown', (e) => {
-                    const isEditing = td.classList.contains('editing');
-                    if(!isEditing) {
-                        if(e.key === 'F2') { e.preventDefault(); enableEditMode(td, inputOrTextarea); return; }
-                        if(e.key.length === 1 && !e.ctrlKey && !e.metaKey) { enableEditMode(td, inputOrTextarea, true); return; }
-
-                        let targetTd = null;
-                        const tr = td.parentElement;
-                        const tdIndex = Array.from(tr.children).indexOf(td);
-
-                        if(e.key === 'ArrowRight' || e.key === 'Tab') {
-                            e.preventDefault();
-                            targetTd = td.nextElementSibling;
-                            if(targetTd && targetTd.getAttribute('tabindex') === '0') {
-                                targetTd.focus();
-                                if(container) scrollToEnsureVisible(container, targetTd);
-                            }
-                        } else if(e.key === 'ArrowLeft') {
-                            e.preventDefault();
-                            targetTd = td.previousElementSibling;
-                            if(targetTd && targetTd.getAttribute('tabindex') === '0') {
-                                targetTd.focus();
-                                if(container) scrollToEnsureVisible(container, targetTd);
-                            }
-                        } else if(e.key === 'ArrowDown' || e.key === 'Enter') {
-                            e.preventDefault();
-                            const nextTr = tr.nextElementSibling;
-                            if(nextTr) {
-                                targetTd = nextTr.children[tdIndex];
-                                if(targetTd && targetTd.getAttribute('tabindex') === '0') {
-                                    targetTd.focus();
-                                    targetTd.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-                                }
-                            }
-                        } else if(e.key === 'ArrowUp') {
-                            e.preventDefault();
-                            const prevTr = tr.previousElementSibling;
-                            if(prevTr) {
-                                targetTd = prevTr.children[tdIndex];
-                                if(targetTd && targetTd.getAttribute('tabindex') === '0') {
-                                    targetTd.focus();
-                                    targetTd.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-                                }
-                            }
-                        }
-                    } else {
-                        if(e.key === 'Enter' && inputOrTextarea.tagName !== 'TEXTAREA') {
-                            e.preventDefault();
-                            disableEditMode(td, inputOrTextarea);
-                            const tr = td.parentElement;
-                            const tdIndex = Array.from(tr.children).indexOf(td);
-                            const nextTr = tr.nextElementSibling;
-                            if(nextTr) {
-                                const targetTd = nextTr.children[tdIndex];
-                                if(targetTd && targetTd.getAttribute('tabindex') === '0') {
-                                    targetTd.focus();
-                                    targetTd.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
-                                }
-                            }
-                        } else if(e.key === 'Escape') {
-                            e.preventDefault();
-                            disableEditMode(td, inputOrTextarea);
-                            td.focus();
-                        }
-                    }
-                });
-
-                inputOrTextarea.addEventListener('blur', () => {
-                    if(td.classList.contains('editing')) disableEditMode(td, inputOrTextarea);
-                });
-            });
-        }
-
-        function scrollToEnsureVisible(container, td) {
-            const tr = td.parentElement;
-            const tdIndex = Array.from(tr.children).indexOf(td);
-            if (tdIndex <= 1 || td.classList.contains('col-1') || td.classList.contains('col-2')) {
-                container.scrollTo({ left: 0, behavior: 'smooth' });
-                return;
-            }
-            const containerRect = container.getBoundingClientRect();
-            const tdRect = td.getBoundingClientRect();
-            const leftStickyWidth = 260; 
-            if (tdRect.right > containerRect.right - 20) {
-                container.scrollBy({ left: tdRect.right - containerRect.right + 80, behavior: 'smooth' });
-            } else if (tdRect.left < containerRect.left + leftStickyWidth) {
-                container.scrollBy({ left: tdRect.left - containerRect.left - leftStickyWidth - 20, behavior: 'smooth' });
-            }
-        }
-
-        function enableEditMode(td, inputOrTextarea, clear = false) {
-            td.classList.add('editing');
-            inputOrTextarea.focus();
-            if(clear && inputOrTextarea.tagName !== 'TEXTAREA') {
-                inputOrTextarea.value = '';
-            } else if(inputOrTextarea.setSelectionRange) {
-                inputOrTextarea.setSelectionRange(inputOrTextarea.value.length, inputOrTextarea.value.length);
-            }
-        }
-
-        function disableEditMode(td, inputOrTextarea) {
-            td.classList.remove('editing');
-            inputOrTextarea.blur();
-        }
-
-        window.saveCroRow = function(btn) {
-            const tr = btn.closest('tr');
-            const noAduan = tr.querySelector('.cro-noAduan').value.trim();
-            if(!noAduan) { alert("Sila masukkan No Aduan"); return; }
-
-            const isNew = tr.classList.contains('new-row');
-            if (isNew) {
-                const exists = rawData.some(r => String(r['NO ADUAN'] || '').trim().toLowerCase() === noAduan.toLowerCase());
-                if (exists) {
-                    showToast(`No Aduan "${noAduan}" sudah wujud! Sila gunakan No Aduan yang lain.`, "error");
-                    return;
-                }
-            }
-
-            const kordinat = tr.querySelector('.cro-kordinat').value.trim();
-            let districtAreaVal = '';
-            if (kordinat) {
-                let parts = kordinat.split(',');
-                if (parts.length === 2) {
-                    let lat = parseFloat(parts[0].trim());
-                    let lng = parseFloat(parts[1].trim());
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        let resDMZ = semakPointInDMZ(lat, lng);
-                        if (resDMZ.zone && !parentFolders.includes(resDMZ.zone.toLowerCase())) {
-                            districtAreaVal = resDMZ.zone;
-                        }
-                    }
-                }
-            }
-
-            const payloadData = {
-                "NO ADUAN": noAduan, "noAduan": noAduan, "No Aduan": noAduan,
-                "ZON": tr.querySelector('.cro-zon').value,
-                "DMA": tr.querySelector('.cro-dma').value,
-                "District Metered Area": districtAreaVal,
-                "DISTRICT METERED AREA": districtAreaVal,
-                "districtMeteredArea": districtAreaVal,
-                "KATEGORI": tr.querySelector('.cro-kategori').value,
-                "LOKASI / TEMPAT": tr.querySelector('.cro-lokasi').value,
-                "KORDINAT": kordinat,
-                "TARIKH & MASA TERIMA  ADUAN": convertToDDMMYYYYHHMM(tr.querySelector('.cro-terima').value),
-                "TARIKH  TUTUP ADUAN": convertToDDMMYYYYHHMM(tr.querySelector('.cro-tutup').value),
-                "JENIS PAIP": tr.querySelector('.cro-jenis').value,
-                "SAIZ PAIP": tr.querySelector('.cro-saiz').value,
-                "JENIS PAIP BARU": tr.querySelector('.cro-jenisBaru').value,
-                "SAIZ": tr.querySelector('.cro-saizBaru').value,
-                "PANJANG PAIP (M)": tr.querySelector('.cro-panjang').value,
-                "SIVIL WORKS": tr.querySelector('.cro-sivil').value,
-                "DILAKSANAKAN OLEH": tr.querySelector('.cro-pelaksana').value
-            };
-
-            const exists = rawData.some(r => String(r['NO ADUAN']).trim() === String(noAduan).trim());
-            const action = exists && !isNew ? 'updateData' : (exists && isNew ? 'updateData' : 'addData');
-            
-            triggerPreviewBeforeSave(action, payloadData);
-            
-            if (isNew) {
-                tr.classList.remove('new-row', 'bg-emerald-50', 'dark:bg-emerald-900/20');
-                tr.querySelector('.cro-noAduan').classList.add('bg-slate-100');
-                tr.querySelector('.cro-noAduan').setAttribute('readonly', 'true');
-            }
-        }
-
-        window.confirmDeleteCro = function(noAduan) {
-            if(confirm(`Adakah anda pasti mahu memadam rekod ${noAduan}?`)) {
-                sendMutation('deleteData', { noAduan: noAduan });
-            }
-        }
-
-        const recordModal = document.getElementById('recordModal');
+const recordModal = document.getElementById('recordModal');
         const deleteModal = document.getElementById('deleteModal');
 
         document.getElementById('btn-open-add').addEventListener('click', () => {
@@ -2294,134 +1911,21 @@
             if(confirm(`Adakah anda pasti mahu memadam rekod ${noAduan}?`)) { sendMutation('deleteData', { noAduan: noAduan }); }
         });
 
-        function setupEvents() {
-            const navD = document.getElementById('nav-dash');
-            const navU = document.getElementById('nav-update');
-            const navCro = document.getElementById('nav-cro');
-            const navDaily = document.getElementById('nav-daily');
-            const navAi = document.getElementById('nav-ai');
-            const navKolam = document.getElementById('nav-kolam');
-
-            const hideAllTabs = () => {
-                document.getElementById('dashboard-content').style.display = 'none';
-                document.getElementById('update-content').style.display = 'none';
-                document.getElementById('cro-content').style.display = 'none';
-                document.getElementById('daily-content').style.display = 'none';
-                document.getElementById('ai-agent-content').style.display = 'none';
-                document.getElementById('kolam-content').style.display = 'none';
-                
-                const inactiveClass = "w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 transition-colors";
-                navD.className = inactiveClass; navU.className = inactiveClass; navCro.className = inactiveClass; navDaily.className = inactiveClass; 
-                if(navAi) navAi.className = inactiveClass;
-                if(navKolam) navKolam.className = inactiveClass;
-            };
-
-            navD.addEventListener('click', () => {
-                hideAllTabs();
-                document.getElementById('dashboard-content').style.display = 'block';
-                navD.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
-                if(map) setTimeout(()=>map.invalidateSize(), 300);
-            });
-
-            navU.addEventListener('click', () => {
-                hideAllTabs();
-                document.getElementById('update-content').style.display = 'block';
-                navU.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
-                if(managementTable) managementTable.columns.adjust();
-            });
-
-            navCro.addEventListener('click', () => {
-                hideAllTabs();
-                document.getElementById('cro-content').style.display = 'flex';
-                navCro.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
-                updateCroTable();
-            });
-
-            navDaily.addEventListener('click', () => {
-                hideAllTabs();
-                document.getElementById('daily-content').style.display = 'block';
-                navDaily.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
-                const picker = document.getElementById('daily-date-picker');
-                if(picker && !picker.value) picker.value = new Date().toISOString().split('T')[0];
-            });
-
-            if(navAi) {
-                navAi.addEventListener('click', () => {
-                    hideAllTabs();
-                    document.getElementById('ai-agent-content').style.display = 'flex';
-                    navAi.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
-                    if(!aiAgentMap) initAiAgentMap();
-                    else setTimeout(() => aiAgentMap.invalidateSize(), 300);
-                });
-            }
-
-            if(navKolam) {
-                navKolam.addEventListener('click', () => {
-                    hideAllTabs();
-                    document.getElementById('kolam-content').style.display = 'flex';
-                    navKolam.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
-                    const dateInput = document.getElementById('kolam-date');
-                    if(!dateInput.value) {
-                        const today = new Date();
-                        dateInput.value = today.toISOString().split('T')[0];
-                    }
-                });
-            }
-
-            document.getElementById('nav-logout').addEventListener('click', () => {
-                safeLogout("Anda telah log keluar dengan jayanya.");
-            });
-
-            document.getElementById('btn-refresh-data').addEventListener('click', () => fetchFreshData(true));
-            document.getElementById('btn-mgmt-refresh').addEventListener('click', () => fetchFreshData(true));
-            
-            document.getElementById('btn-reset').addEventListener('click', () => {
-                document.getElementById('filter-search').value = ''; 
-                const latestMonths = sortMonths([...new Set(rawData.map(i => i['BULAN']).filter(Boolean))]);
-                document.getElementById('filter-bulan').value = latestMonths.length > 0 ? latestMonths[latestMonths.length - 1] : '';
-                document.getElementById('filter-kategori').value = ''; document.getElementById('filter-jenis-paip').value = '';
-                document.getElementById('filter-saiz-paip').value = '';
-                document.querySelectorAll('.zon-checkbox, .district-checkbox').forEach(cb => cb.checked = false);
-                applyFilters();
-            });
-
-            ['filter-bulan', 'filter-kategori', 'filter-jenis-paip', 'filter-saiz-paip', 'filter-search'].forEach(id => {
-                document.getElementById(id).addEventListener('input', applyFilters);
-                document.getElementById(id).addEventListener('change', applyFilters);
-            });
-
-            document.getElementById('mgmt-filter-bulan').addEventListener('change', () => updateManagementTable());
-            document.getElementById('mgmt-filter-status').addEventListener('change', () => updateManagementTable());
-
-            document.getElementById('btn-toggle-map').addEventListener('click', () => {
-                isHeatmapMode = !isHeatmapMode; updateMapMarkers();
-            });
-
-            document.getElementById('cro-filter-bulan').addEventListener('change', () => { croCurrentPage = 1; updateCroTable(); });
-            document.getElementById('cro-filter-status').addEventListener('change', () => { croCurrentPage = 1; updateCroTable(); });
-            document.getElementById('cro-search').addEventListener('input', () => { croCurrentPage = 1; updateCroTable(); });
-            
-            document.getElementById('cro-zoom-select').addEventListener('change', (e) => {
-                document.getElementById('cro-table-container').style.zoom = e.target.value;
-            });
-            document.getElementById('btn-cro-add').addEventListener('click', addCroBlankRow);
-
-            const aiSendBtn = document.getElementById('ai-send-btn');
-            const aiInput = document.getElementById('ai-chat-input');
-            if(aiSendBtn && aiInput) {
-                aiSendBtn.addEventListener('click', sendAiMessage);
-                aiInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendAiMessage(); });
-            }
-
-            const spatialFileInput = document.getElementById('ai-spatial-file');
-            if(spatialFileInput) {
-                spatialFileInput.addEventListener('change', handleSpatialFileUpload);
-            }
-            const flowFileInput = document.getElementById('ai-flow-file');
-            if (flowFileInput) flowFileInput.addEventListener('change', handleAiFlowUpload);
-            const saveMonitoringBtn = document.getElementById('btn-save-dma-monitoring');
-            if (saveMonitoringBtn) saveMonitoringBtn.addEventListener('click', saveDmaMonitoring);
+        const aiSendBtn = document.getElementById('ai-send-btn');
+        const aiInput = document.getElementById('ai-chat-input');
+        if(aiSendBtn && aiInput) {
+            aiSendBtn.addEventListener('click', sendAiMessage);
+            aiInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendAiMessage(); });
         }
+
+        const spatialFileInput = document.getElementById('ai-spatial-file');
+        if(spatialFileInput) {
+            spatialFileInput.addEventListener('change', handleSpatialFileUpload);
+        }
+        const flowFileInput = document.getElementById('ai-flow-file');
+        if (flowFileInput) flowFileInput.addEventListener('change', handleAiFlowUpload);
+        const saveMonitoringBtn = document.getElementById('btn-save-dma-monitoring');
+        if (saveMonitoringBtn) saveMonitoringBtn.addEventListener('click', saveDmaMonitoring);
 
         async function handleAiFlowUpload(event) {
             const file = event.target.files?.[0];
@@ -2752,7 +2256,6 @@
             }
         };
 
-        // --- UPDATED AI AGENT UI RENDERER FOR STRUCTURED JSON RESPONSES ---
         async function sendAiMessage() {
             const inputEl = document.getElementById('ai-chat-input');
             const messagesContainer = document.getElementById('ai-chat-messages');
@@ -2808,9 +2311,6 @@
                         action: 'aiAgent',
                         prompt: userPrompt,
                         params: aiParams,
-                        // rawData ialah pemboleh ubah aplikasi. Jangan guna window.rawData
-                        // kerana ia tidak wujud bagi deklarasi `let rawData` dan akan
-                        // menyebabkan Worker menerima senarai rekod kosong.
                         records: Array.isArray(rawData) ? rawData : [],
                         agentType: 'nrw_agent',
                         sessionId: localStorage.getItem('sainsUserEmail') || localStorage.getItem('sainsUsername') || localStorage.getItem('sainsUserLevel') || 'user_session'
@@ -2945,7 +2445,7 @@
             }
         }
 
-        function formatKategori(val) {
+function formatKategori(val) {
             if(!val) return '-';
             if(val.toLowerCase().includes('pecah')) { return `<span class="text-red-600 font-bold dark:text-red-400">${escapeHTML(val)}</span>`; }
             return escapeHTML(val);
@@ -2965,7 +2465,12 @@
             populateSel('filter-kategori', uniqueValues('KATEGORI').sort());
             populateSel('filter-jenis-paip', uniqueValues('JENIS PAIP').sort());
             populateSel('filter-saiz-paip', sortNumeric(uniqueValues('SAIZ PAIP')));
-            populateSel('mgmt-filter-bulan', sortedMonths);
+            
+            const mgmtFilterBulan = document.getElementById('mgmt-filter-bulan');
+            if (mgmtFilterBulan) {
+                populateSel('mgmt-filter-bulan', sortedMonths);
+            }
+            
             populateSel('cro-filter-bulan', sortedMonths);
             populateSel('ai-filter-bulan', sortedMonths);
 
@@ -2981,8 +2486,10 @@
             const latestMonth = sortedMonths.length > 0 ? sortedMonths[sortedMonths.length - 1] : '';
             const filterBulanEl = document.getElementById('filter-bulan');
             if (filterBulanEl && latestMonth) filterBulanEl.value = latestMonth;
+            
             const mgmtFilterBulanEl = document.getElementById('mgmt-filter-bulan');
             if (mgmtFilterBulanEl && latestMonth) mgmtFilterBulanEl.value = latestMonth;
+            
             const croFilterBulan = document.getElementById('cro-filter-bulan');
             if (croFilterBulan && latestMonth) croFilterBulan.value = latestMonth;
             const aiFilterBulan = document.getElementById('ai-filter-bulan');
@@ -2990,47 +2497,51 @@
 
             const dmas = uniqueValues('DMA').sort();
             const zonContainer = document.getElementById('filter-zon-container');
-            zonContainer.innerHTML = '';
-            dmas.forEach(d => {
-                if(!d.trim()) return;
-                zonContainer.innerHTML += `
-                    <label class="flex items-center gap-3 p-3 bg-slate-800/85 rounded-xl border border-slate-700 hover:border-emerald-500 cursor-pointer transition shadow-sm group">
-                        <input type="checkbox" value="${escapeHTML(d)}" class="zon-checkbox peer sr-only">
-                        <div class="w-5 h-5 rounded bg-slate-900 border border-slate-500 peer-checked:bg-emerald-600 peer-checked:border-emerald-600 flex items-center justify-center text-white transition shrink-0">
-                            <svg class="w-3.5 h-3.5 opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
-                        </div>
-                        <span class="font-semibold text-white text-xs tracking-wide whitespace-nowrap">${escapeHTML(d)}</span>
-                    </label>
-                `;
-            });
-
-            const districtContainer = document.getElementById('filter-district-container');
-            districtContainer.innerHTML = '';
-            for (let mainArea in districtHierarchy) {
-                let subHtml = '';
-                districtHierarchy[mainArea].forEach(sub => {
-                    subHtml += `
-                        <label class="flex items-center gap-2.5 p-2 bg-slate-900/60 rounded-lg border border-slate-700/60 hover:border-blue-500 cursor-pointer transition group">
-                            <input type="checkbox" value="${escapeHTML(sub)}" data-main="${escapeHTML(mainArea)}" class="district-checkbox peer sr-only">
-                            <div class="w-4 h-4 rounded bg-slate-900 border border-slate-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 flex items-center justify-center text-white transition shrink-0">
-                                <svg class="w-3 h-3 opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+            if (zonContainer) {
+                zonContainer.innerHTML = '';
+                dmas.forEach(d => {
+                    if(!d.trim()) return;
+                    zonContainer.innerHTML += `
+                        <label class="flex items-center gap-3 p-3 bg-slate-800/85 rounded-xl border border-slate-700 hover:border-emerald-500 cursor-pointer transition shadow-sm group">
+                            <input type="checkbox" value="${escapeHTML(d)}" class="zon-checkbox peer sr-only">
+                            <div class="w-5 h-5 rounded bg-slate-900 border border-slate-500 peer-checked:bg-emerald-600 peer-checked:border-emerald-600 flex items-center justify-center text-white transition shrink-0">
+                                <svg class="w-3.5 h-3.5 opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
                             </div>
-                            <span class="text-slate-300 text-xs font-medium">${escapeHTML(sub)}</span>
+                            <span class="font-semibold text-white text-xs tracking-wide whitespace-nowrap">${escapeHTML(d)}</span>
                         </label>
                     `;
                 });
+            }
 
-                districtContainer.innerHTML += `
-                    <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 flex flex-col gap-2 shadow-sm">
-                        <div class="flex items-center justify-between border-b border-slate-700 pb-2">
-                            <span class="font-bold text-blue-400 text-xs uppercase tracking-wider">${escapeHTML(mainArea)}</span>
-                            <button type="button" onclick="toggleMainDistrict('${escapeHTML(mainArea)}', true)" class="text-[10px] text-slate-400 hover:text-white underline">Pilih Semua</button>
+            const districtContainer = document.getElementById('filter-district-container');
+            if (districtContainer) {
+                districtContainer.innerHTML = '';
+                for (let mainArea in districtHierarchy) {
+                    let subHtml = '';
+                    districtHierarchy[mainArea].forEach(sub => {
+                        subHtml += `
+                            <label class="flex items-center gap-2.5 p-2 bg-slate-900/60 rounded-lg border border-slate-700/60 hover:border-blue-500 cursor-pointer transition group">
+                                <input type="checkbox" value="${escapeHTML(sub)}" data-main="${escapeHTML(mainArea)}" class="district-checkbox peer sr-only">
+                                <div class="w-4 h-4 rounded bg-slate-900 border border-slate-500 peer-checked:bg-blue-600 peer-checked:border-blue-600 flex items-center justify-center text-white transition shrink-0">
+                                    <svg class="w-3 h-3 opacity-0 peer-checked:opacity-100 transition-opacity" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
+                                </div>
+                                <span class="text-slate-300 text-xs font-medium">${escapeHTML(sub)}</span>
+                            </label>
+                        `;
+                    });
+
+                    districtContainer.innerHTML += `
+                        <div class="bg-slate-800/90 p-3.5 rounded-xl border border-slate-700 flex flex-col gap-2 shadow-sm">
+                            <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+                                <span class="font-bold text-blue-400 text-xs uppercase tracking-wider">${escapeHTML(mainArea)}</span>
+                                <button type="button" onclick="toggleMainDistrict('${escapeHTML(mainArea)}', true)" class="text-[10px] text-slate-400 hover:text-white underline">Pilih Semua</button>
+                            </div>
+                            <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                                ${subHtml}
+                            </div>
                         </div>
-                        <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
-                            ${subHtml}
-                        </div>
-                    </div>
-                `;
+                    `;
+                }
             }
 
             document.querySelectorAll('.zon-checkbox').forEach(cb => {
@@ -3057,11 +2568,16 @@
         }
 
         function applyFilters() {
-            const sSearch = document.getElementById('filter-search').value.toLowerCase();
-            const sBulan = document.getElementById('filter-bulan').value;
-            const sCat = document.getElementById('filter-kategori').value;
-            const sJenisPaip = document.getElementById('filter-jenis-paip').value;
-            const sSaizPaip = document.getElementById('filter-saiz-paip').value;
+            const searchEl = document.getElementById('filter-search');
+            const sSearch = searchEl ? searchEl.value.toLowerCase() : '';
+            const bulanEl = document.getElementById('filter-bulan');
+            const sBulan = bulanEl ? bulanEl.value : '';
+            const katEl = document.getElementById('filter-kategori');
+            const sCat = katEl ? katEl.value : '';
+            const jenisEl = document.getElementById('filter-jenis-paip');
+            const sJenisPaip = jenisEl ? jenisEl.value : '';
+            const saizEl = document.getElementById('filter-saiz-paip');
+            const sSaizPaip = saizEl ? saizEl.value : '';
             
             const checkedDmas = Array.from(document.querySelectorAll('.zon-checkbox:checked')).map(cb => cb.value);
             const checkedDistricts = Array.from(document.querySelectorAll('.district-checkbox:checked')).map(cb => cb.value);
@@ -3109,21 +2625,26 @@
         }
 
         function updateDashboard() {
-            document.getElementById('kpi-total').innerText = filteredData.length;
-            document.getElementById('kpi-dma').innerText = new Set(filteredData.map(d=>d['DMA']).filter(Boolean)).size;
-            document.getElementById('kpi-category').innerText = new Set(filteredData.map(d=>d['KATEGORI']).filter(Boolean)).size;
+            const kpiTotal = document.getElementById('kpi-total');
+            if (kpiTotal) kpiTotal.innerText = filteredData.length;
+            const kpiDma = document.getElementById('kpi-dma');
+            if (kpiDma) kpiDma.innerText = new Set(filteredData.map(d=>d['DMA']).filter(Boolean)).size;
+            const kpiCategory = document.getElementById('kpi-category');
+            if (kpiCategory) kpiCategory.innerText = new Set(filteredData.map(d=>d['KATEGORI']).filter(Boolean)).size;
             
             const validCivil = filteredData.filter(d => {
                 const val = String(d['SIVIL WORKS'] || '').trim();
                 return val !== '' && val !== '-' && val.toLowerCase() !== 'tiada';
             });
-            document.getElementById('kpi-civil').innerText = validCivil.length;
+            const kpiCivil = document.getElementById('kpi-civil');
+            if (kpiCivil) kpiCivil.innerText = validCivil.length;
 
             const kpiAchievedCount = filteredData.filter(d => {
                 const kpiVal = String(d['KPI Aduan'] || d['KPI ADUAN'] || '').trim();
                 return kpiVal.includes('✓') || kpiVal.includes('√') || (kpiVal !== '' && kpiVal !== '-');
             }).length;
-            document.getElementById('kpi-achievement').innerText = (filteredData.length > 0 ? Math.round((kpiAchievedCount / filteredData.length) * 100) : 0) + '%';
+            const kpiAchievement = document.getElementById('kpi-achievement');
+            if (kpiAchievement) kpiAchievement.innerText = (filteredData.length > 0 ? Math.round((kpiAchievedCount / filteredData.length) * 100) : 0) + '%';
 
             const countBy = (key) => {
                 const counts = {};
@@ -3135,10 +2656,10 @@
             filteredData.forEach(r => { let v = r['BULAN']||'Tiada'; dMonthCounts[v] = (dMonthCounts[v]||0)+1; });
             let sortedMonthKeys = sortMonths(Object.keys(dMonthCounts));
             let dMonth = sortedMonthKeys.map(m => [m, dMonthCounts[m]]);
-            charts.month.updateSeries([{name: 'Kes', data: dMonth.map(d=>d[1])}]); charts.month.updateOptions({xaxis: {categories: dMonth.map(d=>d[0])}});
+            if (charts.month) { charts.month.updateSeries([{name: 'Kes', data: dMonth.map(d=>d[1])}]); charts.month.updateOptions({xaxis: {categories: dMonth.map(d=>d[0])}}); }
             
             const dDma = countBy('DMA').slice(0,10);
-            charts.dma.updateSeries([{name: 'Kes', data: dDma.map(d=>d[1])}]); charts.dma.updateOptions({xaxis: {categories: dDma.map(d=>d[0])}});
+            if (charts.dma) { charts.dma.updateSeries([{name: 'Kes', data: dDma.map(d=>d[1])}]); charts.dma.updateOptions({xaxis: {categories: dDma.map(d=>d[0])}}); }
 
             const dCat = countBy('KATEGORI');
             const categoryPriority = { 'PECAH': 1, 'Bocor': 2 };
@@ -3154,30 +2675,32 @@
                 const percent = filteredData.length > 0 ? ((count / filteredData.length) * 100).toFixed(1) + '%' : '0.0%';
                 catTableHtml += `<tr class="border-b border-slate-200 dark:border-gray-700/50 hover:bg-slate-50"><td class="p-2.5 font-medium">${formatKategori(cat)}</td><td class="p-2.5 text-right">${count}</td><td class="p-2.5 text-right font-semibold text-blue-600">${percent}</td></tr>`;
             });
-            document.getElementById('table-category-body').innerHTML = catTableHtml || '<tr><td colspan="3" class="p-4 text-center text-gray-500">Tiada Data</td></tr>';
+            const tableCategoryBody = document.getElementById('table-category-body');
+            if (tableCategoryBody) tableCategoryBody.innerHTML = catTableHtml || '<tr><td colspan="3" class="p-4 text-center text-gray-500">Tiada Data</td></tr>';
 
             const dCivil = countBy('SIVIL WORKS').slice(0,5);
-            charts.civilWorks.updateSeries([{name: 'Jumlah', data: dCivil.map(d=>d[1])}]); charts.civilWorks.updateOptions({xaxis: {categories: dCivil.map(d=>d[0])}});
+            if (charts.civilWorks) { charts.civilWorks.updateSeries([{name: 'Jumlah', data: dCivil.map(d=>d[1])}]); charts.civilWorks.updateOptions({xaxis: {categories: dCivil.map(d=>d[0])}}); }
 
             const dJenisPaip = countBy('JENIS PAIP').slice(0,5);
-            charts.jenisPaip.updateSeries(dJenisPaip.map(d=>d[1])); charts.jenisPaip.updateOptions({labels: dJenisPaip.map(d=>d[0])});
+            if (charts.jenisPaip) { charts.jenisPaip.updateSeries(dJenisPaip.map(d=>d[1])); charts.jenisPaip.updateOptions({labels: dJenisPaip.map(d=>d[0])}); }
 
             const dSaizPaip = countBy('SAIZ PAIP').slice(0,5);
-            charts.saizPaip.updateSeries([{name: 'Kes', data: dSaizPaip.map(d=>d[1])}]); charts.saizPaip.updateOptions({xaxis: {categories: dSaizPaip.map(d=>d[0])}});
+            if (charts.saizPaip) { charts.saizPaip.updateSeries([{name: 'Kes', data: dSaizPaip.map(d=>d[1])}]); charts.saizPaip.updateOptions({xaxis: {categories: dSaizPaip.map(d=>d[0])}}); }
 
             const dJenisBaru = countBy('JENIS PAIP BARU').slice(0,5);
-            charts.jenisBaru.updateSeries(dJenisBaru.map(d=>d[1])); charts.jenisBaru.updateOptions({labels: dJenisBaru.map(d=>d[0])});
+            if (charts.jenisBaru) { charts.jenisBaru.updateSeries(dJenisBaru.map(d=>d[1])); charts.jenisBaru.updateOptions({labels: dJenisBaru.map(d=>d[0])}); }
 
             const dSaizBaru = countBy('SAIZ').slice(0,5);
-            charts.saizBaru.updateSeries([{name: 'Kes', data: dSaizBaru.map(d=>d[1])}]); charts.saizBaru.updateOptions({xaxis: {categories: dSaizBaru.map(d=>d[0])}});
+            if (charts.saizBaru) { charts.saizBaru.updateSeries([{name: 'Kes', data: dSaizBaru.map(d=>d[1])}]); charts.saizBaru.updateOptions({xaxis: {categories: dSaizBaru.map(d=>d[0])}}); }
 
             const dPanjang = countBy('PANJANG PAIP (M)').slice(0,5);
-            charts.panjangPaip.updateSeries([{name: 'Nilai', data: dPanjang.map(d=>d[1])}]); charts.panjangPaip.updateOptions({xaxis: {categories: dPanjang.map(d=>d[0])}});
+            if (charts.panjangPaip) { charts.panjangPaip.updateSeries([{name: 'Nilai', data: dPanjang.map(d=>d[1])}]); charts.panjangPaip.updateOptions({xaxis: {categories: dPanjang.map(d=>d[0])}}); }
 
             updateMapMarkers(); updateTable();
         }
 
         function updateMapMarkers() {
+            if (!map || !markerClusterGroup) return;
             markerClusterGroup.clearLayers();
             if(heatLayer) map.removeLayer(heatLayer);
             const markers = [], heatPts = [];
@@ -3257,8 +2780,10 @@
 
         function updateManagementTable() {
             const userLevel = localStorage.getItem('sainsUserLevel');
-            const sBulan = document.getElementById('mgmt-filter-bulan').value;
-            const sStatus = document.getElementById('mgmt-filter-status').value;
+            const filterBulanEl = document.getElementById('mgmt-filter-bulan');
+            const sBulan = filterBulanEl ? filterBulanEl.value : '';
+            const filterStatusEl = document.getElementById('mgmt-filter-status');
+            const sStatus = filterStatusEl ? filterStatusEl.value : '';
 
             let currentPage = 0;
             if ($.fn.DataTable.isDataTable('#managementTable')) {
@@ -3339,6 +2864,339 @@
             }
         }
 
+        function updateCroTable() {
+            const tbody = document.getElementById('cro-tbody');
+            if(!tbody) return;
+
+            const sBulanEl = document.getElementById('cro-filter-bulan');
+            const sBulan = sBulanEl ? sBulanEl.value : '';
+            const sStatusEl = document.getElementById('cro-filter-status');
+            const sStatus = sStatusEl ? sStatusEl.value : '';
+            const sSearchEl = document.getElementById('cro-search');
+            const sSearch = sSearchEl ? sSearchEl.value.toLowerCase() : '';
+            
+            let displayData = rawData.filter(row => {
+                if (sBulan && row['BULAN'] !== sBulan) return false;
+                const isComplete = window.isRowComplete(row);
+                if (sStatus === 'complete' && !isComplete) return false;
+                if (sStatus === 'incomplete' && isComplete) return false;
+                if (sSearch && !Object.values(row).join(' ').toLowerCase().includes(sSearch)) return false;
+                return true;
+            });
+
+            const totalPages = Math.ceil(displayData.length / croRowsPerPage) || 1;
+            if (croCurrentPage > totalPages) croCurrentPage = totalPages;
+            if (croCurrentPage < 1) croCurrentPage = 1;
+
+            const startIndex = (croCurrentPage - 1) * croRowsPerPage;
+            const paginatedData = displayData.slice(startIndex, startIndex + croRowsPerPage);
+
+            let html = '';
+            paginatedData.forEach(row => {
+                const noAduan = row['NO ADUAN'] || '';
+                const tarikhTerimaVal = row['TARIKH & MASA TERIMA  ADUAN'] || row['TARIKH TERIMA'] || '';
+                const tarikhTutupVal = row['TARIKH  TUTUP ADUAN'] || row['TARIKH TUTUP'] || '';
+                const lokasiVal = row['LOKASI / TEMPAT'] || row['LOKASI'] || '';
+                const kordinatVal = row['KORDINAT'] || '';
+
+                const isComplete = window.isRowComplete(row);
+                const trClass = isComplete ? 'row-complete' : '';
+
+                html += `
+                    <tr class="${trClass}">
+                        <td class="col-1 text-center p-1 whitespace-nowrap" tabindex="-1">
+                            <button type="button" onclick="saveCroRow(this)" class="text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded text-xs mx-0.5 transition font-bold shadow-sm" title="Simpan"><i class="fa-solid fa-save"></i> SIMPAN</button>
+                            <button type="button" onclick="confirmDeleteCro('${escapeHTML(noAduan)}')" class="text-red-600 hover:text-red-800 bg-red-100 hover:bg-red-200 px-2 py-1 rounded text-xs mx-0.5 transition shadow-sm" title="Padam"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                        <td class="col-2" tabindex="0"><input type="text" class="excel-input cro-noAduan font-bold" value="${escapeHTML(noAduan)}" readonly autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-zon" list="list-zon" value="${escapeHTML(row['ZON']||'')}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-dma" list="list-dma" value="${escapeHTML(row['DMA']||'')}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-kategori" list="list-kategori" value="${escapeHTML(row['KATEGORI']||'')}" autocomplete="off"></td>
+                        <td class="col-lokasi" tabindex="0"><textarea class="excel-input cro-lokasi" autocomplete="off">${escapeHTML(lokasiVal)}</textarea></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-kordinat" value="${escapeHTML(kordinatVal)}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="datetime-local" class="excel-input cro-terima" value="${escapeHTML(formatForDateTimeInput(tarikhTerimaVal))}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="datetime-local" class="excel-input cro-tutup" value="${escapeHTML(formatForDateTimeInput(tarikhTutupVal))}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-jenis" list="list-jenisPaip" value="${escapeHTML(row['JENIS PAIP']||'')}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-saiz" list="list-saizPaip" value="${escapeHTML(row['SAIZ PAIP']||'')}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-jenisBaru" list="list-jenisPaipBaru" value="${escapeHTML(row['JENIS PAIP BARU']||'')}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-saizBaru" list="list-saiz" value="${escapeHTML(row['SAIZ']||'')}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-panjang" value="${escapeHTML(row['PANJANG PAIP (M)']||'')}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-sivil" list="list-sivilWorks" value="${escapeHTML(row['SIVIL WORKS']||'')}" autocomplete="off"></td>
+                        <td tabindex="0"><input type="text" class="excel-input cro-pelaksana" list="list-dilaksanakanOleh" value="${escapeHTML(row['DILAKSANAKAN OLEH']||'')}" autocomplete="off"></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+            renderCroPagination(totalPages, displayData.length);
+            initExcelGridNavigation();
+        }
+
+        function renderCroPagination(totalPages, totalRows) {
+            let pagerEl = document.getElementById('cro-pagination-bar');
+            if (!pagerEl) {
+                pagerEl = document.createElement('div');
+                pagerEl.id = 'cro-pagination-bar';
+                pagerEl.className = 'flex justify-between items-center p-3 bg-slate-100 dark:bg-gray-800 border-t border-slate-200 dark:border-gray-700 text-xs shrink-0';
+                const croContent = document.getElementById('cro-content');
+                if (croContent) croContent.appendChild(pagerEl);
+            }
+            if (pagerEl) {
+                pagerEl.innerHTML = `
+                    <span class="text-slate-600 dark:text-gray-400">Jumlah Rekod: <b>${totalRows}</b> | Muka Surat <b>${croCurrentPage}</b> dari <b>${totalPages}</b></span>
+                    <div class="flex gap-2">
+                        <button onclick="changeCroPage(-1)" class="px-3 py-1 bg-slate-200 dark:bg-gray-700 hover:bg-blue-600 hover:text-white rounded transition ${croCurrentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}">Sebelumnya</button>
+                        <button onclick="changeCroPage(1)" class="px-3 py-1 bg-slate-200 dark:bg-gray-700 hover:bg-blue-600 hover:text-white rounded transition ${croCurrentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}">Seterusnya</button>
+                    </div>
+                `;
+            }
+        }
+
+        window.changeCroPage = function(direction) {
+            croCurrentPage += direction;
+            updateCroTable();
+        }
+
+        window.addCroBlankRow = function() {
+            const tbody = document.getElementById('cro-tbody');
+            if(!tbody) return;
+            const html = `
+                <tr class="new-row bg-emerald-50 dark:bg-emerald-900/20">
+                    <td class="col-1 text-center p-1 whitespace-nowrap" tabindex="-1">
+                        <button type="button" onclick="saveCroRow(this)" class="text-emerald-600 hover:text-emerald-800 bg-emerald-100 hover:bg-emerald-200 px-2 py-1 rounded text-xs mx-0.5 transition font-bold shadow-sm" title="Simpan"><i class="fa-solid fa-save"></i> SIMPAN</button>
+                        <button type="button" onclick="this.closest('tr').remove()" class="text-red-600 hover:text-red-800 bg-red-100 hover:bg-red-200 px-2 py-1 rounded text-xs mx-0.5 transition shadow-sm" title="Batal"><i class="fa-solid fa-times"></i></button>
+                    </td>
+                    <td class="col-2" tabindex="0"><input type="text" class="excel-input cro-noAduan font-bold text-blue-600 placeholder:text-gray-400" placeholder="NO ADUAN BARU" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-zon" list="list-zon" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-dma" list="list-dma" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-kategori" list="list-kategori" autocomplete="off"></td>
+                    <td class="col-lokasi" tabindex="0"><textarea class="excel-input cro-lokasi" autocomplete="off" placeholder="Masukkan lokasi..."></textarea></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-kordinat" autocomplete="off"></td>
+                    <td tabindex="0"><input type="datetime-local" class="excel-input cro-terima" autocomplete="off"></td>
+                    <td tabindex="0"><input type="datetime-local" class="excel-input cro-tutup" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-jenis" list="list-jenisPaip" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-saiz" list="list-saizPaip" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-jenisBaru" list="list-jenisPaipBaru" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-saizBaru" list="list-saiz" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-panjang" placeholder="Cth: 10 Meter" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-sivil" list="list-sivilWorks" autocomplete="off"></td>
+                    <td tabindex="0"><input type="text" class="excel-input cro-pelaksana" list="list-dilaksanakanOleh" autocomplete="off"></td>
+                </tr>
+            `;
+            tbody.insertAdjacentHTML('afterbegin', html);
+            initExcelGridNavigation();
+        }
+
+        function initExcelGridNavigation() {
+            const table = document.querySelector('.excel-table');
+            if(!table) return;
+            const container = document.getElementById('cro-table-container');
+            const cells = table.querySelectorAll('tbody td[tabindex="0"]');
+
+            cells.forEach(td => {
+                const inputOrTextarea = td.querySelector('.excel-input');
+                if(!inputOrTextarea) return;
+                const isLokasiOrKordinat = inputOrTextarea.classList.contains('cro-lokasi') || inputOrTextarea.classList.contains('cro-kordinat');
+
+                td.addEventListener('click', (e) => {
+                    if(td.classList.contains('editing')) return;
+                    cells.forEach(c => {
+                        if(c !== td) {
+                            c.classList.remove('editing');
+                            c.querySelector('.excel-input').blur();
+                        }
+                    });
+                });
+
+                td.addEventListener('dblclick', () => { enableEditMode(td, inputOrTextarea); });
+
+                if(isLokasiOrKordinat) {
+                    td.addEventListener('paste', async (e) => {
+                        e.preventDefault();
+                        let pastedText = '';
+                        if (e.clipboardData) pastedText = e.clipboardData.getData('text');
+                        else if (window.clipboardData) pastedText = window.clipboardData.getData('Text');
+                        if (pastedText !== null) {
+                            enableEditMode(td, inputOrTextarea);
+                            inputOrTextarea.value = pastedText.trim();
+                            inputOrTextarea.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    });
+                }
+
+                td.addEventListener('keydown', (e) => {
+                    const isEditing = td.classList.contains('editing');
+                    if(!isEditing) {
+                        if(e.key === 'F2') { e.preventDefault(); enableEditMode(td, inputOrTextarea); return; }
+                        if(e.key.length === 1 && !e.ctrlKey && !e.metaKey) { enableEditMode(td, inputOrTextarea, true); return; }
+
+                        let targetTd = null;
+                        const tr = td.parentElement;
+                        const tdIndex = Array.from(tr.children).indexOf(td);
+
+                        if(e.key === 'ArrowRight' || e.key === 'Tab') {
+                            e.preventDefault();
+                            targetTd = td.nextElementSibling;
+                            if(targetTd && targetTd.getAttribute('tabindex') === '0') {
+                                targetTd.focus();
+                                if(container) scrollToEnsureVisible(container, targetTd);
+                            }
+                        } else if(e.key === 'ArrowLeft') {
+                            e.preventDefault();
+                            targetTd = td.previousElementSibling;
+                            if(targetTd && targetTd.getAttribute('tabindex') === '0') {
+                                targetTd.focus();
+                                if(container) scrollToEnsureVisible(container, targetTd);
+                            }
+                        } else if(e.key === 'ArrowDown' || e.key === 'Enter') {
+                            e.preventDefault();
+                            const nextTr = tr.nextElementSibling;
+                            if(nextTr) {
+                                targetTd = nextTr.children[tdIndex];
+                                if(targetTd && targetTd.getAttribute('tabindex') === '0') {
+                                    targetTd.focus();
+                                    targetTd.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                                }
+                            }
+                        } else if(e.key === 'ArrowUp') {
+                            e.preventDefault();
+                            const prevTr = tr.previousElementSibling;
+                            if(prevTr) {
+                                targetTd = prevTr.children[tdIndex];
+                                if(targetTd && targetTd.getAttribute('tabindex') === '0') {
+                                    targetTd.focus();
+                                    targetTd.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                                }
+                            }
+                        }
+                    } else {
+                        if(e.key === 'Enter' && inputOrTextarea.tagName !== 'TEXTAREA') {
+                            e.preventDefault();
+                            disableEditMode(td, inputOrTextarea);
+                            const tr = td.parentElement;
+                            const tdIndex = Array.from(tr.children).indexOf(td);
+                            const nextTr = tr.nextElementSibling;
+                            if(nextTr) {
+                                const targetTd = nextTr.children[tdIndex];
+                                if(targetTd && targetTd.getAttribute('tabindex') === '0') {
+                                    targetTd.focus();
+                                    targetTd.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                                }
+                            }
+                        } else if(e.key === 'Escape') {
+                            e.preventDefault();
+                            disableEditMode(td, inputOrTextarea);
+                            td.focus();
+                        }
+                    }
+                });
+
+                inputOrTextarea.addEventListener('blur', () => {
+                    if(td.classList.contains('editing')) disableEditMode(td, inputOrTextarea);
+                });
+            });
+        }
+
+        function scrollToEnsureVisible(container, td) {
+            const tr = td.parentElement;
+            const tdIndex = Array.from(tr.children).indexOf(td);
+            if (tdIndex <= 1 || td.classList.contains('col-1') || td.classList.contains('col-2')) {
+                container.scrollTo({ left: 0, behavior: 'smooth' });
+                return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            const tdRect = td.getBoundingClientRect();
+            const leftStickyWidth = 260; 
+            if (tdRect.right > containerRect.right - 20) {
+                container.scrollBy({ left: tdRect.right - containerRect.right + 80, behavior: 'smooth' });
+            } else if (tdRect.left < containerRect.left + leftStickyWidth) {
+                container.scrollBy({ left: tdRect.left - containerRect.left - leftStickyWidth - 20, behavior: 'smooth' });
+            }
+        }
+
+        function enableEditMode(td, inputOrTextarea, clear = false) {
+            td.classList.add('editing');
+            inputOrTextarea.focus();
+            if(clear && inputOrTextarea.tagName !== 'TEXTAREA') {
+                inputOrTextarea.value = '';
+            } else if(inputOrTextarea.setSelectionRange) {
+                inputOrTextarea.setSelectionRange(inputOrTextarea.value.length, inputOrTextarea.value.length);
+            }
+        }
+
+        function disableEditMode(td, inputOrTextarea) {
+            td.classList.remove('editing');
+            inputOrTextarea.blur();
+        }
+
+        window.saveCroRow = function(btn) {
+            const tr = btn.closest('tr');
+            const noAduan = tr.querySelector('.cro-noAduan').value.trim();
+            if(!noAduan) { alert("Sila masukkan No Aduan"); return; }
+
+            const isNew = tr.classList.contains('new-row');
+            if (isNew) {
+                const exists = rawData.some(r => String(r['NO ADUAN'] || '').trim().toLowerCase() === noAduan.toLowerCase());
+                if (exists) {
+                    showToast(`No Aduan "${noAduan}" sudah wujud! Sila gunakan No Aduan yang lain.`, "error");
+                    return;
+                }
+            }
+
+            const kordinat = tr.querySelector('.cro-kordinat').value.trim();
+            let districtAreaVal = '';
+            if (kordinat) {
+                let parts = kordinat.split(',');
+                if (parts.length === 2) {
+                    let lat = parseFloat(parts[0].trim());
+                    let lng = parseFloat(parts[1].trim());
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        let resDMZ = semakPointInDMZ(lat, lng);
+                        if (resDMZ.zone && !parentFolders.includes(resDMZ.zone.toLowerCase())) {
+                            districtAreaVal = resDMZ.zone;
+                        }
+                    }
+                }
+            }
+
+            const payloadData = {
+                "NO ADUAN": noAduan, "noAduan": noAduan, "No Aduan": noAduan,
+                "ZON": tr.querySelector('.cro-zon').value,
+                "DMA": tr.querySelector('.cro-dma').value,
+                "District Metered Area": districtAreaVal,
+                "DISTRICT METERED AREA": districtAreaVal,
+                "districtMeteredArea": districtAreaVal,
+                "KATEGORI": tr.querySelector('.cro-kategori').value,
+                "LOKASI / TEMPAT": tr.querySelector('.cro-lokasi').value,
+                "KORDINAT": kordinat,
+                "TARIKH & MASA TERIMA  ADUAN": convertToDDMMYYYYHHMM(tr.querySelector('.cro-terima').value),
+                "TARIKH  TUTUP ADUAN": convertToDDMMYYYYHHMM(tr.querySelector('.cro-tutup').value),
+                "JENIS PAIP": tr.querySelector('.cro-jenis').value,
+                "SAIZ PAIP": tr.querySelector('.cro-saiz').value,
+                "JENIS PAIP BARU": tr.querySelector('.cro-jenisBaru').value,
+                "SAIZ": tr.querySelector('.cro-saizBaru').value,
+                "PANJANG PAIP (M)": tr.querySelector('.cro-panjang').value,
+                "SIVIL WORKS": tr.querySelector('.cro-sivil').value,
+                "DILAKSANAKAN OLEH": tr.querySelector('.cro-pelaksana').value
+            };
+
+            const exists = rawData.some(r => String(r['NO ADUAN']).trim() === String(noAduan).trim());
+            const action = exists && !isNew ? 'updateData' : (exists && isNew ? 'updateData' : 'addData');
+            
+            triggerPreviewBeforeSave(action, payloadData);
+            
+            if (isNew) {
+                tr.classList.remove('new-row', 'bg-emerald-50', 'dark:bg-emerald-900/20');
+                tr.querySelector('.cro-noAduan').classList.add('bg-slate-100');
+                tr.querySelector('.cro-noAduan').setAttribute('readonly', 'true');
+            }
+        }
+
+        window.confirmDeleteCro = function(noAduan) {
+            if(confirm(`Adakah anda pasti mahu memadam rekod ${noAduan}?`)) {
+                sendMutation('deleteData', { noAduan: noAduan });
+            }
+        }
+
         document.getElementById('btn-load-daily').addEventListener('click', () => {
             const selectedDate = document.getElementById('daily-date-picker').value; 
             if (!selectedDate) { showToast("Sila pilih tarikh terlebih dahulu!", "error"); return; }
@@ -3379,390 +3237,189 @@
             const sainsText = sainsCases.length > 0 ? sainsCases.map(r => `${r['NO ADUAN'] || r['noAduan']} - ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}`).join(', ') : 'TIADA';
             const kesTurap = matchedCases.filter(r => String(r['SIVIL WORKS'] || r['sivilWorks'] || r['Kerja Sivil'] || '').toUpperCase().includes('TURAP'));
 
-            const extractTimeWithAmPm = (val) => {
-                if (!val || val === '-') return 'HH:MM am/pm';
-                const str = String(val).trim(); const timeMatch = str.match(/(\d{2}):(\d{2})/);
-                if (timeMatch) {
-                    let hours = parseInt(timeMatch[1], 10); const minutes = timeMatch[2];
-                    const ampm = hours >= 12 ? 'pm' : 'am';
-                    hours = hours % 12; hours = hours ? hours : 12; 
-                    return `${String(hours).padStart(2, '0')}:${minutes} ${ampm}`;
-                }
-                return str;
-            };
-
             let template = `*LAPORAN HARIAN OPERASI* :\n\n`;
             template += `*Tarikh Laporan* : ${targetDDMMYYYY}\n*Tarikh Kemaskini* : ${tarikhKemaskini}\n*Daerah* : PORT DICKSON\n\n`;
             template += `*PAIP PECAH / BOCOR :*\n\n*GENG PEMBAIKAN SAINS & LOKASI² ADUAN :* ${sainsText}\n\n*KONTRAKTOR² & LOKASI² ADUAN:* ${kesPecah.length + kesBocor.length} NOS\n`;
-            
-            if (matchedCases.length > 0) {
-                matchedCases.forEach((r, i) => {
-                    const noAduan = r['NO ADUAN'] || r['noAduan'] || '-';
-                    const lokasi = r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi'] || '-';
-                    const saiz = r['SAIZ PAIP'] || r['saizPaip'] || '-';
-                    const jenisPaip = r['JENIS PAIP'] || r['jenisPaip'] || '-';
-                    const tTerima = extractTimeWithAmPm(r['TARIKH & MASA TERIMA  ADUAN'] || r['TARIKH TERIMA']);
-                    const rawTutup = r['TARIKH  TUTUP ADUAN'] || r['TARIKH TUTUP'] || r['tarikhTutup'];
-                    const tTutup = rawTutup ? extractTimeWithAmPm(rawTutup) : 'DALAM TINDAKAN';
-                    const pelaksana = r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh'] || '-';
-                    template += `${i + 1}. ${noAduan} - ${lokasi} – ${saiz}'' - ${jenisPaip} - ${tTerima} hingga ${tTutup} - ${pelaksana}\n`;
-                });
-            } else { template += `TIADA\n`; }
 
-            template += `\n*KAWASAN² TERLIBAT GANGGUAN AIR KES PAIP PECAH :* ${kesPecah.length} NOS\n`;
-            if (kesPecah.length > 0) { kesPecah.forEach((r, i) => { template += `${i + 1}. ${r['NO ADUAN'] || r['noAduan']} – ${r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi']}\n`; }); } else { template += `TIADA\n`; }
-            template += `\n*UKZ² & LOKASI² ADUAN :* TIADA\n\n*JUMLAH PECAH :* ${kesPecah.length}\n*JUMLAH BOCOR :* ${kesBocor.length}\n\n*NO². ADUAN KERJA LIBAT JALAN :* ${kesTurap.length} NOS\n`;
-            if (kesTurap.length > 0) { kesTurap.forEach((r, i) => { template += `${i + 1}. ${r['NO ADUAN'] || r['noAduan']}, Turap\n`; }); } else { template += `TIADA\n`; }
-            template += `\n*GANGGUAN BEKALAN AIR LAIN² HAL :* TIADA\n*PENGHANTARAN AIR MELALUI LORI TANGKI :* TIADA\n*KOLAM KRITIKAL (PARAS RENDAH) :* TIADA\n*LAIN-LAIN HAL :* TIADA`;
+            const previewArea = document.getElementById('daily-whatsapp-preview');
+            if(previewArea) previewArea.value = template;
 
-            document.getElementById('daily-whatsapp-preview').value = template;
-
-            const container = document.getElementById('daily-cases-list');
-            if (matchedCases.length === 0) {
-                container.innerHTML = `<p class="text-sm text-slate-500 text-center py-8">Tiada rekod kes ditemui pada tarikh ${targetDDMMYYYY}.</p>`; return;
+            const listContainer = document.getElementById('daily-cases-list');
+            if(listContainer) {
+                if(matchedCases.length === 0) {
+                    listContainer.innerHTML = '<p class="text-sm text-slate-500 text-center py-4">Tiada kes dilaporkan pada tarikh ini.</p>';
+                } else {
+                    let casesHtml = '';
+                    matchedCases.forEach((c, idx) => {
+                        casesHtml += `
+                            <div class="p-3 bg-slate-50 dark:bg-gray-800 rounded-lg border border-slate-200 dark:border-gray-700 text-xs">
+                                <b>#${idx + 1} - No Aduan:</b> ${escapeHTML(c['NO ADUAN'] || c['noAduan'])} | <b>DMA:</b> ${escapeHTML(c['DMA'])} | <b>Kategori:</b> ${escapeHTML(c['KATEGORI'])}<br>
+                                <b>Lokasi:</b> ${escapeHTML(c['LOKASI / TEMPAT'] || c['LOKASI'])}\n
+                            </div>
+                        `;
+                    });
+                    listContainer.innerHTML = casesHtml;
+                }
             }
-
-            let html = '';
-            matchedCases.forEach((r) => {
-                let districtAreaVal = r['District Metered Area'] || r['DISTRICT METERED AREA'] || r['districtMeteredArea'] || '-';
-                if (parentFolders.includes(districtAreaVal.trim().toLowerCase())) districtAreaVal = '-';
-                html += `
-                    <div class="p-4 rounded-xl border border-slate-200 dark:border-gray-700 bg-slate-50 dark:bg-gray-800/50 shadow-sm flex flex-col gap-2 text-xs">
-                        <div class="flex justify-between font-bold text-blue-600 dark:text-blue-400 text-sm">
-                            <span>${escapeHTML(r['NO ADUAN'] || r['noAduan'])} (${escapeHTML(r['KATEGORI'] || r['kategori'])})</span><span>District Metered Area: ${escapeHTML(districtAreaVal)}</span>
-                        </div>
-                        <div><b>Lokasi:</b> ${escapeHTML(r['LOKASI / TEMPAT'] || r['LOKASI'] || r['lokasi'])}</div>
-                        <div><b>Pelaksana:</b> ${escapeHTML(r['DILAKSANAKAN OLEH'] || r['Pelaksana'] || r['dilaksanakanOleh'])} | <b>Sivil:</b> ${escapeHTML(r['SIVIL WORKS'] || r['sivilWorks'] || 'Tiada')}</div>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
+            showToast("Laporan harian berjaya dijana!");
         });
 
         document.getElementById('btn-copy-daily-whatsapp').addEventListener('click', () => {
-            const previewBox = document.getElementById('daily-whatsapp-preview');
-            if (!previewBox.value) { showToast("Sila jana laporan harian terlebih dahulu!", "error"); return; }
-            previewBox.select(); navigator.clipboard.writeText(previewBox.value).then(() => { showToast("Teks laporan berjaya disalin!", "success"); }).catch(() => { showToast("Gagal menyalin teks.", "error"); });
+            const previewArea = document.getElementById('daily-whatsapp-preview');
+            if(!previewArea || !previewArea.value) { showToast("Tiada teks untuk disalin!", "error"); return; }
+            navigator.clipboard.writeText(previewArea.value).then(() => {
+                showToast("Teks laporan berjaya disalin ke clipboard!");
+            });
         });
 
         document.getElementById('btn-open-whatsapp-link').addEventListener('click', () => {
-            const previewBox = document.getElementById('daily-whatsapp-preview');
-            if (!previewBox.value) { showToast("Sila salin atau jana laporan harian terlebih dahulu!", "error"); return; }
-            const encodedText = encodeURIComponent(previewBox.value);
-            window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
+            const previewArea = document.getElementById('daily-whatsapp-preview');
+            const text = previewArea ? encodeURIComponent(previewArea.value) : '';
+            window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
         });
 
-        const laporanTemplate = `*LAPORAN HARIAN KERJA PEMBAIKAN OPERASI SAINS PORT DICKSON*
-
-*TARIKH :* {TARIKH}
-
-*MASA :* {MASA}
-
-*KPI DAERAH:* 98.89%
-
-
-*STATUS SEMASA KEROSAKAN & GANGGUAN BEKALAN AKIBAT PAIP PECAH*
-
-*KES BARU :* TIADA
-
-*DALAM PEMBAIKAN :* 
-*a.* 
-
-*SIAP DIBAIKI :* TIADA
-
-*LAIN-LAIN GANGGUAN :* TIADA
-
-
-*PERKARA: PARAS KOLAM UTAMA / TANGKI AIR*
-
-*1).* Tmn. Bagan Kurnia - *110816* : {Bagan Kurnia RSVR}M
-
-*2).* Bayu Indera ( RSVR )  - *110337* : {Bayu Indra RSVR}M
-
-*3).* Bayu Sutera (RSVR) - *111381* : {Bayu Sutera RSVR}M
-
-*4).* Bkt. Kepong (ST) - *111303* : {Bukit Kepong ST}M
-
-*5).* Bkt. Kuau Lama - *111223* : {Bukit Kuah}M
-
-*6).* Bkt. Kuau Baru - *111221* : {Bukit Kuau Baru}M
-
-*7).* Bkt. Kunyit 2 - *111229* : {Bukit Kunyit 2}M
-
-*8).* Bkt. Pelandok - *111230* : {Bukit Pelandok A}M
-
-*9).* Bkt. Tunggal (BARU) - *110539* : {Bukit Tunggal Balancing New}M
-
-*10).* Chuah - *111208* : {Chuah}M
-
-*11).* Desa PD 1 (RSVR) - *111306* : {Desa PD 1 RSVR)}M
-
-*12).* Desa PD 2 (RSVR) - *111310* : {Desa PD 2 RSVR}M
-
-*13).* Intan Duyung (RSVR) - *111227* : {Intan Duyung RSVR}M
-
-*14).* Tmn. Intan Perdana (1) - *111215* : {Intan Perdana 1 RSVR}M
-
-*15).* Tangki Jimah Indah (SITE A) - *111308* : {Jimah Indah Site A RSVR}M
-
-*16).* Tangki Jimah Jaya (SITE C) - *110105* : {Jimah Jaya}M
-
-*17).* Linggi - *111205* : {Linggi}M
-
-*18).* Lukut Makmur (RSVR) - *111307* : {Lukut Makmur RSVR}M
-
-*19).* Lukut Prima (RSVR) - *111267* : {Lukut Prima RSVR}M
-
-*20).* Marlin (RSVR) - *110673* : {Marlin RSVR}M
-
-*21).* Mayung (RSVR) - *110679* : {Mayung RSVR}M
-
-*22).* Mayung (ST) - *110678* : {Mayung ST}M
-
-*23).* Nila Aspira (RSVR) - *110144* : {Nila Aspira RSVR}M
-
-*24).* Nila Aspira (ST) - *110138* : {Nila Aspira ST}M
-
-*25).* PD Utama 1 (RSVR) - *111304* : {PD Utama 1 RSVR}M
-
-*26).* PD Utama 2 (RSVR) - *111213* : {PD Utama 2 RSVR}M
-
-*27).* PD Villa (RSVR) - *111268* : {PD Villa RSVR}M
-
-*28).* Politeknik (RSVR) - *111269* : {Politeknik RSVR}M
-
-*29).* Kolam PD - *111206* : {Port Dickson}M
-
-*30).* PPR Desa Tanjung (RSVR) - *0676* : {PPR Desa Tanjung RSVR}M
-
-*31).* PPR Desa Tanjung (ST) - *0675* : {PPR Desa Tanjung ST}M
-
-*32).* R. R. Tlk. Pelandok (ST) - *110672* : {R.R. Telok Pelandok ST}M
-
-*33).* R/ Rakyat Permatang Pasir (RSVR) - *110349* : {R.R.Permatang Pasir Rsvr}M
-
-*34).* R/ Rakyat Telok Kemang (RSVR) - *110351* : {R.R.Telok Kemang RSVR}M
-
-*35).* Residendi Prima PD (RSVR) - *111255* : {Residensi Prima PD RSVR}M
-
-*36).* R/ Rakyat Peng. Durian (1) - *111228* : {R.Rakyat Pengkalan Durian 1}M
-
-*37).* Sengkang (RSVR) - *110688* : {Sengkang RSVR}M
-
-*38).* Sengkang (ST) - *110687* : {Sengkang ST}M
-
-*39).* Sirusa 2 - *111200* : {Sirusa 2}M
-
-*40).* Sirusa 3 - *111201* : {Sirusa 3}M
-
-*41).* Sirusa 4 - *111202* : {Sirusa 4}M
-
-*42).* Sirusa 5A - *111232* : {Sirusa 5A}M
-
-*43).* Sirusa 5B - *111203* : {Sirusa 5B}M
-
-*44).* Springhill (NEW) - *110788* : {Springhill}M
-
-*45).* Springhill (COMP 1) - *111209* : {Springhill 1}M
-
-*46).* Springhill (COMP 2) - *110347* : {Springhill 2 Rsvr}M
-
-*47).* Springhill (COMP 3) - *110348* : {Springhill 3 Rsvr}M
-
-*48).* Kolam Sunggala - *111231* : {Sunggala}M
-
-*49).* Tmn. Sunggala Hartamas - *110876* : {Sunggala Hartamas Rsvr}M
-
-*50).* Tmn. Indah Baru (RSVR) - *111363* : {Taman Indah Baru RSVR}M
-
-*51).* Tmn. Indah Jaya (RSVR) - *111364* : {Taman Indah Jaya RSVR}M
-
-*52).* Tmn. Shorea Hartamas (RSVR) - *111397* : {Taman Shorea Hartamas RSVR}M
-
-*53).* Tanjung (RSVR) - *111309* : {Tanjung RSVR}M
-
-*54).* Telok Kemang (Lama) - *111204* : {Telok Kemang RSVR}M
-
-*55).* Telok Kemang (Baru) - *110352* : {Telok Kemang Baru Rsvr}M
-
-*56).* Tmn. Impian Putra (RSVR) - *110872* : {Tmn Impian Putra Rsvr}M
-
-*57).* Vista Jaya (RSVR) - *111305* : {Vista Jaya RSVR}M
-
-*58).* Bandar Springhill (RSVR) - *111443* : {Bandar Springhill RSVR}M
-
-*59).* Bandar Springhill (ST) - *111442* : {Bandar Springhill ST}M
-
-*60).* Desa Rusa (RSVR) - *111220* : {Desa Rusa RSVR}M
-
-*61).* Taman Penaga RSVR - *111438* : {Taman Penaga RSVR}M
-
-*62).* Taman Penaga ST - *111437* : {Taman Penaga ST}M
-
-
-*BACAAN PRESSURE:*
-*1).* Bkt. Palong ( CP ) - *130225* : {Bukit Palong CP}
-
-*2).* Inlet Springhill - *130401* : {Inlet Springhill}
-
-*3).* Kg. Site A ( CP ) - *130114* : {Kg Site A Bukit Pelandok}
-
-*4).* PRV Sri Parit ( DOWN ) - *130402* : {PRV Downstream Sri Parit}
-
-*5).* PRV Sg Sendayan - *130339* : {PRV Downstream Sg Sendayan}
-
-*6).* Greenview CP - *131471* : {Green View CP}`;
-
-        function matchSiteName(targetName, extractedDataMap) {
-    let cleanTarget = targetName.toLowerCase().replace(/[^a-z0-9]/g, '');
-    
-    // Ujian 1: Padanan Tepat & Substring (Paling Berkesan untuk Singkatan)
-    for (let siteNameKey in extractedDataMap) {
-        let cleanSite = siteNameKey.toLowerCase().replace(/[^a-z0-9]/g, '');
-        
-        // Jika kgsiteabukitpelandok mengandungi kgsitea -> LULUS
-        if (cleanTarget === cleanSite || cleanTarget.includes(cleanSite) || cleanSite.includes(cleanTarget)) {
-            return extractedDataMap[siteNameKey];
-        }
-    }
-
-    // Ujian 2: Sistem Pemarkahan Perkataan (Fuzzy Match)
-    let targetWords = targetName.toLowerCase().split(/[\s\(\)\.\-\_]+/);
-    let bestMatchVal = null;
-    let highestScore = 0;
-
-    for (let siteNameKey in extractedDataMap) {
-        let siteWords = siteNameKey.toLowerCase().split(/[\s\(\)\.\-\_]+/);
-        let matches = 0;
-        
-        targetWords.forEach(w => {
-            if(w.trim() !== '' && siteWords.includes(w)) matches++;
-        });
-
-        if (matches > highestScore && matches >= 2) {
-            highestScore = matches;
-            bestMatchVal = extractedDataMap[siteNameKey];
-        }
-    }
-    return bestMatchVal;
-}
-
-        document.getElementById('btn-jana-kolam').addEventListener('click', async () => {
-            const uploadTime = localStorage.getItem('kolamUploadTime');
-            const oneHour = 60 * 60 * 1000;
-
-            if (uploadTime && (Date.now() - parseInt(uploadTime) > oneHour)) {
-                clearExpiredKolamFiles();
-                return;
-            }
-
-            const selectedDate = document.getElementById('kolam-date').value;
-            const selectedTime = document.getElementById('kolam-time').value;
-
-            if (!selectedDate || !selectedTime) {
-                showToast("Sila pilih tarikh dan masa yang dikehendaki!", "error");
-                return;
-            }
-            if (accumulatedKolamFiles.length === 0) {
-                showToast("Sila muat naik fail paras kolam terlebih dahulu!", "error");
-                return;
-            }
-
-            let [yy, mm, dd] = selectedDate.split('-');
-            let targetDateStr = `${dd}/${mm}/${yy}`;
-            let targetDateTimeStr = `${targetDateStr} ${selectedTime}`;
-
-            let kolamData = {};
-            showLoading(true, 50, "Membaca semua fail terkumpul...");
-
-            try {
-                for (let i = 0; i < accumulatedKolamFiles.length; i++) {
-                    const file = accumulatedKolamFiles[i];
-                    const buffer = await file.arrayBuffer();
-                    const workbook = XLSX.read(buffer, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    
-                    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
-                    
-                    let siteName = "";
-                    let readingValue = "";
-
-                    if (rows.length > 0 && rows[0][0] && typeof rows[0][0] === 'string' && rows[0][0].includes("Site name:")) {
-                        siteName = rows[0][0].replace("Site name:", "").trim();
-                    }
-
-                    if(!siteName) {
-                        for (let row of rows) {
-                            if (row[0] && typeof row[0] === 'string' && row[0].includes("Site name:")) {
-                                siteName = row[0].replace("Site name:", "").trim(); break;
-                            }
-                        }
-                    }
-
-                    for (let r = 0; r < rows.length; r++) {
-                        const rowData = rows[r];
-                        if (rowData[0] && typeof rowData[0] === 'string') {
-                            if (rowData[0].includes(targetDateTimeStr)) {
-                                readingValue = rowData[1]; 
-                                break;
-                            }
-                        }
-                    }
-
-                    if (siteName) {
-                        kolamData[siteName] = readingValue || null;
-                    }
-                }
-
-                let finalReport = laporanTemplate;
+        // ==========================================
+        // FUNGSI SETUP EVENTS UTAMA (NULL-SAFE)
+        // ==========================================
+        function setupEvents() {
+            const safeAddListener = (id, event, handler) => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener(event, handler);
+            };
+
+            const navD = document.getElementById('nav-dash');
+            const navU = document.getElementById('nav-update');
+            const navCro = document.getElementById('nav-cro');
+            const navDaily = document.getElementById('nav-daily');
+            const navAi = document.getElementById('nav-ai');
+            const navKolam = document.getElementById('nav-kolam');
+
+            const hideAllTabs = () => {
+                ['dashboard-content', 'update-content', 'cro-content', 'daily-content', 'ai-agent-content', 'kolam-content'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.style.display = 'none';
+                });
                 
-                let [hh, min] = selectedTime.split(':');
-                let hourStr = parseInt(hh);
-                let ampm = hourStr >= 12 ? 'PM' : 'AM';
-                hourStr = hourStr % 12; hourStr = hourStr ? hourStr : 12;
-                let displayTime = `${hourStr}:${min} ${ampm}`;
+                const inactiveClass = "w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 transition-colors";
+                if(navD) navD.className = inactiveClass; 
+                if(navU) navU.className = inactiveClass; 
+                if(navCro) navCro.className = inactiveClass; 
+                if(navDaily) navDaily.className = inactiveClass; 
+                if(navAi) navAi.className = inactiveClass;
+                if(navKolam) navKolam.className = inactiveClass;
+            };
 
-                finalReport = finalReport.replace("{TARIKH}", targetDateStr).replace("{MASA}", displayTime);
+            if(navD) navD.addEventListener('click', () => {
+                hideAllTabs();
+                const content = document.getElementById('dashboard-content');
+                if(content) content.style.display = 'block';
+                navD.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
+                if(map) setTimeout(()=>map.invalidateSize(), 300);
+            });
 
-                // Carian Regex baharu: Kesan semua {...} sama ada ia ada huruf 'M' di belakang atau tidak
-finalReport = finalReport.replace(/\{([^}]+)\}(M?)/g, (matchPattern, pureName, unitM) => {
-    let foundValue = matchSiteName(pureName, kolamData);
-    
-    // Jika data ditemui dari fail upload
-    if (foundValue !== null && foundValue !== undefined && foundValue !== "") {
-        return foundValue + unitM; // Masukkan nilai dan kekalkan unit 'M' (jika ada)
-    } else {
-        // Jika fail tiada atau bacaan kosong
-        return "Tiada"; 
-    }
-});
+            if(navU) navU.addEventListener('click', () => {
+                hideAllTabs();
+                const content = document.getElementById('update-content');
+                if(content) content.style.display = 'block';
+                navU.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
+                if(managementTable) managementTable.columns.adjust();
+            });
 
-                document.getElementById('kolam-report-output').value = finalReport;
-                showLoading(false);
-                showToast("Laporan kolam berjaya dijana!", "success");
+            if(navCro) navCro.addEventListener('click', () => {
+                hideAllTabs();
+                const content = document.getElementById('cro-content');
+                if(content) content.style.display = 'flex';
+                navCro.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
+                updateCroTable();
+            });
 
-            } catch (err) {
-                showLoading(false);
-                showToast("Ralat membaca fail kolam: " + err.message, "error");
+            if(navDaily) navDaily.addEventListener('click', () => {
+                hideAllTabs();
+                const content = document.getElementById('daily-content');
+                if(content) content.style.display = 'block';
+                navDaily.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
+                const picker = document.getElementById('daily-date-picker');
+                if(picker && !picker.value) picker.value = new Date().toISOString().split('T')[0];
+            });
+
+            if(navAi) navAi.addEventListener('click', () => {
+                hideAllTabs();
+                const content = document.getElementById('ai-agent-content');
+                if(content) content.style.display = 'flex';
+                navAi.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
+                if(!aiAgentMap) initAiAgentMap();
+                else setTimeout(() => aiAgentMap.invalidateSize(), 300);
+            });
+
+            if(navKolam) navKolam.addEventListener('click', () => {
+                hideAllTabs();
+                const content = document.getElementById('kolam-content');
+                if(content) content.style.display = 'flex';
+                navKolam.className = "w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors";
+                const dateInput = document.getElementById('kolam-date');
+                if(dateInput && !dateInput.value) {
+                    const today = new Date();
+                    dateInput.value = today.toISOString().split('T')[0];
+                }
+            });
+
+            safeAddListener('nav-logout', 'click', () => {
+                safeLogout("Anda telah log keluar dengan jayanya.");
+            });
+
+            safeAddListener('btn-refresh-data', 'click', () => fetchFreshData(true));
+            safeAddListener('btn-mgmt-refresh', 'click', () => fetchFreshData(true));
+            
+            safeAddListener('btn-reset', 'click', () => {
+                const searchEl = document.getElementById('filter-search');
+                if(searchEl) searchEl.value = ''; 
+                
+                const latestMonths = sortMonths([...new Set(rawData.map(i => i['BULAN']).filter(Boolean))]);
+                const bulanEl = document.getElementById('filter-bulan');
+                if(bulanEl) bulanEl.value = latestMonths.length > 0 ? latestMonths[latestMonths.length - 1] : '';
+                
+                const katEl = document.getElementById('filter-kategori');
+                if(katEl) katEl.value = ''; 
+                
+                const jenisEl = document.getElementById('filter-jenis-paip');
+                if(jenisEl) jenisEl.value = '';
+                
+                const saizEl = document.getElementById('filter-saiz-paip');
+                if(saizEl) saizEl.value = '';
+                
+                document.querySelectorAll('.zon-checkbox, .district-checkbox').forEach(cb => cb.checked = false);
+                applyFilters();
+            });
+
+            ['filter-bulan', 'filter-kategori', 'filter-jenis-paip', 'filter-saiz-paip', 'filter-search'].forEach(id => {
+                safeAddListener(id, 'input', applyFilters);
+                safeAddListener(id, 'change', applyFilters);
+            });
+
+            safeAddListener('mgmt-filter-bulan', 'change', () => updateManagementTable());
+            safeAddListener('mgmt-filter-status', 'change', () => updateManagementTable());
+            safeAddListener('btn-toggle-map', 'click', () => { isHeatmapMode = !isHeatmapMode; updateMapMarkers(); });
+
+            safeAddListener('cro-filter-bulan', 'change', () => { croCurrentPage = 1; updateCroTable(); });
+            safeAddListener('cro-filter-status', 'change', () => { croCurrentPage = 1; updateCroTable(); });
+            safeAddListener('cro-search', 'input', () => { croCurrentPage = 1; updateCroTable(); });
+            safeAddListener('cro-zoom-select', 'change', (e) => {
+                const container = document.getElementById('cro-table-container');
+                if(container) container.style.zoom = e.target.value;
+            });
+            safeAddListener('btn-cro-add', 'click', addCroBlankRow);
+
+            const aiSendBtn = document.getElementById('ai-send-btn');
+            const aiInput = document.getElementById('ai-chat-input');
+            if(aiSendBtn && aiInput) {
+                aiSendBtn.addEventListener('click', sendAiMessage);
+                aiInput.addEventListener('keypress', (e) => { if(e.key === 'Enter') sendAiMessage(); });
             }
-        });
 
-        document.getElementById('btn-copy-kolam').addEventListener('click', () => {
-            const previewBox = document.getElementById('kolam-report-output');
-            if (!previewBox.value) { showToast("Sila jana laporan kolam terlebih dahulu!", "error"); return; }
-            previewBox.select();
-            navigator.clipboard.writeText(previewBox.value).then(() => {
-                showToast("Teks laporan kolam berjaya disalin!", "success");
-            }).catch(() => { showToast("Gagal menyalin teks.", "error"); });
-        });
-
-        document.getElementById('btn-wa-kolam').addEventListener('click', () => {
-            const previewBox = document.getElementById('kolam-report-output');
-            if (!previewBox.value) { showToast("Sila jana laporan kolam terlebih dahulu!", "error"); return; }
-            const encodedText = encodeURIComponent(previewBox.value);
-            window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
-        });
+            safeAddListener('ai-spatial-file', 'change', handleSpatialFileUpload);
+            safeAddListener('ai-flow-file', 'change', handleAiFlowUpload);
+            safeAddListener('btn-save-dma-monitoring', 'click', saveDmaMonitoring);
+        }
     </script>
 </body>
 </html>
