@@ -389,6 +389,18 @@
                             <option value="">Semua</option>
                         </select>
                     </div>
+                    <!-- DROPDOWN ZOOM DITAMBAH DI SINI -->
+                    <div class="flex items-center gap-2">
+                        <label class="text-xs font-bold text-slate-600 dark:text-gray-400 uppercase" for="mgmt-zoom-select">Zoom:</label>
+                        <select id="mgmt-zoom-select" aria-label="Zum paparan pengurusan data" class="filter-select rounded px-3 py-1.5 text-sm">
+                            <option value="0.5">50%</option>
+                            <option value="0.75">75%</option>
+                            <option value="1" selected>100%</option>
+                            <option value="1.25">125%</option>
+                            <option value="1.5">150%</option>
+                            <option value="1.75">175%</option>
+                        </select>
+                    </div>
                     <button id="btn-mgmt-refresh" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-bold flex items-center gap-2 shadow-sm transition">
                         <i class="fa-solid fa-rotate"></i> Muat Semula
                     </button>
@@ -403,7 +415,8 @@
                 </div>
             </header>
 
-            <section class="dashboard-card p-4 overflow-x-auto">
+            <!-- ID mgmt-table-container DITAMBAH DI SINI -->
+            <section id="mgmt-table-container" class="dashboard-card p-4 overflow-x-auto">
                 <table id="managementTable" class="display w-full text-xs text-left text-slate-700 dark:text-gray-300">
                     <thead class="bg-slate-100 dark:bg-gray-800 text-slate-700 dark:text-gray-300">
                         <tr>
@@ -915,6 +928,10 @@
         let pendingMutationData = null;
         let modalZoomTimer;
         const MODAL_ZOOM_LIMIT = 4 * 60 * 60 * 1000;
+        
+        // --- VARIABEL ZOOM PENGURUSAN DATA ---
+        let mgmtZoomTimer;
+        const MGMT_ZOOM_LIMIT = 8 * 60 * 60 * 1000;
 
         function loadSavedFilesFromSession() {
             const countLabel = document.getElementById('file-count-label');
@@ -1041,6 +1058,45 @@
             }
             if (sel) {
                 sel.addEventListener('change', (e) => applyModalZoom(e.target.value));
+            }
+        }
+
+        // --- FUNGSI ZOOM PENGURUSAN DATA (8 JAM) ---
+        function applyMgmtZoom(level) {
+            const tableContainer = document.getElementById('mgmt-table-container');
+            if (tableContainer) tableContainer.style.zoom = level;
+            localStorage.setItem('sainsMgmtZoom', level);
+            localStorage.setItem('sainsMgmtZoomTime', Date.now());
+            clearTimeout(mgmtZoomTimer);
+            mgmtZoomTimer = setTimeout(() => { resetMgmtZoom(); }, MGMT_ZOOM_LIMIT);
+        }
+
+        function resetMgmtZoom() {
+            const tableContainer = document.getElementById('mgmt-table-container');
+            const sel = document.getElementById('mgmt-zoom-select');
+            if (tableContainer) tableContainer.style.zoom = "1";
+            if (sel) sel.value = "1";
+            localStorage.removeItem('sainsMgmtZoom');
+            localStorage.removeItem('sainsMgmtZoomTime');
+        }
+
+        function initMgmtZoom() {
+            const savedZoom = localStorage.getItem('sainsMgmtZoom');
+            const savedTime = localStorage.getItem('sainsMgmtZoomTime');
+            const sel = document.getElementById('mgmt-zoom-select');
+            const tableContainer = document.getElementById('mgmt-table-container');
+
+            if (savedZoom && savedTime) {
+                if (Date.now() - parseInt(savedTime) < MGMT_ZOOM_LIMIT) {
+                    if (sel) sel.value = savedZoom;
+                    if (tableContainer) tableContainer.style.zoom = savedZoom;
+                    
+                    const remainingTime = MGMT_ZOOM_LIMIT - (Date.now() - parseInt(savedTime));
+                    clearTimeout(mgmtZoomTimer);
+                    mgmtZoomTimer = setTimeout(() => { resetMgmtZoom(); }, remainingTime);
+                } else {
+                    resetMgmtZoom();
+                }
             }
         }
 
@@ -1273,6 +1329,7 @@
             if(localStorage.getItem('sainsLoggedIn') !== 'true') { window.location.replace('index.html'); return; }
             initSessionTimeouts();
             initModalZoom(); 
+            initMgmtZoom();
 
             if(localStorage.getItem('sainsTheme') === 'dark') {
                 document.documentElement.classList.add('dark');
@@ -2404,6 +2461,13 @@
             document.getElementById('cro-zoom-select').addEventListener('change', (e) => {
                 document.getElementById('cro-table-container').style.zoom = e.target.value;
             });
+
+            // --- EVENT LISTENER ZOOM PENGURUSAN DATA ---
+            const mgmtZoomSelect = document.getElementById('mgmt-zoom-select');
+            if (mgmtZoomSelect) {
+                mgmtZoomSelect.addEventListener('change', (e) => applyMgmtZoom(e.target.value));
+            }
+
             document.getElementById('btn-cro-add').addEventListener('click', addCroBlankRow);
 
             const aiSendBtn = document.getElementById('ai-send-btn');
