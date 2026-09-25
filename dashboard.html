@@ -1344,6 +1344,7 @@
                         feature.properties._fileName = cleanFileName;
                         feature.properties._mainArea = mainArea;
                         window.koleksiPoligonDMZ.push(feature);
+                        if (aiAgentMap) addAiDmaPolygonFeature(feature);
                     };
 
                     if (data.type === 'FeatureCollection' && Array.isArray(data.features)) {
@@ -2618,6 +2619,8 @@
             if (flowFileInput) flowFileInput.addEventListener('change', handleAiFlowUpload);
             const saveMonitoringBtn = document.getElementById('btn-save-dma-monitoring');
             if (saveMonitoringBtn) saveMonitoringBtn.addEventListener('click', saveDmaMonitoring);
+            const aiDistrictSelect = document.getElementById('ai-filter-district');
+            if (aiDistrictSelect) aiDistrictSelect.addEventListener('change', () => focusAiDmaPolygon(aiDistrictSelect.value));
         }
 
         async function handleAiFlowUpload(event) {
@@ -2804,19 +2807,34 @@
             window.aiDmaPolygonFeatures = [];
 
             if (window.koleksiPoligonDMZ && window.koleksiPoligonDMZ.length > 0) {
-                window.koleksiPoligonDMZ.forEach(feature => {
-                    const polygonLayer = L.geoJSON(feature, {
-                        style: { color: '#10b981', weight: 2, dashArray: '4,4', fillOpacity: 0.15 },
-                        onEachFeature: (f, layer) => {
-                            let nama = f.properties._fileName || 'Kawasan DMZ';
-                            let mainArea = f.properties._mainArea || '';
-                            layer.bindPopup(`<b>District Metered Area (${mainArea}):</b> ${escapeHTML(nama)}`);
-                        }
-                    }).addTo(aiAgentMap);
-                    const props = feature.properties || {};
-                    window.aiDmaPolygonFeatures.push({ feature, name: props._fileName || props.name || props.Name || '', layer: polygonLayer });
-                });
+                window.koleksiPoligonDMZ.forEach(addAiDmaPolygonFeature);
             }
+        }
+
+        function addAiDmaPolygonFeature(feature) {
+            if (!aiAgentMap) return;
+            const props = feature.properties || {};
+            const name = props._fileName || props.name || props.Name || '';
+            const polygonLayer = L.geoJSON(feature, {
+                style: { color: '#10b981', weight: 2, dashArray: '4,4', fillOpacity: 0.15 },
+                onEachFeature: (f, layer) => {
+                    const area = f.properties?._mainArea || '';
+                    layer.bindPopup(`<b>District Metered Area (${escapeHTML(area)}):</b> ${escapeHTML(name)}`);
+                }
+            }).addTo(aiAgentMap);
+            window.aiDmaPolygonFeatures.push({ feature, name, layer: polygonLayer });
+            const selected = document.getElementById('ai-filter-district')?.value;
+            if (selected && normaliseMapDma(name) === normaliseMapDma(selected)) focusAiDmaPolygon(selected);
+        }
+
+        function focusAiDmaPolygon(dma) {
+            if (!aiAgentMap || !dma) return;
+            const matching = (window.aiDmaPolygonFeatures || []).filter(item => normaliseMapDma(item.name) === normaliseMapDma(dma));
+            if (!matching.length) return;
+            const bounds = L.latLngBounds([]);
+            matching.forEach(item => bounds.extend(item.layer.getBounds()));
+            if (bounds.isValid()) aiAgentMap.fitBounds(bounds, { padding: [40, 40], maxZoom: 14 });
+            matching[0].layer.eachLayer(layer => layer.openPopup?.());
         }
 
         function normaliseMapDma(value) {
@@ -2829,7 +2847,7 @@
             if (!polygon || !selected) return false;
             if (polygon.includes(selected) || selected.includes(polygon)) return true;
             const tokens = selected.split(' ').filter(token => token.length >= 4 && !/^\d+MM$/.test(token));
-            return tokens.length > 0 && tokens.filter(token => polygon.includes(token)).length >= Math.min(2, tokens.length);
+            return tokens.length > 0 && tokens.every(token => polygon.split(' ').includes(token));
         }
 
         function renderAiRiskZones(riskZones) {
