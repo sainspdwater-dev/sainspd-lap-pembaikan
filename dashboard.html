@@ -590,7 +590,7 @@
             <header class="mb-2 flex justify-between items-center shrink-0">
                 <div>
                     <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><i class="fa-solid fa-user-tie text-purple-500"></i> AI Agent (Engineer & Planner)</h2>
-                    <p class="text-slate-500 dark:text-gray-400 text-xs">Pembantu analitikal operasi NRW. Jana rumusan, pemetaan automatik, dan cadangan aset berdasarkan D1 master & fail spatial KML/KMZ.</p>
+                    <p class="text-slate-500 dark:text-gray-400 text-xs">Pembantu analitikal operasi NRW berasaskan data dan peraturan. Jana rumusan, pemetaan, dan cadangan aset berdasarkan D1 master serta fail spatial KML/KMZ/GeoJSON.</p>
                 </div>
             </header>
             <div class="dashboard-card flex flex-col lg:flex-row overflow-visible p-0 min-h-[1000px]">
@@ -690,7 +690,7 @@
                     <div class="p-2 bg-slate-100 dark:bg-gray-800 text-xs font-semibold text-slate-700 dark:text-gray-300 border-b border-slate-200 dark:border-gray-700 flex justify-between items-center gap-2">
                         <span><i class="fa-solid fa-map-location-dot text-blue-500 mr-1"></i> Peta Analisis Visual AI (D1 / KML Hybrid)</span>
                         <div class="flex items-center gap-1">
-                            <button type="button" onclick="ujiPaipTurfJS()" class="px-2 py-0.5 bg-amber-500 hover:bg-amber-400 text-white rounded text-[11px] font-bold transition shadow whitespace-nowrap" title="Papar Jajaran Paip Sirusa 3D"><i class="fa-solid fa-route"></i> Uji Paip 3D</button>
+                            <button type="button" onclick="ujiPaipTurfJS()" class="px-2 py-0.5 bg-amber-500 hover:bg-amber-400 text-white rounded text-[11px] font-bold transition shadow whitespace-nowrap" title="Semak geometri, julat koordinat dan ukuran fail spatial"><i class="fa-solid fa-route"></i> Semak Spatial</button>
                             <input type="text" id="map-search-latlng" placeholder="Cari Lat, Lng..." class="form-input py-0.5 px-2 text-[11px] w-44 bg-white dark:bg-gray-900" autocomplete="off">
                             <button type="button" onclick="searchLatLngOnMap()" class="px-2 py-0.5 bg-blue-600 hover:bg-blue-50 text-white rounded text-[11px] font-bold transition"><i class="fa-solid fa-magnifying-glass"></i></button>
                         </div>
@@ -940,6 +940,7 @@
         let rawData = [], filteredData = [], dropdownOptions = {}, charts = {};
         let map, aiAgentMap, aiAgentClusterGroup = null, aiHeatLayer = null, aiRiskLayerGroup = null, markerClusterGroup, heatLayer = null, isHeatmapMode = false, dataTable, managementTable, currentMode = 'add';
         let aiTelemetryRows = [];
+        let aiSpatialSummary = null;
         let croCurrentPage = 1;
         const croRowsPerPage = 50;
 
@@ -2640,8 +2641,10 @@
         }
 
         function parseMonitoringCoordinate(value) {
-            const pair = String(value || '').split(',').map(item => Number(item.trim()));
-            return pair.length === 2 && Number.isFinite(pair[0]) && Number.isFinite(pair[1]) && Math.abs(pair[0]) <= 90 && Math.abs(pair[1]) <= 180 ? pair : null;
+            const parts = String(value || '').split(',').map(item => item.trim());
+            if (parts.length !== 2 || parts.some(item => item === '')) return null;
+            const pair = parts.map(Number);
+            return Number.isFinite(pair[0]) && Number.isFinite(pair[1]) && Math.abs(pair[0]) <= 90 && Math.abs(pair[1]) <= 180 ? pair : null;
         }
 
         async function saveDmaMonitoring() {
@@ -2649,8 +2652,10 @@
             if (!dma) { showToast('Pilih District Metered Area sebelum menyimpan pemantauan.', 'error'); return; }
             const timestamp = document.getElementById('ai-monitoring-time').value || new Date().toISOString().slice(0, 16);
             const asNumber = id => {
-                const value = document.getElementById(id).value;
-                return value === '' ? null : Number(value);
+                const value = document.getElementById(id).value.trim();
+                if (value === '') return null;
+                const parsed = Number(value);
+                return Number.isFinite(parsed) ? parsed : null;
             };
             const sensors = [
                 ['FLOW_METER', 'Flow Meter', 'ai-flow-meter-coord'],
@@ -2762,10 +2767,17 @@
             document.getElementById('ai-ald-location').value = '';
             document.getElementById('ai-ald-leak-rate').value = '';
             aiTelemetryRows = [];
+            aiSpatialSummary = null;
             if (document.getElementById('ai-hazen-c')) document.getElementById('ai-hazen-c').value = '120';
             document.getElementById('ai-flow-file').value = '';
             document.getElementById('ai-spatial-file').value = '';
             document.getElementById('ai-chat-input').value = '';
+
+            if (window.customSpatialLayer && aiAgentMap) {
+                aiAgentMap.removeLayer(window.customSpatialLayer);
+                window.customSpatialLayer = null;
+                window.customSpatialGeoJSON = null;
+            }
 
             const chips = document.querySelectorAll('.ai-chip');
             chips.forEach(c => {
@@ -2850,71 +2862,127 @@
         }
 
         async function handleSpatialFileUpload(e) {
-            const file = e.target.files[0];
+            const file = e.target.files?.[0];
             if (!file) return;
             const fileName = file.name.toLowerCase();
-            
-            showLoading(true, 50, "Memproses fail KML/KMZ spatial...");
+
+            showLoading(true, 50, "Memproses fail KML/KMZ/GeoJSON spatial...");
 
             try {
                 if (fileName.endsWith('.kmz')) {
-                    const zip = new JSZip();
-                    const zipContent = await zip.loadAsync(file);
-                    let kmlText = "";
-                    for (let filename in zipContent.files) {
-                        if (filename.endsWith('.kml')) {
-                            kmlText = await zipContent.files[filename].async("text");
-                            break;
-                        }
-                    }
-                    if (kmlText) {
-                        parseKmlTextToMap(kmlText, file.name);
-                    } else {
-                        throw new Error("Tiada fail .kml dijumpai di dalam arkib .kmz.");
-                    }
-                } else if (fileName.endsWith('.kml') || fileName.endsWith('.geojson')) {
-                    const reader = new FileReader();
-                    reader.onload = function(evt) {
-                        parseKmlTextToMap(evt.target.result, file.name);
-                    };
-                    reader.readAsText(file);
+                    const zipContent = await new JSZip().loadAsync(file);
+                    const kmlEntry = Object.values(zipContent.files).find(entry => !entry.dir && entry.name.toLowerCase().endsWith('.kml'));
+                    if (!kmlEntry) throw new Error("Tiada fail .kml dijumpai di dalam arkib .kmz.");
+                    parseKmlTextToMap(await kmlEntry.async('text'), file.name);
+                } else if (fileName.endsWith('.kml')) {
+                    parseKmlTextToMap(await file.text(), file.name);
+                } else if (fileName.endsWith('.geojson')) {
+                    parseGeoJsonTextToMap(await file.text(), file.name);
                 } else {
                     throw new Error("Format fail tidak disokong. Sila guna KML, KMZ atau GeoJSON.");
                 }
-                showLoading(false);
-                showToast("Fail spatial berjaya dimuat naik & dipetakan!", "success");
+                showToast(`Fail spatial berjaya dipetakan: ${aiSpatialSummary?.featureCount || 0} fitur.`, "success");
             } catch(err) {
-                showLoading(false);
+                aiSpatialSummary = null;
                 showToast("Ralat memproses fail spatial: " + err.message, "error");
+            } finally {
+                showLoading(false);
             }
+        }
+
+        function buildSpatialSummary(geoJson, sourceName) {
+            const features = geoJson?.type === 'FeatureCollection' ? geoJson.features : (geoJson?.type === 'Feature' ? [geoJson] : []);
+            if (!features.length) throw new Error('Fail spatial tidak mengandungi fitur GeoJSON yang sah.');
+
+            let points = 0, lines = 0, polygons = 0, lengthKm = 0, areaSqKm = 0;
+            features.forEach(feature => {
+                const type = feature?.geometry?.type || '';
+                if (/Point$/i.test(type)) points++;
+                if (/LineString$/i.test(type)) {
+                    lines++;
+                    lengthKm += turf.length(feature, { units: 'kilometers' });
+                }
+                if (/Polygon$/i.test(type)) {
+                    polygons++;
+                    areaSqKm += turf.area(feature) / 1_000_000;
+                }
+            });
+
+            const bbox = turf.bbox({ type: 'FeatureCollection', features });
+            const isWgs84 = bbox.every(Number.isFinite) && bbox[0] >= -180 && bbox[2] <= 180 && bbox[1] >= -90 && bbox[3] <= 90;
+            return {
+                sourceName,
+                featureCount: features.length,
+                points,
+                lines,
+                polygons,
+                lengthKm: Number(lengthKm.toFixed(3)),
+                areaSqKm: Number(areaSqKm.toFixed(3)),
+                bbox: bbox.map(value => Number(value.toFixed(6))),
+                coordinateSystem: isWgs84 ? 'WGS84' : 'UNKNOWN_PROJECTED'
+            };
+        }
+
+        function mountCustomSpatialLayer(layer, geoJson, sourceName) {
+            if (!aiAgentMap) initAiAgentMap();
+            const summary = buildSpatialSummary(geoJson, sourceName);
+            if (summary.coordinateSystem !== 'WGS84') {
+                throw new Error('Koordinat di luar julat WGS84. Sila tukar CRS kepada EPSG:4326 sebelum pemetaan.');
+            }
+            if (window.customSpatialLayer) aiAgentMap.removeLayer(window.customSpatialLayer);
+
+            layer.setStyle?.({ color: '#3b82f6', weight: 3, fillOpacity: 0.2 });
+            layer.eachLayer?.(featureLayer => {
+                const props = featureLayer.feature?.properties || {};
+                const name = props.name || props.title || sourceName;
+                featureLayer.bindPopup?.(`<b>Spatial (${escapeHTML(sourceName)}):</b><br>${escapeHTML(name)}`);
+            });
+            layer.addTo(aiAgentMap);
+
+            const bounds = layer.getBounds?.();
+            if (bounds?.isValid?.()) aiAgentMap.fitBounds(bounds, { padding: [50, 50] });
+
+            window.customSpatialLayer = layer;
+            window.customSpatialGeoJSON = geoJson;
+            aiSpatialSummary = summary;
+        }
+
+        function parseGeoJsonTextToMap(geoJsonString, sourceName) {
+            let geoJson;
+            try {
+                geoJson = JSON.parse(geoJsonString);
+            } catch (error) {
+                throw new Error('JSON tidak sah.');
+            }
+            const layer = L.geoJSON(geoJson);
+            mountCustomSpatialLayer(layer, geoJson, sourceName);
         }
 
         function parseKmlTextToMap(kmlString, sourceName) {
-            if (!aiAgentMap) initAiAgentMap();
-            
-            if (window.customSpatialLayer) {
-                aiAgentMap.removeLayer(window.customSpatialLayer);
-            }
+            const kmlDoc = new DOMParser().parseFromString(kmlString, 'text/xml');
+            if (kmlDoc.querySelector('parsererror')) throw new Error('Struktur KML tidak sah.');
 
-            const domParser = new DOMParser();
-            const kmlDoc = domParser.parseFromString(kmlString, 'text/xml');
-            
-            try {
-                window.customSpatialLayer = omnivore.kml.parse(kmlString);
-                window.customSpatialLayer.setStyle({ color: '#3b82f6', weight: 3, fillOpacity: 0.2 });
-                window.customSpatialLayer.eachLayer(layer => {
-                    if (layer.feature && layer.feature.properties) {
-                        let props = layer.feature.properties;
-                        let name = props.name || props.title || sourceName;
-                        layer.bindPopup(`<b>Sempadan Spatial (${escapeHTML(sourceName)}):</b><br>${escapeHTML(name)}`);
-                    }
-                });
-                window.customSpatialLayer.addTo(aiAgentMap);
-                aiAgentMap.fitBounds(window.customSpatialLayer.getBounds(), { padding: [50, 50] });
-            } catch(err) {
-                showToast("Amaran pemaparan KML: Menggunakan D1 Master Fallback.", "error");
-            }
+            const layer = omnivore.kml.parse(kmlString);
+            const features = [];
+            layer.eachLayer(featureLayer => {
+                if (featureLayer.feature) features.push(featureLayer.feature);
+            });
+            mountCustomSpatialLayer(layer, { type: 'FeatureCollection', features }, sourceName);
         }
+
+        window.ujiPaipTurfJS = function() {
+            if (!aiSpatialSummary) {
+                showToast('Muat naik fail KML, KMZ atau GeoJSON dahulu untuk semakan spatial.', 'error');
+                return;
+            }
+            const summary = aiSpatialSummary;
+            const measures = [
+                summary.lines ? `Panjang: ${summary.lengthKm} km` : '',
+                summary.polygons ? `Luas: ${summary.areaSqKm} km²` : ''
+            ].filter(Boolean).join(' • ');
+            const message = `${summary.featureCount} fitur (${summary.points} titik, ${summary.lines} garisan, ${summary.polygons} poligon) • CRS: ${summary.coordinateSystem}${measures ? ` • ${measures}` : ''}`;
+            showToast(message, summary.coordinateSystem === 'WGS84' ? 'success' : 'error');
+        };
 
         window.searchLatLngOnMap = function() {
             const inputVal = document.getElementById('map-search-latlng').value.trim();
@@ -2989,7 +3057,8 @@
                 pressureCpCoordinate: document.getElementById('ai-cp-coord').value.trim(),
                 prvCoordinate: document.getElementById('ai-prv-coord').value.trim(),
                 aldResult: document.getElementById('ai-ald-result').value,
-                pekaliHazen: document.getElementById('ai-hazen-c')?.value || 120
+                pekaliHazen: document.getElementById('ai-hazen-c')?.value || 120,
+                spatialSummary: aiSpatialSummary
             };
 
             try {
