@@ -1,0 +1,6 @@
+.wrangler/
+node_modules/
+.phase2b-venv/
+hydraulic_service/__pycache__/
+# Private engineering audit counts; review before sharing outside SAINS.
+PHASE2B_COMPLETION_REPORT.md

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hydraulic TEST MODEL staging login</title>
+<main style="font:16px system-ui;max-width:36rem;margin:5rem auto;padding:1rem;border:2px solid #d97706;border-radius:1rem">
+  <h1>Hydraulic staging · TEST MODEL only</h1>
+  <p>This isolated staging login does not access SAINS production records. Production simulation remains disabled.</p>
+  <form id="test-login"><label>Temporary staging code <input id="test-code" type="password" required minlength="32" autocomplete="off" style="width:100%"></label>
+    <button type="submit" style="margin-top:1rem">Open test dashboard</button></form>
+  <p id="login-status" role="status"></p>
+</main>
+<script>
+const hosted=location.hostname==='sains-hydraulic-gateway-staging.sainspdwater.workers.dev';
+if(!hosted&&location.hostname!=='localhost'&&location.hostname!=='127.0.0.1'){
+  document.querySelector('main').replaceChildren('This page is staging-only.');
+}else document.getElementById('test-login').addEventListener('submit',async event=>{
+  event.preventDefault();const status=document.getElementById('login-status');status.textContent='Checking staging access…';
+  try{
+    const response=await fetch(hosted?`${location.origin}/`:'http://127.0.0.1:8787/',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'hydraulicStagingLogin',code:document.getElementById('test-code').value})});
+    const data=await response.json();
+    if(!response.ok||data.status!=='success')throw new Error(data.message||'Login failed');
+    localStorage.setItem('sainsLoggedIn','true');localStorage.setItem('sainsUserLevel','ADMIN');
+    localStorage.setItem('sainsToken',data.token);
+    location.replace('dashboard.html?hydraulicStaging=1');
+  }catch(error){status.textContent=error.message;}
+});
+</script></html>

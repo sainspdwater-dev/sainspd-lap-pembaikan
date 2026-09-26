@@ -1,0 +1,8 @@
+{
+  "name": "sains-hydraulic-staging-workers",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@cloudflare/containers": "0.3.7"
+  }
+}

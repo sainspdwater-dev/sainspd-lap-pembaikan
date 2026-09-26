@@ -1,0 +1,6 @@
+# Isolated LOCAL rehearsal of the staging Worker. No D1/KV/AI or production binding.
+# Never deploy this config as the production laporanpembaikan Worker.
+name = "laporanpembaikan-hydraulic-staging-local"
+main = "worker.js"
+compatibility_date = "2026-08-12"
+workers_dev = false

@@ -1,0 +1,20 @@
+# Browser-facing copy of the existing Worker, isolated from production bindings.
+name = "sains-hydraulic-gateway-staging"
+main = "worker.js"
+account_id = "077904f9afb5422fccb5221876cf9ae3"
+compatibility_date = "2026-09-25"
+workers_dev = true
+
+[vars]
+GOOGLE_SHEET_ID = "STAGING_TEST_ONLY"
+HYDRAULIC_STAGING_MODE = "TEST_ONLY"
+HYDRAULIC_STAGING_HOST = "sains-hydraulic-gateway-staging.sainspdwater.workers.dev"
+
+[[services]]
+binding = "HYDRAULIC_SIM_SERVICE"
+service = "sains-hydraulic-container-staging"
+
+[assets]
+directory = "../staging-site"
+binding = "ASSETS"
+run_worker_first = ["/api/*"]

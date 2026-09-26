@@ -1,0 +1,20 @@
+# Separate private service. No workers.dev URL, route, D1, KV or production data.
+name = "sains-hydraulic-container-staging"
+main = "hydraulic-container-worker.js"
+account_id = "077904f9afb5422fccb5221876cf9ae3"
+compatibility_date = "2026-09-25"
+workers_dev = false
+
+[[containers]]
+class_name = "HydraulicReferenceContainer"
+image = "../hydraulic_service/Dockerfile"
+max_instances = 1
+instance_type = "basic"
+
+[[durable_objects.bindings]]
+name = "HYDRAULIC_TEST_CONTAINER"
+class_name = "HydraulicReferenceContainer"
+
+[[migrations]]
+tag = "v1-phase2bs-reference"
+new_sqlite_classes = ["HydraulicReferenceContainer"]
