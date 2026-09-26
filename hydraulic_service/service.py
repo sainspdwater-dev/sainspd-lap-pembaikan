@@ -146,6 +146,11 @@ class HydraulicSimulationService:
             # WNTR creates INP/RPT/BIN files; keep sensitive network input out
             # of the public repo and remove all solver intermediates on exit.
             with tempfile.TemporaryDirectory(prefix="sains-epanet-") as scratch:
+                # EPANET's C toolkit otherwise chooses its own scratch .hyd
+                # filename. Point it at this per-run writable directory so a
+                # non-root Container can create and remove it reliably.
+                network.options.hydraulic.hydraulics = "SAVE"
+                network.options.hydraulic.hydraulics_filename = str(Path(scratch)/"simulation.hyd")
                 result = wntr.sim.EpanetSimulator(network).run_sim(
                     file_prefix=str(Path(scratch)/"simulation"),version=2.2,convergence_error=True)
         except Exception as exc:
