@@ -11,6 +11,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -171,8 +172,17 @@ class StagingHandler(BaseHTTPRequestHandler):
                     raise ValueError("Only static reference test is enabled")
                 payload = json.dumps({"testMode": True, "model": model, "scenario": scenario}).encode()
                 started = time.perf_counter()
-                completed = subprocess.run([sys.executable, str(Path(__file__).with_name("job_worker.py"))],
-                                           input=payload, capture_output=True, timeout=30, check=False)
+                # EPANET also creates an internal hydraulics file relative to
+                # its process working directory. /app is read-only to the
+                # unprivileged container user, so isolate every TEST run in a
+                # writable, automatically removed directory.
+                with tempfile.TemporaryDirectory(prefix="sains-epanet-process-") as process_dir:
+                    process_env = {**os.environ, "HOME": process_dir,
+                                   "MPLCONFIGDIR": process_dir, "TMPDIR": process_dir}
+                    completed = subprocess.run(
+                        [sys.executable, str(Path(__file__).resolve().with_name("job_worker.py"))],
+                        input=payload, capture_output=True, timeout=30, check=False,
+                        cwd=process_dir, env=process_env)
                 duration_ms = (time.perf_counter() - started) * 1000
                 if completed.returncode != 0:
                     # TEST-only diagnostics: do not log request data or credentials.
