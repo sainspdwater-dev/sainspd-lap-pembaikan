@@ -71,10 +71,11 @@
       setStatus('ai-test-service','UNAVAILABLE');setStatus('ai-test-result',failure(error.message));
     }
   }
-  async function start(testFault){
+  async function start(testFault,scenario){
     $('ai-test-run').disabled=true;clearTimeout(pollTimer);clearLayer();geojson=null;
     try{
-      const data=await call('startTestHydraulicJob',{modelId:'TEST-REFERENCE-LOOP',...(testFault?{testFault}:{})});
+      const data=await call('startTestHydraulicJob',{modelId:'TEST-REFERENCE-LOOP',
+        ...(testFault?{testFault}:{}),...(scenario?{scenario}:{})});
       localStorage.setItem('sainsStagingHydraulicJob',data.job.jobId);
       setStatus('ai-test-job-status',data.job.status);
       await poll(data.job.jobId);
@@ -94,6 +95,7 @@
     if(localStorage.getItem('sainsUserLevel')!=='ADMIN')return;
     $('ai-hydraulic-staging')?.classList.remove('hidden');
     $('ai-test-run')?.addEventListener('click',()=>start());
+    $('ai-test-head-scenario')?.addEventListener('click',()=>start(null,{type:'SOURCE_HEAD_CHANGE',targetId:'R',headM:113}));
     $('ai-test-timeout')?.addEventListener('click',()=>start('TIMEOUT_TEST_ONLY'));
     $('ai-test-restart-run')?.addEventListener('click',()=>start('RESTART_WAIT_TEST_ONLY'));
     $('ai-test-restart-now')?.addEventListener('click',restartContainer);
