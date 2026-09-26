@@ -1,4 +1,5 @@
 # Separate private service. No workers.dev URL, route, D1, KV or production data.
+# Workers Builds uses the repository root so the Dockerfile remains in build scope.
 name = "sains-hydraulic-container-staging"
 main = "hydraulic-container-worker.js"
 account_id = "077904f9afb5422fccb5221876cf9ae3"
