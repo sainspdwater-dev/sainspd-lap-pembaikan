@@ -175,6 +175,9 @@ class StagingHandler(BaseHTTPRequestHandler):
                                            input=payload, capture_output=True, timeout=30, check=False)
                 duration_ms = (time.perf_counter() - started) * 1000
                 if completed.returncode != 0:
+                    # TEST-only diagnostics: do not log request data or credentials.
+                    print(json.dumps({"event": "reference_solver_failed", "returnCode": completed.returncode,
+                                      "stderr": completed.stderr.decode(errors="replace")[:300]}), flush=True)
                     self._reply(422, {"status": "error", "message": "Reference solver failed",
                                       "errorCode": "SOLVER_FAILED"})
                     return

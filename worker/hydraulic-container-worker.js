@@ -108,7 +108,7 @@ export class HydraulicReferenceContainer extends Container {
       const priorId = await tx.get(HASH_PREFIX + input_hash);
       if (priorId) {
         const prior = await tx.get(JOB_PREFIX + priorId);
-        if (prior) { job = prior; reused = true; return; }
+        if (prior && prior.status !== 'FAILED') { job = prior; reused = true; return; }
       }
       const all = await tx.list({ prefix: JOB_PREFIX });
       if ([...all.values()].filter(row => ['QUEUED', 'RUNNING'].includes(row.status)).length >= 4)
@@ -159,9 +159,10 @@ export class HydraulicReferenceContainer extends Container {
       const raw = await upstream.text();
       if (raw.length > MAX_RESULT) throw new Error('OUTPUT_LIMIT');
       const payload = JSON.parse(raw);
+      if (!upstream.ok) throw new Error(`UPSTREAM_${upstream.status}_${String(payload.errorCode || 'ERROR').slice(0, 32)}`);
       if (!upstream.ok || payload.status !== 'success' || payload.result?.modelId !== MODEL ||
           !Number.isFinite(payload.result?.summary?.minimumPressureM) || !payload.geojson?.features)
-        throw new Error(payload.errorCode || 'SOLVER_FAILED');
+        throw new Error('UPSTREAM_INVALID_RESULT');
       const persistStarted = Date.now();
       job = { ...job, status: 'COMPLETED', completed_at: iso(), result: payload.result,
         summary: payload.result.summary, geojson: payload.geojson, warnings: payload.result.warnings || [],
@@ -173,11 +174,13 @@ export class HydraulicReferenceContainer extends Container {
     } catch (error) {
       const retry = job.attempts < 2;
       job = { ...job, status: retry ? 'QUEUED' : 'FAILED', completed_at: retry ? null : iso(),
-        error_code: error.message === 'TIMEOUT' ? 'TIMEOUT' : 'SOLVER_FAILED',
+        error_code: /^UPSTREAM_[0-9]{3}_[A-Z_]{1,32}$/.test(error.message) ? error.message :
+          error.name === 'TimeoutError' ? 'TIMEOUT' : 'SOLVER_FAILED',
         error_message: retry ? 'Retry scheduled' : 'Reference simulation failed', result: null, summary: null, geojson: null };
       await this.ctx.storage.put(JOB_PREFIX + jobId, job);
       if (retry) await this.schedule(2, 'executeJob', { jobId });
-      console.log(JSON.stringify({ event: 'container_job_error', jobId, type: error.name, retry }));
+      console.log(JSON.stringify({ event: 'container_job_error', jobId, type: error.name,
+        code: job.error_code, retry }));
     }
   }
 
