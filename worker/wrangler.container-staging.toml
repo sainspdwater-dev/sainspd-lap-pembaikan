@@ -6,6 +6,10 @@ account_id = "077904f9afb5422fccb5221876cf9ae3"
 compatibility_date = "2026-09-25"
 workers_dev = false
 
+# TEST-only diagnostics for the private staging container. Never log tokens or model payloads.
+[observability]
+enabled = true
+
 [[containers]]
 class_name = "HydraulicReferenceContainer"
 image = "../hydraulic_service/Dockerfile"
