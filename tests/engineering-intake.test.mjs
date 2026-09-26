@@ -17,6 +17,7 @@ test('missing evidence, inferred length, unallocated demand and invented Pipe ID
   assert.equal(validateEngineeringRow({...pipe,parameter:'length_m',unit:'m',source_ref:'GEOMETRY_DERIVED:kml'},context).valid,false);
   assert.equal(validateEngineeringRow({...pipe,parameter:'pipe_id',unit:'TEXT',value:'P123',source_ref:'nearby pipe'},context).valid,false);
   assert.equal(validateEngineeringRow({...pipe,entity_type:'NODE',parameter:'base_demand_m3s',unit:'m3/s',value:'0.1'},context).valid,false);
+  assert.equal(validateEngineeringRow({...pipe,parameter:'hazen_c',unit:'1',value:'120',classification:'ASSUMED'},context).valid,false);
   assert.equal(validateEngineeringRow(pipe,{...context,modelId:'TEST-REFERENCE-LOOP'}).valid,false);
 });
 test('MISSING is explicit and has no fabricated value',()=>{

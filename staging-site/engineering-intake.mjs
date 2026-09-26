@@ -54,6 +54,9 @@ export function validateEngineeringRow(row, context) {
     errors.push('Pipe ID memerlukan rujukan asset/import/as-built yang boleh diaudit.');
   if (parameter==='length_m' && /GEOMETRY_DERIVED/i.test(sourceRef) && classification==='VERIFIED')
     errors.push('Panjang terbitan geometri tidak boleh dilabel VERIFIED.');
+  if (parameter==='hazen_c' && classification==='ASSUMED' &&
+      (!/material=/i.test(notes) || !/table_version=/i.test(notes)))
+    errors.push('Andaian Hazen-Williams memerlukan material=... dan table_version=... dalam nota.');
   if (parameter==='base_demand_m3s' && classification!=='MISSING' && !/allocation=/i.test(notes))
     errors.push('Permintaan nod memerlukan kaedah agihan dalam nota: allocation=...');
   return {valid:errors.length===0,errors,record:{modelId,version,entityType,entityId,parameter,value,unit,
