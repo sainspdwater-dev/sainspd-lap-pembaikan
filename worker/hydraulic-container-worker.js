@@ -41,6 +41,7 @@ async function hashOf(value) {
 
 export class HydraulicReferenceContainer extends Container {
   defaultPort = 8765;
+  pingEndpoint = 'localhost:8765/ping';
   sleepAfter = '5m';
   enableInternet = false;
 

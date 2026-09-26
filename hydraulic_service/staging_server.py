@@ -110,6 +110,9 @@ class StagingHandler(BaseHTTPRequestHandler):
         return value
 
     def do_GET(self):
+        if urlsplit(self.path).path == "/ping" and os.environ.get("SAINS_CONTAINER_MODE") == "1":
+            self._reply(200, {"status": "ok"})
+            return
         if not self._authenticated():
             return
         path = urlsplit(self.path).path
