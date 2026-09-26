@@ -53,6 +53,8 @@ class HydraulicSimulationService:
         issues = []
         if not isinstance(model, dict) or model.get("validationStatus") not in {"UNCALIBRATED", "CALIBRATED", "VALIDATED", "EXPERIMENTAL"}:
             issues.append("Model version/review status is missing")
+        if not isinstance(model, dict) or not isinstance(model.get("id"), str) or not model["id"].startswith("TEST-"):
+            issues.append("SAINS operational simulation is disabled; only explicit TEST models may run")
         nodes = model.get("nodes", []) if isinstance(model, dict) else []
         pipes = model.get("pipes", []) if isinstance(model, dict) else []
         sources = model.get("sources", []) if isinstance(model, dict) else []
@@ -172,15 +174,24 @@ class HydraulicSimulationService:
             if row["pressureM"] > self.pressure_max_m: warnings.append(f"HIGH_PRESSURE:{name}")
         for name,row in link_rows.items():
             if abs(row["velocityMs"]) > self.velocity_max_ms: warnings.append(f"HIGH_VELOCITY:{name}")
+        low_nodes = [name for name,row in node_rows.items() if row["pressureM"] < self.pressure_min_m]
+        critical_links = [name for name,row in link_rows.items() if abs(row["velocityMs"]) > self.velocity_max_ms]
         return {"engineVersion": ENGINE_VERSION, "wrapperVersion": WRAPPER_VERSION,
                 "modelId": model["id"], "modelVersion": model["version"], "inputSha256": canonical_hash({"model":model,"scenario":scenario}),
                 "validationStatus": model["validationStatus"], "calibrationStatus": model.get("calibrationStatus", "UNCALIBRATED"),
+                "resultLabel": "CALIBRATED RESULT" if model.get("calibrationStatus") in {"CALIBRATED", "VALIDATED"} else "UNCALIBRATED RESULT",
+                "inputLabel": "TEST MODEL" if model["id"].startswith("TEST-") else "REVIEWED MODEL INPUT",
+                "limitations": list(model.get("limitations", [])) + [f"ASSUMED INPUT: {a.get('field')}" for a in model.get("assumptions", [])],
                 "nodes": node_rows, "links": link_rows,
                 "summary": {"minimumPressureM": min(r["pressureM"] for r in node_rows.values()),
                             "maximumPressureM": max(r["pressureM"] for r in node_rows.values()),
                             "averagePressureM": sum(r["pressureM"] for r in node_rows.values())/len(node_rows),
                             "maximumVelocityMs": max(abs(r["velocityMs"]) for r in link_rows.values()),
-                            "nodesBelowThreshold": [name for name,row in node_rows.items() if row["pressureM"] < self.pressure_min_m],
+                            "maximumHeadlossMperM": max(abs(r["headlossMperM"]) for r in link_rows.values()),
+                            "nodesBelowThreshold": low_nodes,
+                            "demandAtLowPressureM3s": sum(node_rows[name]["demandM3s"] for name in low_nodes),
+                            "criticalLinks": critical_links,
+                            "pressureThresholdM": self.pressure_min_m,
                             "solverStatus": "COMPLETED"},
                 "warnings": warnings}
 
@@ -216,13 +227,26 @@ class HydraulicSimulationService:
         return self._run(model, scenario=scenario)
 
     def compareScenarios(self, baseline: dict, *scenarios: dict) -> dict:
+        if not 1 <= len(scenarios) <= 2:
+            raise ValueError("Compare baseline with one or two scenarios")
         if any(s["modelId"] != baseline["modelId"] or s["modelVersion"] != baseline["modelVersion"] for s in scenarios):
             raise ValueError("Cannot compare different model versions")
-        return {"baseline": baseline["summary"], "scenarios": [
-            {"inputSha256": s["inputSha256"], "summary": s["summary"],
-             "deltaMinimumPressureM": s["summary"]["minimumPressureM"]-baseline["summary"]["minimumPressureM"],
-             "nodePressureChangeM": {n:s["nodes"][n]["pressureM"]-base["pressureM"] for n,base in baseline["nodes"].items()},
-             "warnings": s["warnings"]} for s in scenarios]}
+        def comparison(s):
+            node_delta={n:s["nodes"][n]["pressureM"]-base["pressureM"] for n,base in baseline["nodes"].items()}
+            link_delta={name:s["links"][name]["flowM3s"]-base["flowM3s"] for name,base in baseline["links"].items()}
+            return {"inputSha256":s["inputSha256"],"summary":s["summary"],
+                    "deltaMinimumPressureM":s["summary"]["minimumPressureM"]-baseline["summary"]["minimumPressureM"],
+                    "deltaAveragePressureM":s["summary"]["averagePressureM"]-baseline["summary"]["averagePressureM"],
+                    "nodePressureChangeM":node_delta,"linkFlowChangeM3s":link_delta,
+                    "affectedNodes":sorted(name for name,delta in node_delta.items() if abs(delta)>1e-6),
+                    "affectedDemandM3s":s["summary"]["demandAtLowPressureM3s"],
+                    "lowPressureNodes":s["summary"]["nodesBelowThreshold"],
+                    "maximumVelocityMs":s["summary"]["maximumVelocityMs"],
+                    "maximumHeadlossMperM":s["summary"]["maximumHeadlossMperM"],
+                    "criticalLinks":s["summary"]["criticalLinks"],"warnings":s["warnings"],
+                    "resultLabel":s["resultLabel"],"limitations":s["limitations"]}
+        return {"baseline":baseline["summary"],"modelId":baseline["modelId"],
+                "modelVersion":baseline["modelVersion"],"scenarios":[comparison(s) for s in scenarios]}
 
     def getNodeResults(self, result: dict, node_id: str) -> dict:
         return result["nodes"][node_id]

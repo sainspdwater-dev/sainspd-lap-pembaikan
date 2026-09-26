@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 from service import HydraulicSimulationService, ModelNotReady
 from jobs import LocalTestJobRunner
-from calibration import compare_observations
+from calibration import compare_observations, normalize_phase2a_observation, build_simulated_observations, assess_calibration
 from durable_jobs import DurableTestJobStore
 from staging_server import StagingHTTPServer
 
@@ -100,6 +100,11 @@ class ServiceTests(unittest.TestCase):
         self.assertGreater(leak["nodes"]["J2"]["demandM3s"],base["nodes"]["J2"]["demandM3s"])
         comparison=self.service.compareScenarios(base,closed,higher)
         self.assertEqual(len(comparison["scenarios"]),2)
+        self.assertIn("J2",comparison["scenarios"][0]["affectedNodes"])
+        self.assertIn("P3",comparison["scenarios"][0]["linkFlowChangeM3s"])
+        self.assertEqual(comparison["scenarios"][0]["resultLabel"],"UNCALIBRATED RESULT")
+        self.assertEqual(closed["summary"]["pressureThresholdM"],0.0)
+        self.assertIn("maximumHeadlossMperM",closed["summary"])
         self.assertEqual(model["pipes"][2].get("status"),None)
 
     def test_missing_parameter_or_source_blocks_solver(self):
@@ -108,6 +113,9 @@ class ServiceTests(unittest.TestCase):
         with self.assertRaises(ModelNotReady): self.service.runBaseline(model)
         model=test_model()
         model["sources"]=[]
+        with self.assertRaises(ModelNotReady): self.service.runBaseline(model)
+        model=test_model()
+        model["id"]="SAINS-OPERATIONS"
         with self.assertRaises(ModelNotReady): self.service.runBaseline(model)
 
     def test_disconnected_demand_blocks_solver(self):
@@ -135,14 +143,58 @@ class ServiceTests(unittest.TestCase):
             runner.close()
 
     def test_calibration_excludes_test_data_and_requires_time_match(self):
-        simulated=[{"dma":"DMA-A","sensorId":"CP-1","parameter":"PRESSURE","timestamp":"2026-01-01T00:00:00Z","value":30.0,"unit":"m","modelId":"M","modelVersion":1}]
-        observations=[{"dma":"DMA-A","sensorId":"CP-1","parameter":"PRESSURE","timestamp":"2026-01-01T00:01:00Z","value":32.0,"unit":"m","qualityStatus":"MEASURED","isTestData":False},
-                      {"dma":"PHASE2A_RELEASE_TEST","sensorId":"CP-1","parameter":"PRESSURE","timestamp":"2026-01-01T00:00:00Z","value":50.0,"unit":"m","qualityStatus":"MEASURED","isTestData":True},
-                      {"dma":"DMA-A","sensorId":"CP-1","parameter":"PRESSURE","timestamp":"2026-01-01T02:00:00Z","value":20.0,"unit":"m","qualityStatus":"MEASURED","isTestData":False}]
+        simulated=[{"dma":"DMA-A","sensorId":"CP-1","parameter":"CP_PRESSURE","timestamp":"2026-01-01T00:00:00Z","value":30.0,"unit":"bar","modelId":"M","modelVersion":1}]
+        base={"district_metered_area":"DMA-A","sensor_id":"CP-1","parameter":"CP_PRESSURE","unit":"bar",
+              "quality_status":"VALID","timestamp_provenance":"MEASURED","source":"SCADA_CSV"}
+        observations=[{**base,"recorded_at":"2026-01-01T00:01:00Z","value":32.0},
+                      {**base,"district_metered_area":"PHASE2A_RELEASE_TEST","recorded_at":"2026-01-01T00:00:00Z","value":50.0,"remark":"TEST DATA"},
+                      {**base,"recorded_at":"2026-01-01T02:00:00Z","value":20.0}]
         comparison=compare_observations(observations,simulated)
         self.assertEqual(len(comparison["matched"]),1)
         self.assertEqual(comparison["matched"][0]["residual"],2.0)
         self.assertEqual(comparison["metrics"][0]["rmse"],2.0)
+
+    def test_calibration_requires_phase2a_source_unit_and_engineering_review(self):
+        base={"district_metered_area":"DMA-A","sensor_id":"CP-1","parameter":"CP_PRESSURE","unit":"bar",
+              "quality_status":"VALID","timestamp_provenance":"MEASURED","source":"MANUAL",
+              "recorded_at":"2026-01-01T00:00:00Z","value":2.0}
+        self.assertIsNone(normalize_phase2a_observation({**base,"source":"LEGACY"}))
+        self.assertIsNone(normalize_phase2a_observation({**base,"unit":"m"}))
+        self.assertIsNone(normalize_phase2a_observation({**base,"import_batch_id":"PHASE2A_RELEASE_TEST"}))
+        simulated=[{"dma":"DMA-A","sensorId":"CP-1","parameter":"CP_PRESSURE","timestamp":"2026-01-01T00:00:00Z",
+                    "value":1.8,"unit":"bar","modelId":"M","modelVersion":1}]
+        comparison=compare_observations([base,base],simulated)
+        self.assertEqual(len(comparison["matched"]),1)  # no reuse of one simulated timestamp
+        self.assertEqual(assess_calibration(comparison)["status"],"CALIBRATION IN PROGRESS")
+        criteria={"CP_PRESSURE":{"unit":"bar","minCount":2,"minCoverageSeconds":3600,"mae":1,"rmse":1,"bias":1}}
+        self.assertEqual(assess_calibration(comparison,criteria=criteria,reviewed_by="Engineer")["status"],
+                         "CALIBRATION DATA INSUFFICIENT")
+        criteria["CP_PRESSURE"].update(minCount=1,minCoverageSeconds=0)
+        self.assertEqual(assess_calibration(comparison,criteria=criteria,reviewed_by="Engineer")["status"],
+                         "CALIBRATION DATA INSUFFICIENT")  # flow missing
+        flow={**base,"sensor_id":"FM-1","parameter":"FLOW","unit":"m3/h","value":36.0}
+        flow_sim={**simulated[0],"sensorId":"FM-1","parameter":"FLOW","unit":"m3/h","value":35.0}
+        comparison=compare_observations([base,flow],[*simulated,flow_sim])
+        criteria["FLOW"]={"unit":"m3/h","minCount":1,"minCoverageSeconds":0,"mae":2,"rmse":2,"bias":2}
+        self.assertEqual(assess_calibration(comparison,criteria=criteria)["status"],"CALIBRATION IN PROGRESS")
+        self.assertEqual(assess_calibration(comparison,criteria=criteria,reviewed_by="Engineer")["status"],"CALIBRATED")
+
+    def test_simulated_sensor_mapping_requires_approved_conversion_and_time(self):
+        result={"modelId":"TEST-ONLY","modelVersion":1,"nodes":{"J1":{"pressureM":20}},
+                "links":{"P1":{"flowM3s":0.01}}}
+        pressure={"dma":"DMA-A","sensorId":"CP-1","parameter":"CP_PRESSURE","entityType":"NODE",
+                  "entityId":"J1","conversionBasis":"HEAD_M_TO_BAR_RHO1000_G9.80665",
+                  "reviewStatus":"APPROVED","reviewedBy":"Engineer","sourceRef":"mapping-test"}
+        flow={"dma":"DMA-A","sensorId":"FM-1","parameter":"FLOW","entityType":"LINK","entityId":"P1",
+              "conversionBasis":"M3S_TO_M3H","flowDirection":1,"reviewStatus":"APPROVED",
+              "reviewedBy":"Engineer","sourceRef":"mapping-test"}
+        at="2026-01-01T00:00:00Z"
+        channels=build_simulated_observations(result,[pressure,flow],model_timestamp=at)
+        self.assertAlmostEqual(channels[0]["value"],1.96133,delta=.0001)
+        self.assertAlmostEqual(channels[1]["value"],36.0)
+        with self.assertRaises(ValueError):build_simulated_observations(result,[{**pressure,"reviewStatus":"DRAFT"}],model_timestamp=at)
+        with self.assertRaises(ValueError):build_simulated_observations(result,[{**flow,"flowDirection":None}],model_timestamp=at)
+        with self.assertRaises(ValueError):build_simulated_observations(result,[pressure],model_timestamp="2026-01-01")
 
     def test_durable_job_survives_restart_and_deduplicates(self):
         with tempfile.TemporaryDirectory() as directory:
