@@ -201,9 +201,10 @@ export class HydraulicReferenceContainer extends Container {
       const current = await this.ctx.storage.get(JOB_PREFIX + jobId);
       if (current?.status !== 'RUNNING' || current.attempts !== job.attempts) return;
       const persistStarted = Date.now();
-      job = { ...job, status: 'COMPLETED', completed_at: iso(), result: payload.result,
+      job = { ...current, status: 'COMPLETED', completed_at: iso(), result: payload.result,
         summary: payload.result.summary, geojson: payload.geojson, warnings: payload.result.warnings || [],
-        solver_duration_ms: payload.solverDurationMs, persistence_duration_ms: null };
+        solver_duration_ms: payload.solverDurationMs, persistence_duration_ms: null,
+        error_code: null, error_message: null };
       await this.ctx.storage.put(JOB_PREFIX + jobId, job);
       job.persistence_duration_ms = Date.now() - persistStarted;
       await this.ctx.storage.put(JOB_PREFIX + jobId, job);
@@ -212,7 +213,7 @@ export class HydraulicReferenceContainer extends Container {
       const current = await this.ctx.storage.get(JOB_PREFIX + jobId);
       if (current?.status !== 'RUNNING' || current.attempts !== job.attempts) return;
       const retry = job.attempts < 2;
-      job = { ...job, status: retry ? 'QUEUED' : 'FAILED', completed_at: retry ? null : iso(),
+      job = { ...current, status: retry ? 'QUEUED' : 'FAILED', completed_at: retry ? null : iso(),
         error_code: error.message === 'UPSTREAM_504_TIMEOUT' ? 'TIMEOUT' :
           /^UPSTREAM_[0-9]{3}_[A-Z_]{1,32}$/.test(error.message) ? error.message :
           error.name === 'TimeoutError' ? 'TIMEOUT' : 'SOLVER_FAILED',
