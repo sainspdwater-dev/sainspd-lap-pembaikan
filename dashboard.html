@@ -593,7 +593,7 @@
             <header class="mb-2 flex justify-between items-center shrink-0">
                 <div>
                     <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"><i class="fa-solid fa-user-tie text-purple-500"></i> AI Agent (Engineer & Planner)</h2>
-                    <p class="text-slate-500 dark:text-gray-400 text-xs">Pembantu analitikal operasi NRW berasaskan data dan peraturan. Jana rumusan, pemetaan, dan cadangan aset berdasarkan D1 master serta fail spatial KML/KMZ/GeoJSON.</p>
+                    <p class="text-slate-500 dark:text-gray-400 text-xs">Pembantu analitikal operasi NRW berasaskan data dan peraturan; skor risiko ialah triage, bukan pengesahan bocor atau simulasi hidraulik. Jana rumusan, pemetaan, dan cadangan aset berdasarkan D1 master serta fail spatial KML/KMZ/GeoJSON.</p>
                 </div>
             </header>
             <div class="dashboard-card flex flex-col lg:flex-row overflow-visible p-0 min-h-[1000px]">
@@ -645,10 +645,22 @@
                                 <input type="file" id="ai-spatial-file" accept=".kml, .kmz, .geojson" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-0.5 file:px-2 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
                             </div>
                             <div>
-                                <label class="font-bold text-emerald-600 dark:text-emerald-400 mb-0.5 block text-[10px]"><i class="fa-solid fa-file-excel mr-1"></i> Data Aliran DMA (Excel/CSV/D1 Master)</label>
+                                <label class="font-bold text-emerald-600 dark:text-emerald-400 mb-0.5 block text-[10px]"><i class="fa-solid fa-file-excel mr-1"></i> Import SCADA CSV / Excel</label>
                                 <input type="file" id="ai-flow-file" accept=".csv, .xls, .xlsx" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-0.5 file:px-2 file:rounded file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
                             </div>
                         </div>
+
+                        <details id="ai-import-panel" class="hidden rounded border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 p-2 text-xs">
+                            <summary class="font-bold cursor-pointer">Pratonton & pemetaan kolum SCADA</summary>
+                            <p class="mt-1 text-slate-600">Sahkan kolum, unit dan masa bacaan sebelum import. Baris tanpa masa sebenar tidak akan menjadi bacaan aktif.</p>
+                            <div id="ai-import-mapping" class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2"></div>
+                            <div id="ai-import-preview" class="overflow-x-auto mt-2 max-h-40"></div>
+                            <div class="flex gap-2 mt-2">
+                                <button type="button" id="ai-preview-import" class="px-2 py-1 bg-emerald-700 text-white rounded">Semak data</button>
+                                <button type="button" id="ai-confirm-import" disabled class="px-2 py-1 bg-slate-500 text-white rounded">Import selepas semakan</button>
+                            </div>
+                            <div id="ai-import-report" aria-live="polite" class="mt-2 text-slate-700 dark:text-slate-200"></div>
+                        </details>
 
                         <div class="rounded border border-cyan-200 dark:border-cyan-800 bg-cyan-50/60 dark:bg-cyan-950/20 p-2 text-xs">
                             <div class="font-bold text-cyan-700 dark:text-cyan-300 mb-1"><i class="fa-solid fa-gauge-high mr-1"></i>Pemantauan Tekanan DMA & ALD</div>
@@ -667,8 +679,45 @@
                                 <input id="ai-ald-leak-rate" type="number" step="any" class="form-input py-1 text-xs" placeholder="Kadar leak anggaran (m³/h)">
                                 <button type="button" id="btn-save-dma-monitoring" class="px-3 py-1 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-xs font-bold"><i class="fa-solid fa-floppy-disk"></i> Simpan Pemantauan / ALD</button>
                             </div>
-                            <p id="ai-flow-upload-status" class="mt-1 text-[10px] text-cyan-700 dark:text-cyan-300">CSV/Excel aliran boleh mengandungi: timestamp, flow_m3h, pressure_inlet_bar, pressure_cp_bar, legitimate_night_use_m3h.</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-2">
+                                <input id="ai-manual-remark" class="form-input py-1 text-xs" placeholder="Catatan bacaan manual (pilihan)">
+                                <input id="ai-ald-pipe-id" class="form-input py-1 text-xs" placeholder="Pipe ID disahkan (pilihan)">
+                                <input id="ai-ald-repair-ref" class="form-input py-1 text-xs" placeholder="Rujukan pembaikan (pilihan)">
+                            </div>
+                            <p class="mt-1 text-[10px]">Sumber bacaan dalam borang ini: <strong>MANUAL</strong>. Masa bacaan ialah masa ukuran sebenar, bukan masa import.</p>
+                            <input id="ai-investigation-id" class="form-input py-1 text-xs mt-2" placeholder="ID penyiasatan (dijana selepas simpan; guna semula untuk kes sama)" autocomplete="off">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                                <label class="text-[10px] font-semibold">Catatan penilaian sistem (dipilih operator; bukan pengesahan AI)
+                                    <select id="ai-system-assessment" class="form-input py-1 text-xs"><option value="">Belum direkodkan</option><option value="SUSPECTED_ABNORMAL">Disyaki tidak normal</option><option value="NO_ANOMALY">Tiada anomali dikenal pasti</option><option value="ALD_RECOMMENDED">ALD disyorkan</option></select>
+                                </label>
+                                <label class="text-[10px] font-semibold">Kategori hasil lapangan
+                                    <select id="ai-ald-category" class="form-input py-1 text-xs"><option value="">Tidak dinyatakan</option><option value="LEAK">Bocor</option><option value="BURST">Paip pecah</option><option value="OTHER">Lain-lain</option></select>
+                                </label>
+                            </div>
+                            <p id="ai-flow-upload-status" class="mt-1 text-[10px] text-cyan-700 dark:text-cyan-300">Bacaan manual mesti mempunyai masa sebenar. Import CSV/Excel memerlukan pratonton dan pemetaan kolum.</p>
                         </div>
+
+                        <details class="rounded border border-slate-200 dark:border-slate-700 p-2 text-xs">
+                            <summary class="font-bold cursor-pointer">Kesediaan Data DMA & Storan D1</summary>
+                            <div class="flex flex-wrap gap-2 mt-2">
+                                <button type="button" id="ai-refresh-readiness" class="px-2 py-1 rounded bg-blue-700 text-white">Semak DMA</button>
+                                <button type="button" id="ai-refresh-storage" class="px-2 py-1 rounded bg-slate-700 text-white">Semak storan</button>
+                            </div>
+                            <div id="ai-readiness-status" aria-live="polite" class="mt-2"></div>
+                            <div id="ai-storage-status" aria-live="polite" class="mt-2"></div>
+                            <details id="ai-storage-manage" class="mt-2 hidden border-t pt-2">
+                                <summary class="font-semibold cursor-pointer">Manage Storage — ADMIN sahaja</summary>
+                                <p class="text-amber-700 mt-1">Aset paip, polygon, sejarah ALD dan data keselamatan dilindungi. Cleanup tidak berjalan pada satu klik.</p>
+                                <select id="ai-cleanup-category" class="form-input py-1 mt-2 text-xs">
+                                    <option value="FAILED_IMPORT_ISSUES">Smart Cleanup: isu import gagal sahaja</option>
+                                    <option value="SCADA_CSV_OBSERVATIONS">Cleanup Uploaded Data: bacaan SCADA CSV sahaja</option>
+                                </select>
+                                <button type="button" id="ai-cleanup-preview" class="px-2 py-1 mt-2 bg-amber-600 text-white rounded">Pratonton cleanup</button>
+                                <div id="ai-cleanup-report" aria-live="polite" class="mt-2"></div>
+                                <input id="ai-cleanup-confirmation" class="form-input py-1 mt-2 text-xs" placeholder="Taip CLEANUP selepas menyemak pratonton" autocomplete="off">
+                                <button type="button" id="ai-cleanup-execute" disabled class="px-2 py-1 mt-2 bg-red-700 text-white rounded">Sahkan cleanup</button>
+                            </details>
+                        </details>
 
                         <div class="flex gap-2 pt-1">
                             <input type="text" id="ai-chat-input" aria-label="Soalan kepada AI Agent" class="form-input flex-1 text-xs bg-white dark:bg-gray-900 py-1.5" placeholder="Pilih prompt di atas atau taip soalan..." autocomplete="off">
@@ -2635,23 +2684,10 @@
         }
 
         async function handleAiFlowUpload(event) {
-            const file = event.target.files?.[0];
+            if (window.phase2aHandleFile) return window.phase2aHandleFile(event);
             const status = document.getElementById('ai-flow-upload-status');
-            aiTelemetryRows = [];
-            if (!file) return;
-            try {
-                const buffer = await file.arrayBuffer();
-                const workbook = XLSX.read(buffer, { type: 'array' });
-                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                aiTelemetryRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-                if (!aiTelemetryRows.length) throw new Error('Fail tidak mengandungi baris data.');
-                status.textContent = `${aiTelemetryRows.length} bacaan daripada ${file.name} sedia untuk disimpan. Pastikan District Metered Area dipilih.`;
-                status.className = 'mt-1 text-[10px] text-emerald-600 dark:text-emerald-300 font-semibold';
-            } catch (error) {
-                status.textContent = `Gagal membaca fail: ${error.message}`;
-                status.className = 'mt-1 text-[10px] text-red-600 dark:text-red-300 font-semibold';
-                aiTelemetryRows = [];
-            }
+            status.textContent = 'Modul pratonton import belum tersedia. Muat semula halaman; fail tidak disimpan.';
+            status.className = 'mt-1 text-[10px] text-red-600 dark:text-red-300 font-semibold';
         }
 
         function parseMonitoringCoordinate(value) {
@@ -2664,7 +2700,7 @@
         async function saveDmaMonitoring() {
             const dma = document.getElementById('ai-filter-district').value.trim();
             if (!dma) { showToast('Pilih District Metered Area sebelum menyimpan pemantauan.', 'error'); return; }
-            const timestamp = document.getElementById('ai-monitoring-time').value || new Date().toISOString().slice(0, 16);
+            const timestamp = document.getElementById('ai-monitoring-time').value;
             const asNumber = id => {
                 const value = document.getElementById(id).value.trim();
                 if (value === '') return null;
@@ -2685,7 +2721,7 @@
                 pressure_inlet_bar: asNumber('ai-pressure-inlet'),
                 pressure_cp_bar: asNumber('ai-pressure-cp'),
                 legitimate_night_use_m3h: asNumber('ai-legitimate-night-use'),
-                source: 'manual_dashboard'
+                source: 'MANUAL'
             };
             const aldResult = document.getElementById('ai-ald-result').value;
             const ald = aldResult ? {
@@ -2693,20 +2729,23 @@
                 location: document.getElementById('ai-ald-location').value.trim(),
                 result_status: aldResult,
                 estimated_leak_m3h: asNumber('ai-ald-leak-rate'),
-                notes: ''
+                notes: '',
+                pipe_id: document.getElementById('ai-ald-pipe-id').value.trim(),
+                result_category: document.getElementById('ai-ald-category').value,
+                repair_reference: document.getElementById('ai-ald-repair-ref').value.trim()
             } : null;
             try {
                 const response = await fetch(WORKER_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('sainsToken')}` },
-                    body: JSON.stringify({ action: 'saveDmaMonitoring', dma, telemetryRows: aiTelemetryRows, manualTelemetry, sensors, ald })
+                    body: JSON.stringify({ action: 'saveDmaMonitoring', dma, manualTelemetry, sensors, ald, investigationId: document.getElementById('ai-investigation-id').value.trim(), systemAssessment: document.getElementById('ai-system-assessment').value ? { status: document.getElementById('ai-system-assessment').value } : null, remark: document.getElementById('ai-manual-remark').value.trim() })
                 });
                 const result = await response.json();
                 if (!response.ok || result.status !== 'success') throw new Error(result.message || 'Gagal menyimpan data.');
                 showToast(result.message, 'success');
-                aiTelemetryRows = [];
-                document.getElementById('ai-flow-file').value = '';
-                document.getElementById('ai-flow-upload-status').textContent = 'Data pemantauan telah disimpan dalam D1.';
+                if (result.investigationId) document.getElementById('ai-investigation-id').value = result.investigationId;
+                document.getElementById('ai-flow-upload-status').textContent = 'Bacaan manual / ALD telah disimpan dalam D1.';
+                if (window.phase2aRefreshReadiness) window.phase2aRefreshReadiness();
             } catch (error) {
                 showToast(error.message, 'error');
             }
@@ -2780,6 +2819,13 @@
             document.getElementById('ai-ald-result').value = '';
             document.getElementById('ai-ald-location').value = '';
             document.getElementById('ai-ald-leak-rate').value = '';
+            document.getElementById('ai-ald-pipe-id').value = '';
+            document.getElementById('ai-ald-repair-ref').value = '';
+            document.getElementById('ai-investigation-id').value = '';
+            document.getElementById('ai-ald-category').value = '';
+            document.getElementById('ai-system-assessment').value = '';
+            document.getElementById('ai-manual-remark').value = '';
+            if (window.phase2aResetImport) window.phase2aResetImport();
             aiTelemetryRows = [];
             aiSpatialSummary = null;
             if (document.getElementById('ai-hazen-c')) document.getElementById('ai-hazen-c').value = '120';
@@ -4119,5 +4165,6 @@ finalReport = finalReport.replace(/\{([^}]+)\}(M?)/g, (matchPattern, pureName, u
             window.open(`https://api.whatsapp.com/send?text=${encodedText}`, '_blank');
         });
     </script>
+    <script src="phase2a-ui.js" defer></script>
 </body>
 </html>
