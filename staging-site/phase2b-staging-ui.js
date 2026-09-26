@@ -57,12 +57,19 @@
       setStatus('ai-test-result',`Simulation Failed: ${job.errorCode||'Unknown error'}. ${job.errorMessage||'Tiada keputusan hidraulik dihasilkan.'} Tiada GeoJSON atau keputusan hidraulik.`);
     }else setStatus('ai-test-result','Menunggu simulasi model contoh; tiada keputusan SAINS.');
   }
-  async function poll(jobId){
+  async function poll(jobId,rateRetries=0){
     try{
       const data=await call('getTestHydraulicJob',{jobId});
       renderJob(data.job);
-      if(['QUEUED','RUNNING'].includes(data.job.status))pollTimer=setTimeout(()=>poll(jobId),750);
-    }catch(error){setStatus('ai-test-job-status','FAILED');setStatus('ai-test-service','UNAVAILABLE');setStatus('ai-test-result',failure(error.message));}
+      if(['QUEUED','RUNNING'].includes(data.job.status))pollTimer=setTimeout(()=>poll(jobId),2000);
+    }catch(error){
+      if(/rate limit|had permintaan/i.test(error.message)&&rateRetries<20){
+        setStatus('ai-test-result','TEST MODEL: had semakan sementara; mencuba semula tanpa mengubah status job.');
+        pollTimer=setTimeout(()=>poll(jobId,rateRetries+1),5000);
+        return;
+      }
+      setStatus('ai-test-service','UNAVAILABLE');setStatus('ai-test-result',failure(error.message));
+    }
   }
   async function start(testFault){
     $('ai-test-run').disabled=true;clearTimeout(pollTimer);clearLayer();geojson=null;
