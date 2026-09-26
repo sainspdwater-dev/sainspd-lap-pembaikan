@@ -47,14 +47,15 @@ function safeJob(job){
   return {id:job.id,status:job.status,modelId:job.model_id,modelVersion:job.model_version,
     createdAt:job.created_at,startedAt:job.started_at,completedAt:job.completed_at,
     queueDelayMs:job.queue_delay_ms,solverDurationMs:job.solver_duration_ms,persistenceDurationMs:job.persistence_duration_ms,
-    engineVersion:job.engine_version,summary:job.summary||null,warnings:job.warnings||[],
+    engineVersion:job.engine_version,attempts:job.attempts,testFault:job.test_fault||null,
+    restartRequestedAt:job.restart_requested_at||null,summary:job.summary||null,warnings:job.warnings||[],
     errorCode:job.error_code||null,errorMessage:job.error_message||null,
     result:job.status==='COMPLETED'?job.result:null,
     geojson:job.status==='COMPLETED'?job.geojson:null};
 }
 
 export async function handleStagingHydraulicAction({action,data,env,user,headers,request}){
-  const actions=new Set(['getTestHydraulicHealth','startTestHydraulicJob','getTestHydraulicJob']);
+  const actions=new Set(['getTestHydraulicHealth','startTestHydraulicJob','getTestHydraulicJob','restartTestHydraulicContainer']);
   const prompt=String(data.prompt||'').toLowerCase().trim();
   const testAi=action==='aiAgent'&&(/test hydraulic baseline|reference model|sains production simulation|where is the leak/.test(prompt));
   if(!actions.has(action)&&!testAi)return null;
@@ -74,12 +75,29 @@ export async function handleStagingHydraulicAction({action,data,env,user,headers
     if(action==='startTestHydraulicJob'||(testAi&&/test hydraulic baseline/.test(prompt))){
       if(data.modelId&&data.modelId!==TEST_MODEL)throw new Error('Hanya model rujukan TEST dibenarkan.');
       const scenario=validateScenario(data.scenario);
-      const {code,payload}=await serviceCall(env,user,'/v1/jobs',{method:'POST',body:{modelId:TEST_MODEL,scenario,settings:{durationSeconds:0}},correlationId});
+      const testFault=data.testFault;
+      if(testFault!==undefined && (env.HYDRAULIC_FAULT_TESTS_ENABLED!=='1'||user.purpose!=='HYDRAULIC_STAGING_TEST'||
+        user.username!=='phase2bs-admin'||!['TIMEOUT_TEST_ONLY','RESTART_WAIT_TEST_ONLY'].includes(testFault)))
+        throw new Error('TEST-only fault injection denied.');
+      const body={modelId:TEST_MODEL,scenario,settings:{durationSeconds:0}};
+      if(testFault)body.testFault=testFault;
+      const {code,payload}=await serviceCall(env,user,'/v1/jobs',{method:'POST',body,correlationId});
       if(code!==202||!payload.job?.jobId)throw new Error(code===429?'Had job ujian tercapai.':'SERVICE_UNAVAILABLE');
       console.log(JSON.stringify({event:'hydraulic_staging_submit',correlationId,jobId:payload.job.jobId,reused:payload.job.reused}));
       const response={status:'success',job:payload.job,modelType:'TEST MODEL',sainsModelStatus:'NOT_READY'};
       if(testAi)response.answer=`TEST MODEL sahaja: job ${payload.job.jobId} ${payload.job.status}. Model SAINS kekal NOT READY.`;
       return json(response,headers,202);
+    }
+    if(action==='restartTestHydraulicContainer'){
+      if(env.HYDRAULIC_FAULT_TESTS_ENABLED!=='1'||user.purpose!=='HYDRAULIC_STAGING_TEST'||
+        user.username!=='phase2bs-admin')throw new Error('TEST-only restart denied.');
+      const id=String(data.jobId||'');
+      if(!/^[0-9a-f-]{36}$/.test(id))throw new Error('Job ID tidak sah.');
+      const {code,payload}=await serviceCall(env,user,'/v1/test/restart',{
+        method:'POST',body:{jobId:id},correlationId});
+      if(code===409)return json({status:'error',message:payload.message||'Job belum RUNNING.'},headers,409);
+      if(code!==200||payload.jobId!==id)throw new Error('SERVICE_UNAVAILABLE');
+      return json({status:'success',jobId:id,testOnly:true,message:'TEST ONLY: Container restart requested.'},headers);
     }
     const id=action==='getTestHydraulicJob'?String(data.jobId||''):null;
     if(id&&!/^[0-9a-f-]{36}$/.test(id))throw new Error('Job ID tidak sah.');

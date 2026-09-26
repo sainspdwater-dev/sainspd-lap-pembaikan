@@ -6,6 +6,9 @@ account_id = "077904f9afb5422fccb5221876cf9ae3"
 compatibility_date = "2026-09-25"
 workers_dev = false
 
+[vars]
+HYDRAULIC_FAULT_TESTS_ENABLED = "1"
+
 # TEST-only diagnostics for the private staging container. Never log tokens or model payloads.
 [observability]
 enabled = true

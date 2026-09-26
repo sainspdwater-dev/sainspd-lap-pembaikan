@@ -1,6 +1,8 @@
 """Isolated one-job EPANET process; JSON stdin/stdout, explicit TEST-only gate."""
 import json
+import os
 import sys
+import time
 
 from service import HydraulicSimulationService, canonical_hash
 
@@ -13,6 +15,14 @@ def main():
     model=request.get("model")
     if request.get("testMode") is not True or not isinstance(model,dict) or not str(model.get("id","")).startswith("TEST-"):
         raise ValueError("Only explicitly labelled non-operational TEST models are allowed")
+    fault=request.get("testFault")
+    if fault is not None:
+        if (os.environ.get("SAINS_CONTAINER_MODE")!="1" or
+                os.environ.get("SAINS_STAGING_FAULT_TESTS")!="1" or
+                model.get("id")!="TEST-REFERENCE-LOOP" or
+                fault not in {"TIMEOUT_TEST_ONLY","RESTART_WAIT_TEST_ONLY"}):
+            raise ValueError("Staging TEST fault is disabled")
+        time.sleep(35 if fault=="TIMEOUT_TEST_ONLY" else 60)
     service=HydraulicSimulationService()
     scenario=request.get("scenario")
     result=service.runScenario(model,scenario) if scenario else service.runBaseline(model)

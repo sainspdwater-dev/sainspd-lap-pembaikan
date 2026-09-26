@@ -164,13 +164,20 @@ class StagingHandler(BaseHTTPRequestHandler):
                     self._reply(413, {"status": "error", "message": "Request size limit"})
                     return
                 data = json.loads(self.rfile.read(size))
-                if not isinstance(data, dict) or set(data) - {"modelId", "scenario", "settings"}:
+                if not isinstance(data, dict) or set(data) - {"modelId", "scenario", "settings", "testFault"}:
                     raise ValueError("Malformed reference request")
                 model = get_reference_model(data.get("modelId"))
                 scenario = validate_scenario(data.get("scenario"))
                 if (data.get("settings") or {"durationSeconds": 0}) != {"durationSeconds": 0}:
                     raise ValueError("Only static reference test is enabled")
-                payload = json.dumps({"testMode": True, "model": model, "scenario": scenario}).encode()
+                fault = data.get("testFault")
+                if fault is not None and (os.environ.get("SAINS_STAGING_ENV") != "STAGING" or
+                        os.environ.get("SAINS_STAGING_FAULT_TESTS") != "1" or
+                        fault not in {"TIMEOUT_TEST_ONLY", "RESTART_WAIT_TEST_ONLY"} or
+                        model["id"] != "TEST-REFERENCE-LOOP"):
+                    raise ValueError("Staging TEST fault is disabled")
+                payload = json.dumps({"testMode": True, "model": model, "scenario": scenario,
+                                      "testFault": fault}).encode()
                 started = time.perf_counter()
                 # EPANET also creates an internal hydraulics file relative to
                 # its process working directory. /app is read-only to the

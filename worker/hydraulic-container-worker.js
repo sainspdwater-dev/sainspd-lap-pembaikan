@@ -10,6 +10,7 @@ const JOB_PREFIX = 'job:';
 const HASH_PREFIX = 'hash:';
 const VALID_USER = /^[A-Za-z0-9_.@-]{1,100}$/;
 const VALID_ID = /^[0-9a-f-]{36}$/;
+const FAULTS = new Set(['TIMEOUT_TEST_ONLY', 'RESTART_WAIT_TEST_ONLY']);
 const iso = () => new Date().toISOString();
 const response = (status, body) => new Response(JSON.stringify(body), {
   status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }
@@ -51,7 +52,8 @@ export class HydraulicReferenceContainer extends Container {
     this.envVars = {
       SAINS_STAGING_ENV: 'STAGING', SAINS_CONTAINER_MODE: '1',
       SAINS_STAGING_SERVICE_TOKEN: env.CONTAINER_INTERNAL_TOKEN,
-      SAINS_STAGING_DB: '/tmp/sains-test-ephemeral.sqlite', SAINS_STAGING_PORT: '8765'
+      SAINS_STAGING_DB: '/tmp/sains-test-ephemeral.sqlite', SAINS_STAGING_PORT: '8765',
+      SAINS_STAGING_FAULT_TESTS: env.HYDRAULIC_FAULT_TESTS_ENABLED === '1' ? '1' : '0'
     };
   }
 
@@ -76,6 +78,7 @@ export class HydraulicReferenceContainer extends Container {
         return response(200, { ...health, persistence: 'DURABLE_OBJECT_SQLITE', modelType: 'TEST MODEL' });
       }
       if (request.method === 'POST' && path === '/v1/jobs') return this._submit(request, requester);
+      if (request.method === 'POST' && path === '/v1/test/restart') return this._restartTest(request, requester);
       if (request.method === 'GET' && path === '/v1/jobs/latest') return this._latest(requester);
       if (request.method === 'GET' && VALID_ID.test(path.slice('/v1/jobs/'.length)) && path.startsWith('/v1/jobs/'))
         return this._get(path.slice('/v1/jobs/'.length), requester);
@@ -95,9 +98,13 @@ export class HydraulicReferenceContainer extends Container {
     try {
       const payload = JSON.parse(raw);
       if (!payload || typeof payload !== 'object' || Array.isArray(payload) ||
-          Object.keys(payload).some(key => !['modelId', 'scenario', 'settings'].includes(key)) || payload.modelId !== MODEL)
+          Object.keys(payload).some(key => !['modelId', 'scenario', 'settings', 'testFault'].includes(key)) || payload.modelId !== MODEL)
         throw new Error('Only the TEST reference model is allowed');
-      input = { modelId: MODEL, scenario: validScenario(payload.scenario), settings: payload.settings || { durationSeconds: 0 } };
+      if (payload.testFault !== undefined &&
+          (this.env.HYDRAULIC_FAULT_TESTS_ENABLED !== '1' || requester !== 'phase2bs-admin' || !FAULTS.has(payload.testFault)))
+        throw new Error('TEST-only fault injection denied');
+      input = { modelId: MODEL, scenario: validScenario(payload.scenario), settings: payload.settings || { durationSeconds: 0 },
+        testFault: payload.testFault || null };
       if (JSON.stringify(input.settings) !== '{"durationSeconds":0}') throw new Error('Only static reference simulation is allowed');
     } catch (error) {
       return response(400, { status: 'error', message: error.message.slice(0, 160) });
@@ -115,6 +122,7 @@ export class HydraulicReferenceContainer extends Container {
         throw new Error('LIMIT');
       const id = crypto.randomUUID();
       job = { id, model_id: MODEL, model_version: VERSION, scenario: input.scenario,
+        test_fault: input.testFault, restart_requested_at: null,
         settings: input.settings, requested_by: requester, input_hash, engine_version: 'EPANET 2.2.0',
         created_at: iso(), started_at: null, completed_at: null, status: 'QUEUED', attempts: 0,
         result: null, summary: null, geojson: null, warnings: [], error_code: null, error_message: null,
@@ -125,7 +133,7 @@ export class HydraulicReferenceContainer extends Container {
     if (!job) return response(429, { status: 'error', message: 'Staging job limit reached' });
     if (!reused) {
       await this.schedule(1, 'executeJob', { jobId: job.id });
-      await this.schedule(60, 'recoverJob', { jobId: job.id });
+      await this.schedule(120, 'recoverJob', { jobId: job.id });
     }
     return response(202, { status: 'success', job: { jobId: job.id, status: job.status, reused },
       modelType: 'TEST MODEL', sainsModelStatus: 'NOT_READY' });
@@ -146,6 +154,32 @@ export class HydraulicReferenceContainer extends Container {
       : response(404, { status: 'error', message: 'No completed reference job' });
   }
 
+  async _restartTest(request, requester) {
+    if (this.env.HYDRAULIC_FAULT_TESTS_ENABLED !== '1' || requester !== 'phase2bs-admin')
+      return response(404, { status: 'error', message: 'TEST hook disabled' });
+    let input;
+    try {
+      const raw = await request.text();
+      if (raw.length > 256) throw new Error('Request too large');
+      input = JSON.parse(raw);
+      if (!input || Object.keys(input).join(',') !== 'jobId' || !VALID_ID.test(input.jobId)) throw new Error('Invalid TEST job');
+    } catch {
+      return response(400, { status: 'error', message: 'Invalid TEST restart request' });
+    }
+    const key = JOB_PREFIX + input.jobId;
+    const job = await this.ctx.storage.get(key);
+    if (!job || job.requested_by !== requester || job.test_fault !== 'RESTART_WAIT_TEST_ONLY' ||
+        job.status !== 'RUNNING' || job.attempts !== 1)
+      return response(409, { status: 'error', message: 'Job must be a first-attempt RUNNING restart TEST' });
+    await this.ctx.storage.put(key, { ...job, restart_requested_at: iso() });
+    // Cloudflare Container.destroy() kills only the ephemeral process. The
+    // Durable Object and its SQLite-backed job state remain authoritative.
+    await this.schedule(3, 'recoverJob', { jobId: job.id });
+    await this.destroy();
+    console.log(JSON.stringify({ event: 'test_container_restarted', jobId: job.id, testOnly: true }));
+    return response(200, { status: 'success', jobId: job.id, testOnly: true });
+  }
+
   async executeJob({ jobId }) {
     let job = await this.ctx.storage.get(JOB_PREFIX + jobId);
     if (!job || job.status !== 'QUEUED') return;
@@ -155,7 +189,8 @@ export class HydraulicReferenceContainer extends Container {
     await this.ctx.storage.put(JOB_PREFIX + jobId, job);
     try {
       const upstream = await this._container('/v1/solve', { method: 'POST',
-        body: JSON.stringify({ modelId: MODEL, scenario: job.scenario, settings: job.settings }) });
+        body: JSON.stringify({ modelId: MODEL, scenario: job.scenario, settings: job.settings,
+          testFault: job.test_fault === 'TIMEOUT_TEST_ONLY' || job.attempts === 1 ? job.test_fault : null }) });
       const raw = await upstream.text();
       if (raw.length > MAX_RESULT) throw new Error('OUTPUT_LIMIT');
       const payload = JSON.parse(raw);
@@ -163,6 +198,8 @@ export class HydraulicReferenceContainer extends Container {
       if (!upstream.ok || payload.status !== 'success' || payload.result?.modelId !== MODEL ||
           !Number.isFinite(payload.result?.summary?.minimumPressureM) || !payload.geojson?.features)
         throw new Error('UPSTREAM_INVALID_RESULT');
+      const current = await this.ctx.storage.get(JOB_PREFIX + jobId);
+      if (current?.status !== 'RUNNING' || current.attempts !== job.attempts) return;
       const persistStarted = Date.now();
       job = { ...job, status: 'COMPLETED', completed_at: iso(), result: payload.result,
         summary: payload.result.summary, geojson: payload.geojson, warnings: payload.result.warnings || [],
@@ -172,11 +209,16 @@ export class HydraulicReferenceContainer extends Container {
       await this.ctx.storage.put(JOB_PREFIX + jobId, job);
       console.log(JSON.stringify({ event: 'container_job_completed', jobId, model: MODEL }));
     } catch (error) {
+      const current = await this.ctx.storage.get(JOB_PREFIX + jobId);
+      if (current?.status !== 'RUNNING' || current.attempts !== job.attempts) return;
       const retry = job.attempts < 2;
       job = { ...job, status: retry ? 'QUEUED' : 'FAILED', completed_at: retry ? null : iso(),
-        error_code: /^UPSTREAM_[0-9]{3}_[A-Z_]{1,32}$/.test(error.message) ? error.message :
+        error_code: error.message === 'UPSTREAM_504_TIMEOUT' ? 'TIMEOUT' :
+          /^UPSTREAM_[0-9]{3}_[A-Z_]{1,32}$/.test(error.message) ? error.message :
           error.name === 'TimeoutError' ? 'TIMEOUT' : 'SOLVER_FAILED',
-        error_message: retry ? 'Retry scheduled' : 'Reference simulation failed', result: null, summary: null, geojson: null };
+        error_message: retry ? 'Retry scheduled' :
+          job.test_fault === 'TIMEOUT_TEST_ONLY' ? 'TEST ONLY: solver exceeded 30 seconds on both attempts' :
+          'Reference simulation failed', result: null, summary: null, geojson: null };
       await this.ctx.storage.put(JOB_PREFIX + jobId, job);
       if (retry) await this.schedule(2, 'executeJob', { jobId });
       console.log(JSON.stringify({ event: 'container_job_error', jobId, type: error.name,
@@ -186,7 +228,7 @@ export class HydraulicReferenceContainer extends Container {
 
   async recoverJob({ jobId }) {
     const job = await this.ctx.storage.get(JOB_PREFIX + jobId);
-    if (!job || ['COMPLETED', 'FAILED', 'CANCELLED'].includes(job.status)) return;
+    if (!job || job.status !== 'RUNNING') return;
     if (job.attempts >= 2) {
       await this.ctx.storage.put(JOB_PREFIX + jobId, { ...job, status: 'FAILED', completed_at: iso(),
         error_code: 'INTERRUPTED', error_message: 'Reference job interrupted; retry limit reached' });

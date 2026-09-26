@@ -45,6 +45,7 @@
   }
   function renderJob(job){
     setStatus('ai-test-job-status',job.status);
+    $('ai-test-restart-now').disabled=!(job.status==='RUNNING'&&job.testFault==='RESTART_WAIT_TEST_ONLY'&&job.attempts===1&&!job.restartRequestedAt);
     if(job.status==='COMPLETED'){
       geojson=job.geojson;
       const summary=job.summary||{};
@@ -53,7 +54,7 @@
       if(shown){clearLayer();toggleLayer();}
     }else if(job.status==='FAILED'||job.status==='CANCELLED'){
       geojson=null;clearLayer();$('ai-test-layer-toggle').disabled=true;
-      setStatus('ai-test-result',`Simulation Failed: ${job.errorCode||'Unknown error'}. ${job.errorMessage||'Tiada keputusan hidraulik dihasilkan.'}`);
+      setStatus('ai-test-result',`Simulation Failed: ${job.errorCode||'Unknown error'}. ${job.errorMessage||'Tiada keputusan hidraulik dihasilkan.'} Tiada GeoJSON atau keputusan hidraulik.`);
     }else setStatus('ai-test-result','Menunggu simulasi model contoh; tiada keputusan SAINS.');
   }
   async function poll(jobId){
@@ -63,20 +64,32 @@
       if(['QUEUED','RUNNING'].includes(data.job.status))pollTimer=setTimeout(()=>poll(jobId),750);
     }catch(error){setStatus('ai-test-job-status','FAILED');setStatus('ai-test-service','UNAVAILABLE');setStatus('ai-test-result',failure(error.message));}
   }
-  async function start(){
+  async function start(testFault){
     $('ai-test-run').disabled=true;clearTimeout(pollTimer);clearLayer();geojson=null;
     try{
-      const data=await call('startTestHydraulicJob',{modelId:'TEST-REFERENCE-LOOP'});
+      const data=await call('startTestHydraulicJob',{modelId:'TEST-REFERENCE-LOOP',...(testFault?{testFault}:{})});
       localStorage.setItem('sainsStagingHydraulicJob',data.job.jobId);
       setStatus('ai-test-job-status',data.job.status);
       await poll(data.job.jobId);
     }catch(error){setStatus('ai-test-job-status','FAILED');setStatus('ai-test-service','UNAVAILABLE');setStatus('ai-test-result',failure(error.message));}
     finally{$('ai-test-run').disabled=false;}
   }
+  async function restartContainer(){
+    const jobId=localStorage.getItem('sainsStagingHydraulicJob');
+    if(!jobId)return;
+    $('ai-test-restart-now').disabled=true;
+    try{
+      await call('restartTestHydraulicContainer',{jobId});
+      setStatus('ai-test-result','TEST ONLY: Container interrupted while RUNNING; waiting for durable-state recovery.');
+    }catch(error){setStatus('ai-test-result',failure(error.message));}
+  }
   document.addEventListener('DOMContentLoaded',async()=>{
     if(localStorage.getItem('sainsUserLevel')!=='ADMIN')return;
     $('ai-hydraulic-staging')?.classList.remove('hidden');
-    $('ai-test-run')?.addEventListener('click',start);
+    $('ai-test-run')?.addEventListener('click',()=>start());
+    $('ai-test-timeout')?.addEventListener('click',()=>start('TIMEOUT_TEST_ONLY'));
+    $('ai-test-restart-run')?.addEventListener('click',()=>start('RESTART_WAIT_TEST_ONLY'));
+    $('ai-test-restart-now')?.addEventListener('click',restartContainer);
     $('ai-test-layer-toggle')?.addEventListener('click',toggleLayer);
     try{const data=await call('getTestHydraulicHealth');
       setStatus('ai-test-engine',data.service.engineVersion?'READY':'ERROR');setStatus('ai-test-service','CONNECTED');

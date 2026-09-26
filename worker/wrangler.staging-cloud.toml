@@ -9,6 +9,7 @@ workers_dev = true
 GOOGLE_SHEET_ID = "STAGING_TEST_ONLY"
 HYDRAULIC_STAGING_MODE = "TEST_ONLY"
 HYDRAULIC_STAGING_HOST = "sains-hydraulic-gateway-staging.sainspdwater.workers.dev"
+HYDRAULIC_FAULT_TESTS_ENABLED = "1"
 
 [[services]]
 binding = "HYDRAULIC_SIM_SERVICE"
