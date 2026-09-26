@@ -39,6 +39,9 @@ export function evaluateHydraulicReadiness(model, topology) {
   if(topology?.links?.some(link=>!link.assetNum))topologyReasons.push('Pipe ID mapping incomplete');
   if(topology?.unresolvedReviewCount>0)topologyReasons.push('Endpoint/crossing review unresolved');
   const topologyReady=topologyReasons.length===0;
+  const geometryReady=!!topology?.summary?.pipeCount && topology?.reviewStatus==='VERIFIED' &&
+    Array.isArray(topology?.links) && topology.links.length===topology.summary.pipeCount &&
+    topology.links.every(link=>!!link.assetNum);
   const temporal={status:model.temporalBoundaryStatus==='VERIFIED'?'READY':'MISSING',missing:model.temporalBoundaryStatus==='VERIFIED'?0:1};
   const fields={topology:{status:topologyReady?'READY':'NOT_READY',components:topology?.summary?.connectedComponents??null,reasons:topologyReasons},
     pipeId,diameter,length,roughness,elevation,demand,sourceHead,pumps,valves,tanks,patterns:pattern,temporal,calibration};
@@ -65,10 +68,19 @@ export function evaluateHydraulicReadiness(model, topology) {
   scenarioCapabilities.RESERVE_MARGIN=scenario(baseline&&capacity.status==='VERIFIED'&&
     ['PIPE_CAPACITY','DMA_SUPPLY_CAPACITY','SOURCE_CAPACITY','TRANSFER_CAPACITY','ALTERNATIVE_SUPPLY_CAPACITY'].includes(capacity.type)&&
     !!capacity.formula&&!!capacity.unit,['Approved capacity type, formula and unit missing']);
-  const capabilities={topology:topologyReady?'READY':'NOT_READY',steadyState:steady&&!assumptionBlock?'READY':'NOT_READY',
-    extendedPeriod:extended&&!assumptionBlock?'READY':'NOT_READY',calibration:baseline?'PARTIAL':'NOT_READY',
-    leakLocalisation:'NOT_READY',valveIsolation:scenarioCapabilities.VALVE_ISOLATION.status};
+  const calibrationStatus=model.calibration?.status;
+  const calibrationReady=['CALIBRATED','VALIDATED'].includes(calibrationStatus) &&
+    model.calibration?.modelVersion===model.version && model.calibration?.reviewStatus==='APPROVED' &&
+    model.calibration?.matchedObservationCount>0;
+  const capabilities={geometry:geometryReady?'READY':'NOT_READY',topology:topologyReady?'READY':'NOT_READY',
+    steadyState:steady&&!assumptionBlock?'READY':'NOT_READY',
+    extendedPeriod:extended&&!assumptionBlock?'READY':'NOT_READY',
+    calibration:baseline&&calibrationReady?'READY':'NOT_READY',baseline:baseline?'READY':'NOT_READY',
+    scenario:baseline?'READY':'NOT_READY',leakModelling:'NOT_READY',leakLocalisation:'NOT_READY',
+    valveIsolation:scenarioCapabilities.VALVE_ISOLATION.status};
   return {status:capabilities.steadyState==='READY'?'READY':pipes.length?'PARTIAL':'NOT_READY',fields,capabilities,
-    scenarioCapabilities,issues,calibrationStatus:'UNCALIBRATED',limitations:['Solver convergence does not establish calibration or field validation.',
+    scenarioCapabilities,issues,calibrationStatus:calibrationReady?calibrationStatus:
+      (model.calibration?.matchedObservationCount>0?'CALIBRATION IN PROGRESS':'CALIBRATION DATA INSUFFICIENT'),
+    limitations:['Solver convergence does not establish calibration or field validation.',
       ...issues.map(i=>`${i.field}: ${i.status}`),...(model.assumptions||[]).map(a=>`ASSUMPTION: ${a.field} (${a.approvalStatus})`)]};
 }

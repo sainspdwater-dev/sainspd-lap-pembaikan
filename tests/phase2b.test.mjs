@@ -62,7 +62,7 @@ test('readiness blocks missing engineering inputs and excludes TEST DATA calibra
   assert.equal(r.capabilities.steadyState,'NOT_READY');
   assert.equal(r.fields.roughness.status,'MISSING');
   assert.equal(r.fields.elevation.status,'MISSING');
-  assert.equal(r.calibrationStatus,'UNCALIBRATED');
+  assert.equal(r.calibrationStatus,'CALIBRATION DATA INSUFFICIENT');
 });
 test('steady-state requires provenance and signed topology, not a demand pattern',()=>{
   const model={version:1,nodes:[{id:'J1',type:'JUNCTION',elevationM:20,elevationStatus:'VERIFIED',elevationSource:'survey'}],
@@ -77,11 +77,14 @@ test('steady-state requires provenance and signed topology, not a demand pattern
     links:[{assetNum:'P1'}],unresolvedReviewCount:0};
   const ready=evaluateHydraulicReadiness(model,topology);
   assert.equal(ready.capabilities.steadyState,'READY');
+  assert.equal(ready.capabilities.geometry,'READY');
   assert.equal(ready.capabilities.extendedPeriod,'NOT_READY');
   assert.equal(ready.scenarioCapabilities.PIPE_CLOSED.status,'NOT_READY');
   assert.match(ready.scenarioCapabilities.VALVE_ISOLATION.reasons.join(' '),/valve/);
   model.baseline={status:'COMPLETED',modelVersion:1};
   const baseline=evaluateHydraulicReadiness(model,topology);
+  assert.equal(baseline.capabilities.baseline,'READY');
+  assert.equal(baseline.capabilities.calibration,'NOT_READY');
   assert.equal(baseline.scenarioCapabilities.PIPE_CLOSED.status,'READY');
   assert.equal(baseline.scenarioCapabilities.RESERVE_MARGIN.status,'NOT_READY');
   model.pipes[0].roughnessStatus='ASSUMED';
@@ -118,9 +121,13 @@ test('candidate migration is additive and creates version/job metadata',()=>{
   db.close();
 });
 test('hydraulic endpoint is ADMIN only and never returns invented solver results',async()=>{
-  const db={prepare:()=>({bind:()=>({first:async()=>({lineParts:3,segmentCount:2,assetCount:2,missingDiameterParts:1,missingGeometryLengthParts:0})})})};
+  const db={prepare:sql=>sql.includes('COUNT(*) AS sourceSegments')?
+    {first:async()=>({sourceSegments:5,missingPipeIdSegments:2,missingDiameterSegments:1})}:
+    {bind:()=>({first:async()=>({lineParts:3,segmentCount:2,assetCount:2,missingDiameterParts:1,missingGeometryLengthParts:0})})}};
   const status=await productionHydraulicStatus(db,'ZONE TEST');
   assert.equal(status.status,'NOT_READY');
+  assert.equal(status.gis.missingPipeIdSegments,2);
+  assert.ok(status.issues.some(issue=>issue.code==='PIPE_ID_MISSING'&&issue.count===2));
   assert.equal(status.engine.integration,'TEST_ONLY');
   assert.equal(status.scenarioCapabilities.PIPE_CLOSED.status,'NOT_READY');
   assert.match(status.scenarioCapabilities.RESERVE_MARGIN.reasons.join(' '),/Formula/);
@@ -134,7 +141,7 @@ test('hydraulic endpoint is ADMIN only and never returns invented solver results
   assert.equal(payload.map.enabled,false);
 });
 test('existing AI page has compact disabled hydraulic controls, not a second map',()=>{
-  const html=readFileSync(new URL('../dashboard.html',import.meta.url),'utf8');
+  const html=readFileSync(new URL('../staging-site/dashboard.html',import.meta.url),'utf8');
   assert.match(html,/id="ai-hydraulic-status"/);
   assert.match(html,/id="ai-hydraulic-issues"/);
   assert.match(html,/src="phase2b-ui\.js"/);

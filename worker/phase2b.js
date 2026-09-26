@@ -36,11 +36,20 @@ export async function productionHydraulicStatus(db, dma='') {
     JOIN pipe_network_segments s ON s.import_id=z.import_id AND s.segment_key=z.segment_key
     WHERE (?='' OR z.zone_name=?)`;
   const row=await db.prepare(sql).bind(selected,selected).first();
+  // Zone lines require a CSV asset ID, so they cannot reveal KML source
+  // segments without one. Count those from the active source import instead.
+  const network=await db.prepare(`SELECT COUNT(*) AS sourceSegments,
+      SUM(CASE WHEN COALESCE(TRIM(s.asset_num),'')='' THEN 1 ELSE 0 END) AS missingPipeIdSegments,
+      SUM(CASE WHEN s.size_mm IS NULL OR s.size_mm<=0 THEN 1 ELSE 0 END) AS missingDiameterSegments
+    FROM pipe_network_segments s JOIN pipe_network_active a
+      ON a.import_id=s.import_id AND a.singleton=1`).first();
   const count=Number(row?.segmentCount||0);
   const issues=[];
   if(!count) issues.push({code:'NO_PIPE_LINES_FOR_ZONE',severity:'CRITICAL',detail:'Tiada jajaran GIS aktif bagi zon yang dipilih.'});
   if(Number(row?.missingDiameterParts||0)) issues.push({code:'MISSING_DIAMETER',severity:'MISSING',count:Number(row.missingDiameterParts),detail:'Bahagian garisan tanpa diameter aset.'});
-  issues.push({code:'PIPE_ID_MAPPING_UNVERIFIED',severity:'MISSING',detail:'Pipe ID untuk keseluruhan GIS belum dipadankan secara deterministik; garisan tanpa asset ID tidak boleh digunakan sebagai link model.'});
+  if(Number(network?.missingPipeIdSegments||0))issues.push({code:'PIPE_ID_MISSING',severity:'MISSING',
+    count:Number(network.missingPipeIdSegments),detail:`${Number(network.missingPipeIdSegments)} segmen sumber tanpa Pipe ID dalam import aktif; tidak dimasukkan dalam garisan DMA berasaskan ID CSV.`});
+  issues.push({code:'PIPE_ID_MAPPING_UNVERIFIED',severity:'MISSING',detail:'Pipe ID model mesti dipadankan secara deterministik dengan aset/sumber; kedekatan GIS bukan bukti.'});
   issues.push({code:'LENGTH_PROVENANCE_UNVERIFIED',severity:'MISSING',detail:'Panjang jajaran GIS bukan panjang paip kejuruteraan yang telah disahkan.'});
   // Phase 2A has GIS geometry but no hydraulic model tables in production.
   for(const [code,detail] of [
@@ -63,9 +72,15 @@ export async function productionHydraulicStatus(db, dma='') {
     ...(['VALVE_ISOLATION','ALTERNATIVE_SUPPLY'].includes(type)?['Topologi injap/laluan alternatif belum disahkan.']:[]),
     ...(type==='RESERVE_MARGIN'?['Formula dan asas kapasiti belum diluluskan.']:[])
   ]}]));
-  return {zone:selected||'Semua zon',gis:{segmentCount:count,lineParts:Number(row?.lineParts||0),assetCount:Number(row?.assetCount||0),missingDiameterParts:Number(row?.missingDiameterParts||0),lengthSource:'GEOMETRY_DERIVED'},
-    status:'NOT_READY',modelVersion:null,calibrationStatus:'NOT_STARTED',engine:{version:'EPANET 2.2.0',integration:'TEST_ONLY'},
-    capabilities:{topology:'NOT_READY',steadyState:'NOT_READY',extendedPeriod:'NOT_READY',calibration:'NOT_READY',leakLocalisation:'NOT_READY',valveIsolation:'NOT_READY'},issues,
+  return {zone:selected||'Semua zon',gis:{segmentCount:count,lineParts:Number(row?.lineParts||0),assetCount:Number(row?.assetCount||0),
+      missingDiameterParts:Number(row?.missingDiameterParts||0),sourceSegments:Number(network?.sourceSegments||0),
+      missingPipeIdSegments:Number(network?.missingPipeIdSegments||0),missingDiameterSegments:Number(network?.missingDiameterSegments||0),
+      lengthSource:'GEOMETRY_DERIVED'},
+    status:'NOT_READY',modelVersion:null,calibrationStatus:'CALIBRATION DATA INSUFFICIENT',calibrationMatchedCount:0,
+    engine:{version:'EPANET 2.2.0',integration:'TEST_ONLY'},
+    capabilities:{geometry:Number(network?.sourceSegments||0)>0?'PARTIAL':'NOT_READY',topology:'NOT_READY',
+      steadyState:'NOT_READY',extendedPeriod:'NOT_READY',calibration:'NOT_READY',baseline:'NOT_READY',scenario:'NOT_READY',
+      leakModelling:'NOT_READY',leakLocalisation:'NOT_READY',valveIsolation:'NOT_READY'},issues,
     scenarioCapabilities,
     latestOperationalData:'CSV / manual snapshot only; PHASE2A_RELEASE_TEST excluded from engineering evidence.'};
 }

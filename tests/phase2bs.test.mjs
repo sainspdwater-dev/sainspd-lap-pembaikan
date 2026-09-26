@@ -10,7 +10,7 @@ import {randomBytes} from 'node:crypto';
 import {handleStagingHydraulicAction} from '../worker/hydraulic-staging.js';
 
 const root=resolve(fileURLToPath(new URL('..',import.meta.url)));
-const python=join(root,'.phase2b-venv','Scripts','python.exe');
+const python=process.env.SAINS_PYTHON||join(root,'.phase2b-venv','Scripts','python.exe');
 const serverScript=join(root,'hydraulic_service','staging_server.py');
 const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 

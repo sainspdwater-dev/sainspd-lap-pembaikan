@@ -180,7 +180,7 @@ test('sensor upsert does not fail when the existing DMA/ALD form is saved twice'
 });
 
 test('dashboard inline scripts and Phase 2A control IDs parse',()=>{
-  const html=readFileSync(new URL('../dashboard.html',import.meta.url),'utf8');
+  const html=readFileSync(new URL('../staging-site/dashboard.html',import.meta.url),'utf8');
   const scripts=[...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(match=>match[1]).filter(Boolean);
   for (const body of scripts) assert.doesNotThrow(()=>new Function(body));
   for (const id of ['ai-import-panel','ai-import-mapping','ai-preview-import','ai-confirm-import','ai-readiness-status','ai-storage-status','ai-cleanup-preview','ai-cleanup-confirmation']) assert.ok(html.includes(`id="${id}"`));
