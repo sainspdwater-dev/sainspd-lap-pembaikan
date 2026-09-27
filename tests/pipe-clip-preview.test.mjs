@@ -46,6 +46,15 @@ test('invalid WGS84 line is counted, not treated as a DMA segment',async()=>{
   assert.equal(result.zones[0].partCount,0);
 });
 
+test('identical polygon features in one DMA do not double-stage the same pipe',async()=>{
+  const boundary=zone('DMA A',square(0,0,10,10));
+  const result=await previewPipeClip([line([[1,5],[9,5]],'P-1','300')],
+    [boundary,structuredClone(boundary)]);
+  assert.equal(result.duplicatePolygons,1);
+  assert.equal(result.zones[0].partCount,1);
+  assert.equal(result.stagedParts.length,1);
+});
+
 test('KML table description supplies diameter when no direct field exists',async()=>{
   const feature=line([[1,1],[2,2]],'P-2',null);
   delete feature.properties.PIPESIZE;
@@ -74,6 +83,7 @@ test('downloadable audit includes file identity and neutralizes spreadsheet form
   assert.match(csv,/polygon_sha256/);
   assert.match(csv,/cd34/);
   assert.match(csv,/source_normalization/);
+  assert.match(csv,/duplicate_polygons_skipped/);
   assert.match(csv,/missing xmlns:xsi repaired in memory/);
   assert.match(csv,/"'=unsafe"/);
   assert.match(csv,/,"0.500",/);

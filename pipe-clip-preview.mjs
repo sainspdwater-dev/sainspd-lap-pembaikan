@@ -111,6 +111,7 @@ export async function previewPipeClip(features,zoneFeatures,{onProgress=()=>{},s
   if(!Array.isArray(features)||!Array.isArray(zoneFeatures))throw new Error('Fitur paip/polygon tidak sah.');
   if(features.length>maxFeatures)throw new Error(`Terlalu banyak fitur (${features.length}); guna aliran import pelayan untuk fail ini.`);
   const zones=new Map();
+  let duplicatePolygons=0;
   for(const item of zoneFeatures){
     const feature=item.feature||item,name=String(item.name||feature.properties?.name||feature.properties?.Name||'').trim();
     if(!name||!feature.geometry)continue;
@@ -118,7 +119,10 @@ export async function previewPipeClip(features,zoneFeatures,{onProgress=()=>{},s
       if(!rings.length||rings.some(ring=>ring.length<4||!same(ring[0],ring.at(-1))))
         throw new Error(`Polygon ${name} tidak tertutup/sah; clip dihentikan.`);
       const zone=zones.get(name)||{name,polygons:[],partCount:0,sourceIds:new Set(),lengthM:0,
-        noIdParts:0,noDiameterParts:0,mapFeatures:[],mapTruncated:false};
+        noIdParts:0,noDiameterParts:0,mapFeatures:[],mapTruncated:false,seenPolygons:new Set()};
+      const polygonKey=JSON.stringify(rings);
+      if(zone.seenPolygons.has(polygonKey)){duplicatePolygons++;continue;}
+      zone.seenPolygons.add(polygonKey);
       zone.polygons.push({rings,bounds:bbox(rings)});zones.set(name,zone);
     }
   }
@@ -162,7 +166,7 @@ export async function previewPipeClip(features,zoneFeatures,{onProgress=()=>{},s
     if(index%100===0){onProgress({done:index+1,total:features.length});await new Promise(resolve=>setTimeout(resolve,0));}
   }
   onProgress({done:features.length,total:features.length});
-  return {sourceLines,outsideLines,multiDmaLines,invalidGeometry,stagedParts,
+  return {sourceLines,outsideLines,multiDmaLines,invalidGeometry,duplicatePolygons,stagedParts,
     zones:summaries.map(({name,partCount,sourceIds,lengthM,noIdParts,noDiameterParts,mapFeatures,mapTruncated})=>
       ({name,partCount,sourceCount:sourceIds.size,lengthM,noIdParts,noDiameterParts,mapFeatures,mapTruncated}))};
 }
@@ -173,9 +177,9 @@ export function clipAuditCsv(result,{sourceName='',sourceSha256='',polygonSha256
     if(/^[\s]*[=+\-@]/.test(text))text=`'${text}`;
     return `"${text.replaceAll('"','""')}"`;
   };
-  const rows=[['source_name','source_sha256','polygon_sha256','source_normalization','created_at','dma','spatial_parts','unique_kml_ids',
+  const rows=[['source_name','source_sha256','polygon_sha256','source_normalization','created_at','duplicate_polygons_skipped','dma','spatial_parts','unique_kml_ids',
     'geometry_length_km','parts_without_kml_id','parts_without_diameter','outside_lines_all_dmas','multi_dma_lines']];
-  for(const zone of result.zones)rows.push([sourceName,sourceSha256,polygonSha256,sourceNormalization,createdAt,zone.name,
+  for(const zone of result.zones)rows.push([sourceName,sourceSha256,polygonSha256,sourceNormalization,createdAt,result.duplicatePolygons||0,zone.name,
     zone.partCount,zone.sourceCount,(zone.lengthM/1000).toFixed(3),zone.noIdParts,
     zone.noDiameterParts,result.outsideLines,result.multiDmaLines]);
   return rows.map(row=>row.map(safe).join(',')).join('\r\n')+'\r\n';

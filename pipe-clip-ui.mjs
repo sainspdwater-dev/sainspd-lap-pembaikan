@@ -104,7 +104,7 @@ if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded
     summary.replaceChildren();
     const note=document.createElement('p');
     note.className='mb-2 text-amber-700 dark:text-amber-300';
-    note.textContent=`${result.sourceLines} garisan sumber; ${result.outsideLines} di luar semua polygon; ${result.multiDmaLines} bersilang lebih daripada satu DMA; ${result.invalidGeometry} geometri tidak sah. ID/diameter yang ditunjuk berasal daripada KML dan belum disahkan terhadap daftar aset.`;
+    note.textContent=`${result.sourceLines} garisan sumber; ${result.outsideLines} di luar semua polygon; ${result.multiDmaLines} bersilang lebih daripada satu DMA; ${result.invalidGeometry} geometri tidak sah; ${result.duplicatePolygons} polygon pendua identik diabaikan. ID/diameter yang ditunjuk berasal daripada KML dan belum disahkan terhadap daftar aset.`;
     summary.append(note);
     const table=document.createElement('table');table.className='min-w-full text-left border-collapse';
     const head=document.createElement('thead');
