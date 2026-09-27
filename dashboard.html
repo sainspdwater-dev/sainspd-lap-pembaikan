@@ -742,8 +742,12 @@
                                 <input id="ai-ald-pipe-id" class="form-input py-1 text-xs" placeholder="Pipe ID disahkan (pilihan)">
                                 <input id="ai-ald-repair-ref" class="form-input py-1 text-xs" placeholder="Rujukan pembaikan (pilihan)">
                             </div>
-                            <button type="button" id="ai-pick-pressure-cp-map" class="mt-2 px-2 py-1 rounded border border-cyan-600 text-cyan-700 dark:text-cyan-300">Pilih titik tekanan CP di peta</button>
-                            <span id="ai-pick-pressure-cp-status" role="status" class="ml-2 text-[10px]">Koordinat dipilih secara manual; isi tekanan dan masa sebenar sebelum Simpan.</span>
+                            <div class="mt-2 flex flex-wrap gap-2">
+                                <button type="button" id="ai-pick-flow-meter-map" class="px-2 py-1 rounded border border-cyan-600 text-cyan-700 dark:text-cyan-300">Pilih Flow Meter di peta</button>
+                                <button type="button" id="ai-pick-pressure-cp-map" class="px-2 py-1 rounded border border-cyan-600 text-cyan-700 dark:text-cyan-300">Pilih titik tekanan CP di peta</button>
+                                <button type="button" id="ai-pick-prv-map" class="px-2 py-1 rounded border border-cyan-600 text-cyan-700 dark:text-cyan-300">Pilih PRV di peta</button>
+                            </div>
+                            <p id="ai-pick-pressure-cp-status" role="status" class="mt-1 text-[10px]">Klik lokasi sebenar di peta; semak DMA dan tekan Simpan Pemantauan / ALD untuk menyimpan koordinat ke D1. Titik PRV sahaja belum melengkapkan model injap EPANET.</p>
                             <p class="mt-1 text-[10px]">Sumber bacaan dalam borang ini: <strong>MANUAL</strong>. Masa bacaan ialah masa ukuran sebenar, bukan masa import.</p>
                             <input id="ai-investigation-id" class="form-input py-1 text-xs mt-2" placeholder="ID penyiasatan (dijana selepas simpan; guna semula untuk kes sama)" autocomplete="off">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
@@ -4278,6 +4282,6 @@
     <script src="engineering-intake.mjs" type="module"></script>
     <script src="ai-prompt-hydraulic-guide.mjs" type="module"></script>
     <script src="pipe-clip-ui.mjs?v=fd486b6" type="module"></script>
-    <script src="ai-map-capture.mjs" type="module"></script>
+    <script src="ai-map-capture.mjs?v=map-points-1" type="module"></script>
 </body>
 </html>
