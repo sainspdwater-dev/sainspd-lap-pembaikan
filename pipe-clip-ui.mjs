@@ -1,4 +1,4 @@
-import {previewPipeClip,clipAuditCsv,hasPipeLine} from './pipe-clip-preview.mjs';
+import {previewPipeClip,clipAuditCsv,hasPipeLine} from './pipe-clip-preview.mjs?v=fd486b6';
 
 if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded',()=>{
   const byId=id=>document.getElementById(id);
