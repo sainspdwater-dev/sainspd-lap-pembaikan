@@ -30,6 +30,14 @@
       demand:['NODE','base_demand_m3s'],pattern:['PATTERN','multipliers_json'],sourceHead:['SOURCE','head_m'],
       valves:['VALVE','setting'],pumps:['PUMP','curve_ref'],tanks:['TANK','initial_level_m']};
     byId('ai-hydraulic-field-guide').textContent=fieldGuides[key]||'Semak sumber kejuruteraan dan proses kelulusan bagi data ini.';
+    if(key==='sensorMapping'||key==='calibration'){
+      const panel=byId('ai-monitoring-panel');
+      panel.scrollIntoView({behavior:'smooth',block:'center'});
+      panel.classList.add('ring-2','ring-violet-500');
+      setTimeout(()=>panel.classList.remove('ring-2','ring-violet-500'),4000);
+      byId('ai-pick-pressure-cp-status').textContent=fieldGuides[key]+' Bacaan/lokasi yang disimpan untuk DMA ini masih memerlukan pemetaan dan semakan model.';
+      return;
+    }
     if(!inputs[key]){byId('ai-hydraulic-field-guide').scrollIntoView({behavior:'smooth',block:'nearest'});return;}
     openDetails('intake');
     const [type,parameter]=inputs[key],typeControl=byId('ai-eng-entity-type');
@@ -37,6 +45,15 @@
     byId('ai-eng-parameter').value=parameter;byId('ai-eng-parameter').dispatchEvent(new Event('change'));
     byId('ai-eng-report').textContent=fieldGuides[key]+' Masukkan hanya nilai sebenar bersumber; pratonton dan simpan DRAFT sebelum semakan bebas.';
     byId('ai-eng-entity-id').focus();
+  };
+  const issueField=(code,fields)=>{
+    const direct={MISSING_DIAMETER:'diameter',PIPE_ID_MISSING_UNASSIGNED:'pipeId',PIPE_ID_MAPPING_UNVERIFIED:'pipeId',
+      LENGTH_PROVENANCE_UNVERIFIED:'length',TOPOLOGY_UNVERIFIED:'topology',ROUGHNESS_MISSING:'roughness',
+      ELEVATION_MISSING:'elevation',DEMAND_ALLOCATION_MISSING:'demand',SOURCE_HEAD_MISSING:'sourceHead',
+      VALVE_DEFINITION_MISSING:'valves',EQUIPMENT_INVENTORY_UNVERIFIED:'valves',PATTERN_MISSING:'pattern',
+      CALIBRATION_MISSING:'calibration'};
+    if(direct[code])return direct[code];
+    return Object.keys(fields||{}).find(key=>String(code||'').startsWith(`HYDRAULIC_${key.toUpperCase()}_`))||null;
   };
   const renderQuick=(h=null)=>{
     const dma=selectedDma(),admin=localStorage.getItem('sainsUserLevel')==='ADMIN';
@@ -143,13 +160,21 @@
       currentHydraulic=h;
       renderQuick(h);
       host.textContent=`${h.zone} · Model ${h.status} · EPANET ${h.engine.integration}\nGIS: ${h.gis.segmentCount} segmen zon; ${h.gis.missingDiameterParts} bahagian tanpa diameter. Segmen sumber tanpa Pipe ID belum dapat dikaitkan secara sah kepada DMA. Panjang GIS bukan panjang aset yang disahkan.`;
-      for(const field of Object.values(h.fields||{})){
-        const item=document.createElement('div');item.className='rounded border p-1';
-        item.textContent=`${field.label}: ${field.status} — ${field.detail}`;fields.append(item);
+      for(const [key,field] of Object.entries(h.fields||{})){
+        const item=document.createElement('button');item.type='button';
+        item.className='rounded border p-2 text-left hover:border-violet-500 focus-visible:outline-2 focus-visible:outline-violet-600';
+        item.textContent=`${field.label}: ${field.status} — ${field.detail} · Klik untuk isi/semak →`;
+        item.addEventListener('click',()=>goToField(key));fields.append(item);
       }
       capabilities.textContent=`STEADY-STATE: ${h.capabilities.steadyState} · BASELINE: ${h.capabilities.baseline} · CALIBRATION: ${h.capabilities.calibration} · PIPE FAILURE: ${h.scenarioCapabilities.PIPE_CLOSED?.status||'NOT_READY'} · VALVE ISOLATION: ${h.scenarioCapabilities.VALVE_ISOLATION?.status||'NOT_READY'} · SCENARIO COMPARE: ${h.scenarioCapabilities.SCENARIO_COMPARE?.status||'NOT_READY'}`;
       byId('ai-hydraulic-issues-map').disabled=!(h.gis?.segmentCount>0);
-      for(const item of h.issues){const li=document.createElement('li');li.textContent=`${item.severity}: ${item.detail}`;issues.append(li);}
+      for(const item of h.issues){const li=document.createElement('li');
+        li.append(document.createTextNode(`${item.severity}: ${item.detail} `));
+        const key=issueField(item.code,h.fields);
+        if(key){const link=document.createElement('button');link.type='button';
+          link.className='underline text-violet-700 dark:text-violet-300';
+          link.textContent='Isi / semak data →';link.addEventListener('click',()=>goToField(key));li.append(link);}
+        issues.append(li);}
       for(const [name,item] of Object.entries(h.scenarioCapabilities||{})){
         const li=document.createElement('li');li.textContent=`${name}: ${item.status} — ${(item.reasons||[]).join(' ')}`;scenarios?.append(li);
       }

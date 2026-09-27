@@ -720,7 +720,7 @@
                             <div id="ai-import-report" aria-live="polite" class="mt-2 text-slate-700 dark:text-slate-200"></div>
                         </details>
 
-                        <div class="rounded border border-cyan-200 dark:border-cyan-800 bg-cyan-50/60 dark:bg-cyan-950/20 p-2 text-xs">
+                        <div id="ai-monitoring-panel" class="rounded border border-cyan-200 dark:border-cyan-800 bg-cyan-50/60 dark:bg-cyan-950/20 p-2 text-xs">
                             <div class="font-bold text-cyan-700 dark:text-cyan-300 mb-1"><i class="fa-solid fa-gauge-high mr-1"></i>Pemantauan Tekanan DMA & ALD</div>
                             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 <div><label class="font-semibold text-[10px]">Tekanan Inlet (bar)</label><input id="ai-pressure-inlet" type="number" step="any" class="form-input py-1 text-xs" placeholder="Cth: 2.8"></div>
@@ -788,7 +788,8 @@
                             <p class="mt-1 text-amber-700">Jajaran GIS bukan model tekanan. Baseline SAINS kekal terkunci sehingga model DMA lengkap dan disahkan.</p>
                             <button type="button" id="ai-hydraulic-refresh" class="mt-2 px-2 py-1 rounded bg-violet-700 text-white">Semak Model DMA</button>
                             <div id="ai-hydraulic-status" aria-live="polite" class="mt-2 whitespace-pre-line">Pilih satu DMA di atas.</div>
-                            <div id="ai-hydraulic-fields" class="mt-2 grid grid-cols-2 gap-1" aria-label="Status parameter hidraulik DMA"></div>
+                            <p class="mt-2 text-xs text-slate-600 dark:text-slate-300">Tekan mana-mana data MISSING/PARTIAL di bawah untuk pergi terus ke medan berkaitan. Bacaan pemantauan D1 tidak terus menjadi parameter model yang diluluskan.</p>
+                            <div id="ai-hydraulic-fields" class="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1" aria-label="Status parameter hidraulik DMA"></div>
                             <div id="ai-hydraulic-capabilities" class="mt-2 whitespace-pre-line" aria-live="polite"></div>
                             <button type="button" id="ai-hydraulic-issues-map" disabled class="mt-2 px-2 py-1 rounded bg-slate-700 text-white disabled:opacity-40">Show Hydraulic Issues</button>
                             <details class="mt-2"><summary class="font-semibold cursor-pointer">Hydraulic Model Issues</summary><ul id="ai-hydraulic-issues" class="list-disc pl-4 mt-1"></ul></details>
@@ -2888,7 +2889,9 @@
                 if (!response.ok || result.status !== 'success') throw new Error(result.message || 'Gagal menyimpan data.');
                 showToast(result.message, 'success');
                 if (result.investigationId) document.getElementById('ai-investigation-id').value = result.investigationId;
-                document.getElementById('ai-flow-upload-status').textContent = 'Bacaan manual / ALD telah disimpan dalam D1.';
+                document.getElementById('ai-flow-upload-status').textContent =
+                    `D1 DMA ${dma}: ${result.observationsInserted || 0} bacaan baharu, ${sensors.length} lokasi sensor/PRV disimpan. ` +
+                    'Bacaan pemantauan ini belum menjadi parameter model hidraulik yang diluluskan.';
                 if (window.phase2aRefreshReadiness) window.phase2aRefreshReadiness();
             } catch (error) {
                 showToast(error.message, 'error');
@@ -4278,7 +4281,7 @@
         });
     </script>
     <script src="phase2a-ui.js" defer></script>
-    <script src="phase2b-ui.js?v=hydraulic-guide-1" defer></script>
+    <script src="phase2b-ui.js?v=hydraulic-guide-2" defer></script>
     <script src="engineering-intake.mjs" type="module"></script>
     <script src="ai-prompt-hydraulic-guide.mjs" type="module"></script>
     <script src="pipe-clip-ui.mjs?v=fd486b6" type="module"></script>
