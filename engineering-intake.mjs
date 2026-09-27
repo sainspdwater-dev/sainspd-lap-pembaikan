@@ -10,6 +10,12 @@ export const definitions = {
   MODEL: {equipment_inventory_status:'TEXT',demand_allocation_method:'TEXT',temporal_boundary_status:'TEXT'}
 };
 export const IMPORT_COLUMNS=['entity_type','entity_id','parameter','value','unit','classification','source_ref','effective_at','notes','review_status'];
+export function exactAutoFillCandidate(autoFill,type,id,parameter){
+  const requested=String(id||'').trim().toUpperCase();
+  if(!requested)return null;
+  return autoFill?.candidates?.find(row=>row.entity_type===type&&
+    String(row.entity_id||'').trim().toUpperCase()===requested&&row.parameter===parameter)||null;
+}
 const positive = new Set(['diameter_mm','length_m','hazen_c','diameter_m']);
 const nonnegative = new Set(['base_demand_m3s']);
 const trimmed = value => String(value ?? '').trim();
@@ -96,6 +102,29 @@ if (typeof document!=='undefined') document.addEventListener('DOMContentLoaded',
     enteredBy:byId('ai-eng-operator').value});
   let fileRows=null,sourceSha256='',pending=null,autoFill=null;
   const reset=()=>{pending=null;byId('ai-eng-save').disabled=true;byId('ai-eng-confirm').checked=false;};
+  const selectedEvidence=()=>{
+    const panel=byId('ai-eng-selected-evidence');panel.replaceChildren();
+    const type=byId('ai-eng-entity-type').value,id=byId('ai-eng-entity-id').value.trim();
+    const parameter=byId('ai-eng-parameter').value;
+    if(!id){panel.textContent='Pilih Entity ID sebenar untuk melihat calon nilai bagi parameter ini.';return;}
+    if(!autoFill){panel.textContent='Tekan Auto-Fill Existing Data dahulu. Nilai untuk Pipe ID lain tidak boleh digunakan bagi '+id+'.';return;}
+    const match=exactAutoFillCandidate(autoFill,type,id,parameter);
+    if(!match){panel.textContent=`Tiada calon ${type}/${id}/${parameter} dalam pratonton Auto-Fill semasa. Semak daftar aset/as-built untuk ID ini; jangan salin nilai daripada ID lain.`;return;}
+    const info=document.createElement('span');
+    info.textContent=`Calon tepat ${type}/${id}/${parameter}: ${match.value} ${match.unit} · ${match.classification} · sumber ${match.source_ref}. Ini belum diluluskan untuk model.`;
+    const button=document.createElement('button');button.type='button';button.className='ml-2 underline font-semibold';
+    button.textContent='Salin calon ke borang DRAFT';
+    button.addEventListener('click',()=>{
+      byId('ai-eng-value').value=String(match.value??'');
+      byId('ai-eng-classification').value=match.classification;
+      byId('ai-eng-source').value=match.source_ref||'';
+      byId('ai-eng-notes').value=match.notes||'';
+      byId('ai-eng-effective').value='';
+      reset();report('Calon untuk ID dan parameter yang sama disalin ke borang. Sahkan bukti, isi tarikh efektif sebenar, kemudian Pratonton entri manual. Belum disimpan.');
+      byId('ai-eng-effective').focus();
+    });
+    panel.append(info,button);
+  };
   const api=async body=>{
     const response=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json',
       'Authorization':`Bearer ${localStorage.getItem('sainsToken')||''}`},body:JSON.stringify(body)});
@@ -137,11 +166,16 @@ if (typeof document!=='undefined') document.addEventListener('DOMContentLoaded',
     byId('ai-eng-unit').value=definitions[type]?.[parameter.value]||'';
     const list=byId('ai-eng-entity-options');list.replaceChildren();
     for(const id of autoFill?.entityIds?.[type]||[]){const option=document.createElement('option');option.value=id;list.append(option);}
-    reset();
+    reset();selectedEvidence();
   };
   byId('ai-eng-entity-type')?.addEventListener('change',updateEntityOptions);
   byId('ai-eng-parameter')?.addEventListener('change',()=>{byId('ai-eng-unit').value=
-    definitions[byId('ai-eng-entity-type').value]?.[byId('ai-eng-parameter').value]||'';reset();});
+    definitions[byId('ai-eng-entity-type').value]?.[byId('ai-eng-parameter').value]||'';reset();selectedEvidence();});
+  byId('ai-eng-entity-id')?.addEventListener('input',()=>{reset();selectedEvidence();});
+  for(const id of ['ai-eng-value','ai-eng-classification','ai-eng-source','ai-eng-effective','ai-eng-notes']){
+    byId(id)?.addEventListener('input',reset);
+    byId(id)?.addEventListener('change',reset);
+  }
   updateEntityOptions();
   byId('ai-eng-preview-manual')?.addEventListener('click',()=>{sourceSha256='';preview([manualRow()]);});
   byId('ai-eng-cancel')?.addEventListener('click',()=>{
@@ -178,6 +212,7 @@ if (typeof document!=='undefined') document.addEventListener('DOMContentLoaded',
   byId('ai-eng-autofill')?.addEventListener('click',async()=>{
     reset();autoFill=null;byId('ai-eng-preview-autofill').disabled=true;
     byId('ai-eng-autofill-rows').replaceChildren();
+    selectedEvidence();
     if(!selectedDma()||!context().modelId||!context().version)return report('Pilih DMA dan model/versi berdaftar dahulu.');
     try{
       const data=await api({action:'autoFillHydraulicPreview',...base()});autoFill=data.autoFill;
@@ -197,7 +232,7 @@ if (typeof document!=='undefined') document.addEventListener('DOMContentLoaded',
         line.textContent=`REVIEWED_ENGINEERING ${row.entityType}/${row.entityId}/${row.parameter}: ${row.value} · ${row.classification} · ${row.sourceRef} · ${row.effectiveAt}`;
         byId('ai-eng-autofill-rows').append(line);}
       byId('ai-eng-preview-autofill').disabled=!a.candidates.length;
-      updateEntityOptions();report('Auto-Fill baca sahaja. Semak sumber dan masukkan tarikh efektif yang dibuktikan sebelum pratonton simpan DRAFT.');
+      updateEntityOptions();selectedEvidence();report('Auto-Fill baca sahaja. Semak sumber dan masukkan tarikh efektif yang dibuktikan sebelum pratonton simpan DRAFT.');
     }catch(error){byId('ai-eng-autofill-report').textContent=`Auto-Fill gagal: ${error.message}`;}
   });
   byId('ai-eng-preview-autofill')?.addEventListener('click',async()=>{
@@ -245,6 +280,7 @@ if (typeof document!=='undefined') document.addEventListener('DOMContentLoaded',
       confirmationHash:pending.hash,confirm:true});
       report(`${result.saved} rekod DRAFT disimpan untuk ${pending.dma}. Belum diluluskan; baseline masih dikunci.`);
       autoFill=null;byId('ai-eng-preview-autofill').disabled=true;
+      selectedEvidence();
       window.phase2bRefreshHydraulic?.();
     }catch(error){report(`Simpan gagal: ${error.message}`);}finally{reset();}
   });
