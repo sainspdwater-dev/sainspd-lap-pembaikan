@@ -2,6 +2,9 @@
 // authoritative pipe_network_* tables or enables a hydraulic simulation.
 const actions=new Set(['beginPipeCandidateDraft','appendPipeCandidateParts',
   'finalizePipeCandidateDraft','getPipeCandidateDraft']);
+// This published DMA polygon has candidate lines but no line in the current
+// active import. It is valid for REVIEW_REQUIRED candidates only, never active GIS.
+const draftOnlyPolygonZones=new Set(['500mm Sunggala Boundry']);
 const reply=(body,headers,status=200)=>new Response(JSON.stringify(body),{status,
   headers:{...headers,'Content-Type':'application/json','Cache-Control':'no-store'}});
 const shaPattern=/^[a-f0-9]{64}$/i;
@@ -124,7 +127,7 @@ export async function handlePipeCandidateAction({action,data,env,user,headers}){
         fail('Setiap upload mesti mengandungi 1–100 bahagian.');
       const zonesResult=await env.DB.prepare(`SELECT DISTINCT z.zone_name FROM pipe_network_zone_lines z
         JOIN pipe_network_active a ON a.import_id=z.import_id AND a.singleton=1`).all();
-      const zones=new Set((zonesResult.results||[]).map(row=>row.zone_name));
+      const zones=new Set([...(zonesResult.results||[]).map(row=>row.zone_name),...draftOnlyPolygonZones]);
       if(!zones.size)fail('Tiada polygon/zon aktif D1 untuk padanan calon.',409);
       const rows=[];const seen=new Set();
       for(const input of data.parts){

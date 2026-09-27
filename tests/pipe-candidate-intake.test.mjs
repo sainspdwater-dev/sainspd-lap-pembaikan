@@ -70,3 +70,16 @@ test('guest, staging token, unknown DMA and malformed geometry never write candi
   assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM pipe_candidate_parts').get().n,0);
   sql.close();
 });
+
+test('published Sunggala polygon may be staged for review without an active line',async()=>{
+  const {sql,db}=fixture();
+  const batchId=(await (await call(db,'beginPipeCandidateDraft',start)).json()).batchId;
+  const response=await call(db,'appendPipeCandidateParts',{batchId,parts:[
+    {...part(0,0),zoneName:'500mm Sunggala Boundry'}]});
+  assert.equal(response.status,200);
+  assert.equal(sql.prepare('SELECT zone_name FROM pipe_candidate_parts').get().zone_name,
+    '500mm Sunggala Boundry');
+  assert.equal(sql.prepare('SELECT import_id FROM pipe_network_active WHERE singleton=1').get().import_id,'active-1');
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM pipe_network_zone_lines').get().n,1);
+  sql.close();
+});
