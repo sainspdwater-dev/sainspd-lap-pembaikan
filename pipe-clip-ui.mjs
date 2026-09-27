@@ -165,7 +165,8 @@ if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded
       currentPreview=result;
       currentMeta={sourceName:sourceFile.name,sourceSha256:sha,polygonSha256:polygonSha};
       auditCsv=clipAuditCsv(result,{sourceName:sourceFile.name,sourceSha256:sha,
-        polygonSha256:polygonSha,createdAt:new Date().toISOString()});
+        polygonSha256:polygonSha,sourceNormalization:window.aiSpatialNormalizationNote||'',
+        createdAt:new Date().toISOString()});
       auditButton.disabled=false;
       stageButton.disabled=result.stagedParts.length===0;
       stageStatus.textContent=result.stagedParts.length

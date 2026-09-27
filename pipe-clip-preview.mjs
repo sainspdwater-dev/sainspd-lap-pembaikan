@@ -167,15 +167,15 @@ export async function previewPipeClip(features,zoneFeatures,{onProgress=()=>{},s
       ({name,partCount,sourceCount:sourceIds.size,lengthM,noIdParts,noDiameterParts,mapFeatures,mapTruncated}))};
 }
 
-export function clipAuditCsv(result,{sourceName='',sourceSha256='',polygonSha256='',createdAt=''}={}) {
+export function clipAuditCsv(result,{sourceName='',sourceSha256='',polygonSha256='',sourceNormalization='',createdAt=''}={}) {
   const safe=value=>{
     let text=String(value??'');
     if(/^[\s]*[=+\-@]/.test(text))text=`'${text}`;
     return `"${text.replaceAll('"','""')}"`;
   };
-  const rows=[['source_name','source_sha256','polygon_sha256','created_at','dma','spatial_parts','unique_kml_ids',
+  const rows=[['source_name','source_sha256','polygon_sha256','source_normalization','created_at','dma','spatial_parts','unique_kml_ids',
     'geometry_length_km','parts_without_kml_id','parts_without_diameter','outside_lines_all_dmas','multi_dma_lines']];
-  for(const zone of result.zones)rows.push([sourceName,sourceSha256,polygonSha256,createdAt,zone.name,
+  for(const zone of result.zones)rows.push([sourceName,sourceSha256,polygonSha256,sourceNormalization,createdAt,zone.name,
     zone.partCount,zone.sourceCount,(zone.lengthM/1000).toFixed(3),zone.noIdParts,
     zone.noDiameterParts,result.outsideLines,result.multiDmaLines]);
   return rows.map(row=>row.map(safe).join(',')).join('\r\n')+'\r\n';

@@ -3076,21 +3076,30 @@
             showLoading(true, 50, "Memproses fail KML/KMZ/GeoJSON spatial...");
 
             try {
+                let repairNote = '';
                 if (fileName.endsWith('.kmz')) {
                     const zipContent = await new JSZip().loadAsync(file);
                     const kmlEntry = Object.values(zipContent.files).find(entry => !entry.dir && entry.name.toLowerCase().endsWith('.kml'));
                     if (!kmlEntry) throw new Error("Tiada fail .kml dijumpai di dalam arkib .kmz.");
-                    parseKmlTextToMap(await kmlEntry.async('text'), file.name);
+                    const { prepareKmlXml } = await import('./kml-namespace.mjs');
+                    const prepared = prepareKmlXml(await kmlEntry.async('text'));
+                    parseKmlTextToMap(prepared.xml, file.name);
+                    repairNote = prepared.repairNote;
                 } else if (fileName.endsWith('.kml')) {
-                    parseKmlTextToMap(await file.text(), file.name);
+                    const { prepareKmlXml } = await import('./kml-namespace.mjs');
+                    const prepared = prepareKmlXml(await file.text());
+                    parseKmlTextToMap(prepared.xml, file.name);
+                    repairNote = prepared.repairNote;
                 } else if (fileName.endsWith('.geojson')) {
                     parseGeoJsonTextToMap(await file.text(), file.name);
                 } else {
                     throw new Error("Format fail tidak disokong. Sila guna KML, KMZ atau GeoJSON.");
                 }
-                showToast(`Fail spatial berjaya dipetakan: ${aiSpatialSummary?.featureCount || 0} fitur.`, "success");
+                window.aiSpatialNormalizationNote = repairNote;
+                showToast(`Fail spatial berjaya dipetakan: ${aiSpatialSummary?.featureCount || 0} fitur.${repairNote ? ' ' + repairNote : ''}`, "success");
             } catch(err) {
                 aiSpatialSummary = null;
+                window.aiSpatialNormalizationNote = '';
                 showToast("Ralat memproses fail spatial: " + err.message, "error");
             } finally {
                 showLoading(false);

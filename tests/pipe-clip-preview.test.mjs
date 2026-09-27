@@ -67,11 +67,14 @@ test('KML MultiGeometry line remains visible to preview and clip',async()=>{
 test('downloadable audit includes file identity and neutralizes spreadsheet formulas',()=>{
   const csv=clipAuditCsv({outsideLines:1,multiDmaLines:2,zones:[{name:'=unsafe',partCount:3,
     sourceCount:2,lengthM:500,noIdParts:1,noDiameterParts:1}]},
-    {sourceName:'network.kml',sourceSha256:'ab12',polygonSha256:'cd34',createdAt:'2026-09-27T00:00:00Z'});
+    {sourceName:'network.kml',sourceSha256:'ab12',polygonSha256:'cd34',
+      sourceNormalization:'missing xmlns:xsi repaired in memory',createdAt:'2026-09-27T00:00:00Z'});
   assert.match(csv,/source_sha256/);
   assert.match(csv,/ab12/);
   assert.match(csv,/polygon_sha256/);
   assert.match(csv,/cd34/);
+  assert.match(csv,/source_normalization/);
+  assert.match(csv,/missing xmlns:xsi repaired in memory/);
   assert.match(csv,/"'=unsafe"/);
   assert.match(csv,/,"0.500",/);
 });
