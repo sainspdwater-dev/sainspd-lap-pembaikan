@@ -1,8 +1,9 @@
 // Reviewed engineering intake for one registered DMA/model version. This never
 // creates a model, changes GIS assets, or starts a hydraulic simulation.
 import {previewEngineeringRows, validateEngineeringRow} from '../staging-site/engineering-intake.mjs';
+import {buildHydraulicAutoFill} from './hydraulic-autofill.js';
 
-const actions=new Set(['listHydraulicModelsForDma','registerHydraulicDraftModel','getHydraulicIntake','previewHydraulicIntake','saveHydraulicDraft','reviewHydraulicDraft']);
+const actions=new Set(['listHydraulicModelsForDma','registerHydraulicDraftModel','getHydraulicIntake','autoFillHydraulicPreview','previewHydraulicIntake','saveHydraulicDraft','reviewHydraulicDraft']);
 const reply=(body,headers,status=200)=>new Response(JSON.stringify(body),{status,headers:{...headers,'Content-Type':'application/json','Cache-Control':'no-store'}});
 const identity=user=>String(user?.username||user?.email||'').trim().slice(0,100);
 const contextOf=data=>({modelId:String(data.modelId||'').trim(),version:data.version,enteredBy:''});
@@ -103,6 +104,10 @@ export async function handleHydraulicIntakeAction({action,data,env,user,headers}
       return reply({status:'success',dma:canonicalDma,modelId,version:1,validationStatus:'NOT_READY',baselineEnabled:false},headers);
     }
     const model=await registeredModel(env.DB,data);
+    if(action==='autoFillHydraulicPreview'){
+      const preview=await buildHydraulicAutoFill(env.DB,model);
+      return reply({status:'success',autoFill:preview},headers);
+    }
     if(action==='getHydraulicIntake'){
       const reviews=await latestReviews(env.DB,model.model_id,model.version);
       return reply({status:'success',dma:model.zone_name,modelId:model.model_id,version:model.version,reviews,

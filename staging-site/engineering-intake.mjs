@@ -1,4 +1,4 @@
-// Staging-only engineering intake PREVIEW. No network calls, persistence or approval.
+// Reviewed engineering intake for the selected DMA; preview is read-only.
 export const definitions = {
   PIPE: {pipe_id:'TEXT',from_node_id:'TEXT',to_node_id:'TEXT',diameter_mm:'mm',length_m:'m',hazen_c:'1'},
   NODE: {elevation_m:'m',base_demand_m3s:'m3/s'},
@@ -94,7 +94,7 @@ if (typeof document!=='undefined') document.addEventListener('DOMContentLoaded',
   const selectedDma=()=>byId('ai-filter-district')?.value?.trim()||'';
   const context=()=>({modelId:byId('ai-eng-model').value,version:byId('ai-eng-version').value,
     enteredBy:byId('ai-eng-operator').value});
-  let fileRows=null,sourceSha256='',pending=null;
+  let fileRows=null,sourceSha256='',pending=null,autoFill=null;
   const reset=()=>{pending=null;byId('ai-eng-save').disabled=true;byId('ai-eng-confirm').checked=false;};
   const api=async body=>{
     const response=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json',
@@ -109,20 +109,45 @@ if (typeof document!=='undefined') document.addEventListener('DOMContentLoaded',
     if(localStorage.getItem('sainsUserLevel')!=='ADMIN')return report('ADMIN sahaja.');
     if(!selectedDma())return report('Pilih satu DMA operasi daripada dropdown District Metered Area dahulu.');
     const local=previewEngineeringRows(rows,context());
-    report(`VALIDASI SETEMPAT · ${local.valid} diterima; ${local.invalid} ditolak. ${local.firstErrors.join(' | ')}\nBelum disimpan.`);
+    const evidence=rows.slice(0,20).map((row,index)=>
+      `Baris ${index+1}: ${row.entity_type}/${row.entity_id}/${row.parameter} = ${row.value||'MISSING'} ${row.unit||''} · ${row.classification} · ${row.source_ref||'tiada sumber'} · ${row.effective_at||'tiada masa'}`).join('\n');
+    report(`VALIDASI SETEMPAT · ${local.valid} diterima; ${local.invalid} ditolak. ${local.firstErrors.join(' | ')}\n${evidence}\nBelum disimpan.`);
     if(local.invalid)return;
     try{
       const result=await api({action:'previewHydraulicIntake',...base(),rows,sourceSha256});
       const p=result.preview;
       report(`PRATONTON DMA ${selectedDma()} · ${p.accepted} diterima; ${p.rejected} ditolak.\n`+
         `VERIFIED ${p.classes.VERIFIED}; MANUAL ${p.classes.MANUAL}; ASSUMED ${p.classes.ASSUMED}; MISSING ${p.classes.MISSING}.\n`+
-        `${sourceSha256?`SHA-256 fail: ${sourceSha256}\n`:''}${[...p.firstErrors,...p.conflicts].join('\n')}\n${p.message}`);
+        `${sourceSha256?`SHA-256 fail: ${sourceSha256}\n`:''}${evidence}\n${[...p.firstErrors,...p.conflicts].join('\n')}\n${p.message}`);
       if(p.confirmationHash){pending={rows,hash:p.confirmationHash,dma:selectedDma(),modelId:base().modelId,version:base().version,sha:sourceSha256};
         byId('ai-eng-save').disabled=false;}
     }catch(error){report(`Belum boleh disimpan: ${error.message}\nPratonton setempat tidak membuktikan model/DMA telah didaftarkan.`);}
   };
-  const manualRow=()=>Object.fromEntries(fields.map(key=>[key,byId(`ai-eng-${(aliases[key]||key).replaceAll('_','-')}`)?.value]));
+  const effectiveIso=value=>value?new Date(value).toISOString():'';
+  const manualRow=()=>Object.fromEntries(fields.map(key=>[key,key==='effective_at'
+    ?effectiveIso(byId('ai-eng-effective').value)
+    :key==='review_status'?'DRAFT':byId(`ai-eng-${(aliases[key]||key).replaceAll('_','-')}`)?.value]));
+  const updateEntityOptions=()=>{
+    const type=byId('ai-eng-entity-type').value,parameter=byId('ai-eng-parameter');
+    const prior=parameter.value;parameter.replaceChildren();
+    for(const [key,unit] of Object.entries(definitions[type]||{})){
+      const option=document.createElement('option');option.value=key;option.textContent=`${key} (${unit})`;parameter.append(option);
+    }
+    if([...parameter.options].some(option=>option.value===prior))parameter.value=prior;
+    byId('ai-eng-unit').value=definitions[type]?.[parameter.value]||'';
+    const list=byId('ai-eng-entity-options');list.replaceChildren();
+    for(const id of autoFill?.entityIds?.[type]||[]){const option=document.createElement('option');option.value=id;list.append(option);}
+    reset();
+  };
+  byId('ai-eng-entity-type')?.addEventListener('change',updateEntityOptions);
+  byId('ai-eng-parameter')?.addEventListener('change',()=>{byId('ai-eng-unit').value=
+    definitions[byId('ai-eng-entity-type').value]?.[byId('ai-eng-parameter').value]||'';reset();});
+  updateEntityOptions();
   byId('ai-eng-preview-manual')?.addEventListener('click',()=>{sourceSha256='';preview([manualRow()]);});
+  byId('ai-eng-cancel')?.addEventListener('click',()=>{
+    reset();for(const id of ['ai-eng-entity-id','ai-eng-value','ai-eng-source','ai-eng-effective','ai-eng-notes'])byId(id).value='';
+    report('Entri manual dibatalkan; tiada data disimpan.');
+  });
   byId('ai-eng-find-model')?.addEventListener('click',async()=>{
     reset();if(!selectedDma())return report('Pilih DMA dahulu.');
     try{const data=await api({action:'listHydraulicModelsForDma',dma:selectedDma()});
@@ -139,6 +164,40 @@ if (typeof document!=='undefined') document.addEventListener('DOMContentLoaded',
       report(`Model DRAFT ${data.modelId} v${data.version} didaftarkan bagi ${data.dma}. STEADY-STATE dan baseline masih NOT READY.`);
       window.phase2bRefreshHydraulic?.();
     }catch(error){report(`Model tidak didaftarkan: ${error.message}`);}
+  });
+  byId('ai-eng-autofill')?.addEventListener('click',async()=>{
+    reset();autoFill=null;byId('ai-eng-preview-autofill').disabled=true;
+    byId('ai-eng-autofill-rows').replaceChildren();
+    if(!selectedDma()||!context().modelId||!context().version)return report('Pilih DMA dan model/versi berdaftar dahulu.');
+    try{
+      const data=await api({action:'autoFillHydraulicPreview',...base()});autoFill=data.autoFill;
+      const a=autoFill,s=a.summary;
+      byId('ai-eng-autofill-report').textContent=`Auto-Fill Result — ${a.dma}\n`+
+        `Pipe IDs found: ${s.pipeIdsFound}; Diameters found: ${s.diametersFound}; GIS lengths found (GEOMETRY_DERIVED): ${s.gisLengthsFound}.\n`+
+        `Reviewed engineering lengths found: ${s.reviewedEngineeringLengthsFound}; Reviewed Hazen C found: ${s.reviewedHazenCFound}.\n`+
+        `Node elevations found: ${s.nodeElevationsFound}; Demands found: ${s.demandsFound}; Source heads found: ${s.sourceHeadsFound}; Sensor mappings found: ${s.approvedSensorMappingsFound}; linked approved observations: ${s.approvedObservationsFound}.\n`+
+        `Calon DRAFT dipaparkan: ${a.candidates.length}/${a.totalCandidates}; baki selepas batch ini: ${a.remainingCandidates}.\n`+
+        `Unresolved Pipe IDs: ${a.unresolvedPipeIdCount}; konflik: ${a.conflictCount}; rekod sedia ada dilindungi: ${a.alreadyReviewedCount}.\n`+
+        `Missing:\n${a.missing.join('\n')}\nConflicts:\n${a.conflicts.slice(0,10).join('\n')||'Tiada'}\n`+
+        `Duplicate GIS parts: ${s.gisParts-s.distinctGisPipeIds} (bahagian geometri, bukan Pipe ID baharu).`;
+      for(const row of a.candidates){const line=document.createElement('div');line.className='border-b py-1';
+        line.textContent=`${row.entity_id}/${row.parameter}: ${row.value} ${row.unit} · ${row.classification} · ${row.source_ref} · ${row.notes}`;
+        byId('ai-eng-autofill-rows').append(line);}
+      if(a.unresolvedPipeIds.length){const line=document.createElement('div');line.textContent=`Unresolved Pipe IDs: ${a.unresolvedPipeIds.join(', ')}`;byId('ai-eng-autofill-rows').append(line);}
+      if(a.alreadyReviewed.length){const line=document.createElement('div');line.textContent=`Already reviewed/protected: ${a.alreadyReviewed.slice(0,20).join(', ')}`;byId('ai-eng-autofill-rows').append(line);}
+      for(const row of a.reviewedEvidence){const line=document.createElement('div');line.className='border-b py-1';
+        line.textContent=`REVIEWED_ENGINEERING ${row.entityType}/${row.entityId}/${row.parameter}: ${row.value} · ${row.classification} · ${row.sourceRef} · ${row.effectiveAt}`;
+        byId('ai-eng-autofill-rows').append(line);}
+      byId('ai-eng-preview-autofill').disabled=!a.candidates.length;
+      updateEntityOptions();report('Auto-Fill baca sahaja. Semak sumber dan masukkan tarikh efektif yang dibuktikan sebelum pratonton simpan DRAFT.');
+    }catch(error){byId('ai-eng-autofill-report').textContent=`Auto-Fill gagal: ${error.message}`;}
+  });
+  byId('ai-eng-preview-autofill')?.addEventListener('click',async()=>{
+    if(!autoFill||autoFill.dma!==selectedDma()||autoFill.modelId!==base().modelId||autoFill.version!==base().version)
+      return report('DMA/model berubah; jalankan Auto-Fill semula.');
+    if(!byId('ai-eng-autofill-effective').value)return report('Tarikh efektif sumber yang disahkan wajib; jangan gunakan tarikh rekaan.');
+    const effectiveAt=effectiveIso(byId('ai-eng-autofill-effective').value);
+    sourceSha256='';await preview(autoFill.candidates.map(row=>({...row,effective_at:effectiveAt})));
   });
   const mapFields=()=>{
     const keys=Object.keys(fileRows?.[0]||{}),panel=byId('ai-eng-column-map');panel.replaceChildren();
@@ -177,6 +236,7 @@ if (typeof document!=='undefined') document.addEventListener('DOMContentLoaded',
     try{const result=await api({action:'saveHydraulicDraft',...base(),rows:pending.rows,sourceSha256:pending.sha,
       confirmationHash:pending.hash,confirm:true});
       report(`${result.saved} rekod DRAFT disimpan untuk ${pending.dma}. Belum diluluskan; baseline masih dikunci.`);
+      autoFill=null;byId('ai-eng-preview-autofill').disabled=true;
       window.phase2bRefreshHydraulic?.();
     }catch(error){report(`Simpan gagal: ${error.message}`);}finally{reset();}
   });
@@ -202,6 +262,8 @@ if (typeof document!=='undefined') document.addEventListener('DOMContentLoaded',
     }catch(error){panel.textContent=`Rekod tidak tersedia: ${error.message}`;}
   };
   byId('ai-eng-load-reviews')?.addEventListener('click',loadReviews);
-  byId('ai-filter-district')?.addEventListener('change',()=>{reset();report('DMA berubah; pratonton semula sebelum menyimpan.');});
+  byId('ai-filter-district')?.addEventListener('change',()=>{reset();autoFill=null;byId('ai-eng-preview-autofill').disabled=true;
+    byId('ai-eng-autofill-rows').replaceChildren();byId('ai-eng-autofill-report').textContent='DMA berubah; jalankan Auto-Fill semula.';
+    updateEntityOptions();report('DMA berubah; pratonton semula sebelum menyimpan.');});
   for(const id of ['ai-eng-model','ai-eng-version','ai-eng-operator'])byId(id)?.addEventListener('input',reset);
 });

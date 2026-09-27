@@ -1,7 +1,7 @@
 // Small production-safe status panel in the existing AI Agent; no model runs.
 (() => {
   const byId=id=>document.getElementById(id);
-  let issueLayer=null,issueZone='';
+  let issueLayer=null,issueZone='',currentHydraulic=null;
   const clearIssueLayer=()=>{if(issueLayer&&typeof aiAgentMap!=='undefined'&&aiAgentMap)aiAgentMap.removeLayer(issueLayer);issueLayer=null;issueZone='';};
   const showIssues=async()=>{
     const dma=byId('ai-filter-district')?.value?.trim();if(!dma)return;
@@ -12,14 +12,36 @@
       const response=await fetch(url,{headers:{Authorization:`Bearer ${localStorage.getItem('sainsToken')||''}`}});
       const data=await response.json();if(!response.ok||data.status!=='success')throw new Error(data.message||`API ${response.status}`);
       if(data.nextOffset!==null)throw new Error('Lebih 500 bahagian; paparan isu belum lengkap.');
-      const features=data.features.filter(feature=>!(Number(feature.properties?.size_mm)>0));
+      let issueByAsset=new Map();
+      if(currentHydraulic?.modelId&&currentHydraulic?.modelVersion){
+        const detail=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json',
+          Authorization:`Bearer ${localStorage.getItem('sainsToken')||''}`},body:JSON.stringify({
+          action:'autoFillHydraulicPreview',dma,modelId:currentHydraulic.modelId,version:currentHydraulic.modelVersion})});
+        const result=await detail.json();if(detail.ok&&result.status==='success')
+          issueByAsset=new Map(result.autoFill.mapIssues.map(item=>[item.assetNum,item.issueCodes]));
+      }
+      const features=data.features.filter(feature=>!(Number(feature.properties?.size_mm)>0)||
+        issueByAsset.has(String(feature.properties?.asset_num||'')));
       if(!features.length){byId('ai-hydraulic-status').textContent+='\nPeta: tiada diameter GIS hilang yang boleh dilokasikan. Isu lain belum mempunyai lokasi disahkan.';return;}
       if(typeof aiAgentMap==='undefined'||!aiAgentMap)initAiAgentMap();
-      issueLayer=L.geoJSON({type:'FeatureCollection',features},{style:{color:'#dc2626',weight:6,opacity:0.9},
+      const labels={PIPE_ID_UNRESOLVED:'Pipe ID belum dipadankan ke asset master',
+        GIS_DIAMETER_MISSING_OR_CONFLICT:'diameter GIS/asset hilang atau bercanggah',
+        ENGINEERING_LENGTH_UNREVIEWED:'engineering length belum diluluskan',
+        ROUGHNESS_UNREVIEWED:'Hazen-Williams C belum diluluskan',
+        TOPOLOGY_UNRESOLVED:'sambungan topologi belum diluluskan'};
+      issueLayer=L.geoJSON({type:'FeatureCollection',features},{style:feature=>{
+        const codes=issueByAsset.get(String(feature.properties?.asset_num||''))||[];
+        return {color:!(Number(feature.properties?.size_mm)>0)||codes.includes('GIS_DIAMETER_MISSING_OR_CONFLICT')
+          ?'#dc2626':codes.includes('PIPE_ID_UNRESOLVED')?'#ea580c':'#d97706',weight:6,opacity:0.9};},
         onEachFeature:(feature,layer)=>{const box=document.createElement('div');
-          box.textContent=`MISSING DIAMETER GIS · aset ${feature.properties.asset_num||'ID belum disahkan'} · DMA ${dma}. Ini bukan pengesahan topologi.`;
+          const codes=issueByAsset.get(String(feature.properties?.asset_num||''))||[];
+          if(!(Number(feature.properties?.size_mm)>0)&&!codes.includes('GIS_DIAMETER_MISSING_OR_CONFLICT'))
+            codes.unshift('GIS_DIAMETER_MISSING_OR_CONFLICT');
+          box.textContent=`ISU HIDRAULIK · aset ${feature.properties.asset_num||'ID belum disahkan'} · DMA ${dma}: `+
+            `${codes.map(code=>labels[code]||code).join('; ')}. Peta tidak mengesahkan topologi atau lokasi nod.`;
           layer.bindPopup(box);}}).addTo(aiAgentMap);
       issueZone=dma;const bounds=issueLayer.getBounds();if(bounds.isValid())aiAgentMap.fitBounds(bounds.pad(0.25),{maxZoom:15});
+      byId('ai-hydraulic-status').textContent+='\nIsu pipe GIS yang boleh dipadankan disorot. Elevasi nod, demand dan source head tanpa lokasi model disahkan kekal dalam senarai status, bukan titik rekaan.';
     }catch(error){clearIssueLayer();byId('ai-hydraulic-status').textContent+=`\nPeta isu tidak tersedia: ${error.message}`;}
   };
   const refresh=async()=>{
@@ -28,7 +50,7 @@
     if(!host||!issues)return;
     if(localStorage.getItem('sainsUserLevel')!=='ADMIN') {host.textContent='ADMIN sahaja.';issues.replaceChildren();scenarios?.replaceChildren();fields?.replaceChildren();return;}
     const dma=byId('ai-filter-district')?.value?.trim()||'';
-    clearIssueLayer();host.textContent='Menyemak status model…';issues.replaceChildren();scenarios?.replaceChildren();fields?.replaceChildren();
+    clearIssueLayer();currentHydraulic=null;host.textContent='Menyemak status model…';issues.replaceChildren();scenarios?.replaceChildren();fields?.replaceChildren();
     capabilities.textContent='';byId('ai-run-real-baseline').disabled=true;
     byId('ai-hydraulic-issues-map').disabled=true;
     if(!dma){host.textContent='Pilih satu District Metered Area dahulu. Status seluruh rangkaian tidak boleh digunakan sebagai readiness DMA.';return;}
@@ -43,13 +65,14 @@
       const data=await response.json();
       if(!response.ok||data.status!=='success')throw new Error(data.message||`API ${response.status}`);
       const h=data.hydraulic;
+      currentHydraulic=h;
       host.textContent=`${h.zone} · Model ${h.status} · EPANET ${h.engine.integration}\nGIS: ${h.gis.segmentCount} segmen zon; ${h.gis.missingDiameterParts} bahagian tanpa diameter. Segmen sumber tanpa Pipe ID belum dapat dikaitkan secara sah kepada DMA. Panjang GIS bukan panjang aset yang disahkan.`;
       for(const field of Object.values(h.fields||{})){
         const item=document.createElement('div');item.className='rounded border p-1';
         item.textContent=`${field.label}: ${field.status} — ${field.detail}`;fields.append(item);
       }
       capabilities.textContent=`STEADY-STATE: ${h.capabilities.steadyState} · BASELINE: ${h.capabilities.baseline} · CALIBRATION: ${h.capabilities.calibration} · PIPE FAILURE: ${h.scenarioCapabilities.PIPE_CLOSED?.status||'NOT_READY'} · VALVE ISOLATION: ${h.scenarioCapabilities.VALVE_ISOLATION?.status||'NOT_READY'} · SCENARIO COMPARE: ${h.scenarioCapabilities.SCENARIO_COMPARE?.status||'NOT_READY'}`;
-      byId('ai-hydraulic-issues-map').disabled=!(h.gis?.missingDiameterParts>0);
+      byId('ai-hydraulic-issues-map').disabled=!(h.gis?.segmentCount>0);
       for(const item of h.issues){const li=document.createElement('li');li.textContent=`${item.severity}: ${item.detail}`;issues.append(li);}
       for(const [name,item] of Object.entries(h.scenarioCapabilities||{})){
         const li=document.createElement('li');li.textContent=`${name}: ${item.status} — ${(item.reasons||[]).join(' ')}`;scenarios?.append(li);

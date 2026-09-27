@@ -107,3 +107,61 @@ test('draft model registration requires an exact existing GIS DMA, preserving it
   assert.equal((await request('registerHydraulicDraftModel',db,author,{confirm:true})).status,409);
   sql.close();
 });
+test('Auto-Fill previews trusted GIS and asset evidence without writing or inventing engineering data',async()=>{
+  const {sql,db}=fixture();
+  sql.exec(`CREATE TABLE water_assets_unique(asset_num TEXT,size REAL,length REAL,source_file TEXT)`);
+  sql.exec(`CREATE TABLE dma_telemetry(district_metered_area TEXT,sensor_id TEXT,parameter TEXT,quality_status TEXT,source TEXT)`);
+  sql.prepare(`INSERT INTO pipe_network_imports(import_id,source_name,source_sha256,inputs_sha256,line_count,zone_line_count)
+    VALUES(?,?,?,?,?,?)`).run('I1','kml','sha','inputs',2,2);
+  sql.prepare(`INSERT INTO pipe_network_active(singleton,import_id) VALUES(1,?)`).run('I1');
+  for(const [key,id,size,length] of [['S1','P1',300,60],['S2','P1',300,40]]){
+    sql.prepare(`INSERT INTO pipe_network_segments(import_id,segment_key,asset_num,size_mm,geometry_json,geometry_sha256,length_m,
+      min_lng,min_lat,max_lng,max_lat) VALUES(?,?,?,?,?,?,?,?,?,?,?)`).run('I1',key,id,size,'{}','g',length,101,2,101.001,2);
+    sql.prepare(`INSERT INTO pipe_network_zone_lines(import_id,zone_name,segment_key,part_index,asset_num,geometry_json,
+      length_m,min_lng,min_lat,max_lng,max_lat) VALUES(?,?,?,?,?,?,?,?,?,?,?)`).run('I1','300mm Bukit Kuau Lama',key,0,id,'{}',length,101,2,101.001,2);
+  }
+  sql.prepare(`INSERT INTO water_assets_unique VALUES(?,?,?,?)`).run('P1',300,99,'300mm Bukit Kuau Lama.csv');
+  const response=await request('autoFillHydraulicPreview',db,author);
+  assert.equal(response.status,200);
+  const data=(await response.json()).autoFill;
+  assert.equal(data.summary.pipeIdsFound,1);
+  assert.equal(data.summary.diametersFound,1);
+  assert.equal(data.summary.gisLengthsFound,1);
+  assert.equal(data.summary.gisParts,2);
+  assert.equal(data.summary.reviewedHazenCFound,0);
+  assert.equal(data.candidates.length,3);
+  const length=data.candidates.find(row=>row.parameter==='length_m');
+  assert.equal(length.value,'100');
+  assert.equal(length.classification,'ASSUMED');
+  assert.match(length.source_ref,/^GEOMETRY_DERIVED:/);
+  assert.equal(length.effective_at,'');
+  assert.equal(data.candidates.some(row=>row.parameter==='hazen_c'||row.parameter==='from_node_id'),false);
+  assert.deepEqual(data.mapIssues[0].issueCodes,
+    ['ENGINEERING_LENGTH_UNREVIEWED','ROUGHNESS_UNREVIEWED','TOPOLOGY_UNRESOLVED']);
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM hydraulic_parameter_reviews').get().n,0);
+  sql.close();
+});
+test('Auto-Fill protects existing approved parameters and reports diameter mismatch',async()=>{
+  const {sql,db}=fixture();
+  sql.exec(`CREATE TABLE water_assets_unique(asset_num TEXT,size REAL,length REAL,source_file TEXT)`);
+  sql.exec(`CREATE TABLE dma_telemetry(district_metered_area TEXT,sensor_id TEXT,parameter TEXT,quality_status TEXT,source TEXT)`);
+  sql.prepare(`INSERT INTO pipe_network_imports(import_id,source_name,source_sha256,inputs_sha256,line_count,zone_line_count)
+    VALUES(?,?,?,?,?,?)`).run('I1','kml','sha','inputs',1,1);
+  sql.prepare(`INSERT INTO pipe_network_active(singleton,import_id) VALUES(1,?)`).run('I1');
+  sql.prepare(`INSERT INTO pipe_network_segments(import_id,segment_key,asset_num,size_mm,geometry_json,geometry_sha256,length_m,
+    min_lng,min_lat,max_lng,max_lat) VALUES(?,?,?,?,?,?,?,?,?,?,?)`).run('I1','S1','P1',250,'{}','g',50,101,2,101.001,2);
+  sql.prepare(`INSERT INTO pipe_network_zone_lines(import_id,zone_name,segment_key,part_index,asset_num,geometry_json,
+    length_m,min_lng,min_lat,max_lng,max_lat) VALUES(?,?,?,?,?,?,?,?,?,?,?)`).run('I1','300mm Bukit Kuau Lama','S1',0,'P1','{}',50,101,2,101.001,2);
+  sql.prepare(`INSERT INTO water_assets_unique VALUES(?,?,?,?)`).run('P1',300,50,'300mm Bukit Kuau Lama.csv');
+  sql.prepare(`INSERT INTO hydraulic_parameter_reviews(entry_id,model_id,version,entity_type,entity_id,parameter_name,
+    value_text,unit,classification,source_ref,effective_at,entered_by,review_status,reviewed_by,reviewed_at)
+    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run('APPROVED-1','SAINS-BUKIT-KUAU-LAMA',1,'PIPE','P1','pipe_id',
+      'P1','TEXT','VERIFIED','ASSET:source','2026-09-01T00:00:00Z','engineer-a','APPROVED','engineer-b','2026-09-02T00:00:00Z');
+  const data=(await (await request('autoFillHydraulicPreview',db,author)).json()).autoFill;
+  assert.equal(data.conflictCount,1);
+  assert.equal(data.alreadyReviewedCount,1);
+  assert.ok(data.mapIssues[0].issueCodes.includes('GIS_DIAMETER_MISSING_OR_CONFLICT'));
+  assert.equal(data.candidates.some(row=>row.parameter==='pipe_id'||row.parameter==='diameter_mm'),false);
+  assert.equal(sql.prepare('SELECT COUNT(*) AS n FROM hydraulic_parameter_reviews').get().n,1);
+  sql.close();
+});

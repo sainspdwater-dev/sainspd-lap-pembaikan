@@ -34,3 +34,16 @@ test('downloadable engineering template matches accepted schema without fabricat
   assert.ok(parameterRows.every(row=>row.value===''&&row.entity_id===''&&row.review_status==='DRAFT'));
   assert.equal(validateEngineeringRow({...pipe,review_status:'APPROVED'},context).valid,false);
 });
+test('existing AI Agent exposes selected-DMA Auto-Fill and visible manual DRAFT controls',()=>{
+  const html=readFileSync(new URL('../staging-site/dashboard.html',import.meta.url),'utf8');
+  const script=readFileSync(new URL('../staging-site/engineering-intake.mjs',import.meta.url),'utf8');
+  for(const id of ['ai-filter-district','ai-eng-autofill','ai-eng-preview-autofill','ai-eng-autofill-report',
+    'ai-eng-entity-type','ai-eng-entity-id','ai-eng-parameter','ai-eng-value','ai-eng-unit',
+    'ai-eng-classification','ai-eng-source','ai-eng-effective','ai-eng-notes','ai-eng-preview-manual',
+    'ai-eng-save','ai-eng-cancel','ai-eng-confirm'])assert.match(html,new RegExp(`id="${id}"`));
+  assert.match(html,/Review Status: <strong>DRAFT<\/strong>/);
+  assert.match(script,/const selectedDma=\(\)=>byId\('ai-filter-district'\)/);
+  assert.match(script,/definitions\[type\]/);
+  assert.match(script,/sourceSha256='';await preview\(autoFill\.candidates/);
+  assert.match(script,/window\.phase2bRefreshHydraulic\?\.\(\)/);
+});
