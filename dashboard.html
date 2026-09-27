@@ -872,6 +872,8 @@
                     <button id="btn-jana-kolam" class="mt-auto px-4 py-3 bg-blue-600 hover:bg-blue-50 text-white rounded-md text-sm font-bold flex justify-center items-center gap-2 shadow-sm transition">
                         <i class="fa-solid fa-gears"></i> Baca & Jana Laporan
                     </button>
+                    <div id="kolam-import-status" class="text-xs text-slate-700 dark:text-gray-200" aria-live="polite">Semakan bacaan akan dipaparkan selepas laporan dijana.</div>
+                    <details class="text-xs"><summary class="cursor-pointer font-semibold">Butiran padanan fail dan placeholder</summary><div id="kolam-import-details" class="mt-1 max-h-40 overflow-auto whitespace-pre-line"></div></details>
                 </div>
 
                 <div class="lg:col-span-2 dashboard-card p-5 flex flex-col bg-slate-50 dark:bg-gray-900">
@@ -1083,6 +1085,14 @@
 
         let accumulatedKolamFiles = [];
         let fileExpirationTimer = null;
+        function invalidateKolamReport() {
+            const output = document.getElementById('kolam-report-output');
+            if (output) output.value = '';
+            const status = document.getElementById('kolam-import-status');
+            if (status) status.textContent = 'Fail, tarikh atau masa berubah. Klik Baca & Jana Laporan semula sebelum salin atau hantar.';
+            const details = document.getElementById('kolam-import-details');
+            if (details) details.textContent = '';
+        }
 
         let pendingMutationAction = null;
         let pendingMutationData = null;
@@ -1107,6 +1117,7 @@
 
         function handleNewFiles(newFileList) {
             if (!newFileList || newFileList.length === 0) return;
+            invalidateKolamReport();
 
             for (let i = 0; i < newFileList.length; i++) {
                 const exists = accumulatedKolamFiles.some(f => f.name === newFileList[i].name && f.size === newFileList[i].size);
@@ -1132,6 +1143,7 @@
 
         function clearExpiredKolamFiles() {
             accumulatedKolamFiles = [];
+            invalidateKolamReport();
             localStorage.removeItem('kolamUploadTime');
             const countLabel = document.getElementById('file-count-label');
             if (countLabel) countLabel.innerText = "0 fail tersimpan dalam memori (Telah tamat tempoh 1 jam)";
@@ -1174,6 +1186,7 @@
             if (resetBtn) {
                 resetBtn.addEventListener('click', () => {
                     accumulatedKolamFiles = [];
+                    invalidateKolamReport();
                     localStorage.removeItem('kolamUploadTime');
                     if (fileExpirationTimer) clearTimeout(fileExpirationTimer);
                     
@@ -1181,6 +1194,9 @@
                     if (countLabel) countLabel.innerText = "0 fail tersimpan dalam memori";
                     showToast("Semua fail telah direset.", "success");
                 });
+            }
+            for (const id of ['kolam-date', 'kolam-time']) {
+                document.getElementById(id)?.addEventListener('change', invalidateKolamReport);
             }
         }
 
@@ -4103,37 +4119,6 @@
 
 *6).* Greenview CP - *131471* : {Green View CP}`;
 
-        function matchSiteName(targetName, extractedDataMap) {
-    let cleanTarget = targetName.toLowerCase().replace(/[^a-z0-9]/g, '');
-    
-    for (let siteNameKey in extractedDataMap) {
-        let cleanSite = siteNameKey.toLowerCase().replace(/[^a-z0-9]/g, '');
-        
-        if (cleanTarget === cleanSite || cleanTarget.includes(cleanSite) || cleanSite.includes(cleanTarget)) {
-            return extractedDataMap[siteNameKey];
-        }
-    }
-
-    let targetWords = targetName.toLowerCase().split(/[\s\(\)\.\-\_]+/);
-    let bestMatchVal = null;
-    let highestScore = 0;
-
-    for (let siteNameKey in extractedDataMap) {
-        let siteWords = siteNameKey.toLowerCase().split(/[\s\(\)\.\-\_]+/);
-        let matches = 0;
-        
-        targetWords.forEach(w => {
-            if(w.trim() !== '' && siteWords.includes(w)) matches++;
-        });
-
-        if (matches > highestScore && matches >= 2) {
-            highestScore = matches;
-            bestMatchVal = extractedDataMap[siteNameKey];
-        }
-    }
-    return bestMatchVal;
-}
-
         document.getElementById('btn-jana-kolam').addEventListener('click', async () => {
             const uploadTime = localStorage.getItem('kolamUploadTime');
             const oneHour = 60 * 60 * 1000;
@@ -4157,77 +4142,54 @@
 
             let [yy, mm, dd] = selectedDate.split('-');
             let targetDateStr = `${dd}/${mm}/${yy}`;
-            let targetDateTimeStr = `${targetDateStr} ${selectedTime}`;
-
-            let kolamData = {};
+            document.getElementById('kolam-report-output').value = '';
+            document.getElementById('kolam-import-status').textContent = 'Sedang membaca fail dan menyemak padanan bacaan...';
+            document.getElementById('kolam-import-details').textContent = '';
             showLoading(true, 50, "Membaca semua fail terkumpul...");
 
             try {
-                for (let i = 0; i < accumulatedKolamFiles.length; i++) {
-                    const file = accumulatedKolamFiles[i];
-                    const buffer = await file.arrayBuffer();
-                    const workbook = XLSX.read(buffer, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    
-                    const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false });
-                    
-                    let siteName = "";
-                    let readingValue = "";
-
-                    if (rows.length > 0 && rows[0][0] && typeof rows[0][0] === 'string' && rows[0][0].includes("Site name:")) {
-                        siteName = rows[0][0].replace("Site name:", "").trim();
-                    }
-
-                    if(!siteName) {
-                        for (let row of rows) {
-                            if (row[0] && typeof row[0] === 'string' && row[0].includes("Site name:")) {
-                                siteName = row[0].replace("Site name:", "").trim(); break;
-                            }
+                const { extractKolamSheet, renderKolamTemplate } = await import('./kolam-readings.mjs');
+                if (typeof XLSX === 'undefined') throw new Error('Pustaka pembaca Excel/CSV tidak tersedia. Cuba muat semula halaman.');
+                const entries = [];
+                for (const file of accumulatedKolamFiles) {
+                    try {
+                        const workbook = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: false });
+                        if (!workbook.SheetNames.length) throw new Error('Fail tidak mempunyai helaian.');
+                        for (const sheetName of workbook.SheetNames) {
+                            const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, raw: false, defval: '' });
+                            entries.push(extractKolamSheet(rows, file.name, sheetName, selectedDate, selectedTime));
                         }
-                    }
-
-                    for (let r = 0; r < rows.length; r++) {
-                        const rowData = rows[r];
-                        if (rowData[0] && typeof rowData[0] === 'string') {
-                            if (rowData[0].includes(targetDateTimeStr)) {
-                                readingValue = rowData[1]; 
-                                break;
-                            }
-                        }
-                    }
-
-                    if (siteName) {
-                        kolamData[siteName] = readingValue || null;
+                    } catch (error) {
+                        entries.push({ sourceFile: file.name, sheetName: '', siteName: '', status: 'INVALID',
+                            value: null, reason: `Fail tidak boleh dibaca: ${error.message}` });
                     }
                 }
 
-                let finalReport = laporanTemplate;
-                
                 let [hh, min] = selectedTime.split(':');
                 let hourStr = parseInt(hh);
                 let ampm = hourStr >= 12 ? 'PM' : 'AM';
                 hourStr = hourStr % 12; hourStr = hourStr ? hourStr : 12;
                 let displayTime = `${hourStr}:${min} ${ampm}`;
 
-                finalReport = finalReport.replace("{TARIKH}", targetDateStr).replace("{MASA}", displayTime);
-
-finalReport = finalReport.replace(/\{([^}]+)\}(M?)/g, (matchPattern, pureName, unitM) => {
-    let foundValue = matchSiteName(pureName, kolamData);
-    
-    if (foundValue !== null && foundValue !== undefined && foundValue !== "") {
-        return foundValue + unitM;
-    } else {
-        return "Tiada"; 
-    }
-});
-
-                document.getElementById('kolam-report-output').value = finalReport;
+                const { report, coverage } = renderKolamTemplate(laporanTemplate, entries, targetDateStr, displayTime);
+                const foundFiles = new Set(entries.filter(entry => entry.status === 'FOUND').map(entry => entry.sourceFile));
+                document.getElementById('kolam-report-output').value = report;
+                document.getElementById('kolam-import-status').textContent =
+                    `${foundFiles.size}/${accumulatedKolamFiles.length} fail mempunyai bacaan tepat pada ${targetDateStr} ${selectedTime}. ` +
+                    `${coverage.found}/${coverage.total} placeholder berisi bacaan; ${coverage.noFile} tiada fail, ` +
+                    `${coverage.noReading} tiada bacaan pada masa dipilih, ${coverage.conflict} konflik, ${coverage.invalid} fail/format tidak sah. ` +
+                    `Semak pratayang sebelum salin atau hantar.`;
+                document.getElementById('kolam-import-details').textContent =
+                    entries.map(entry => `${entry.sourceFile}${entry.sheetName ? ` [${entry.sheetName}]` : ''}: ${entry.siteName || 'tapak tidak dikenal pasti'} — ${entry.status}` +
+                        `${entry.status === 'FOUND' ? `, ${entry.value} (baris ${entry.row})` : `, ${entry.reason || 'semak fail'}`}`).join('\n') +
+                    '\n\nPlaceholder tanpa bacaan:\n' +
+                    coverage.details.filter(item => item.status !== 'FOUND').map(item => `${item.site}: ${item.status}${item.reason ? ` — ${item.reason}` : ''}`).join('\n');
                 showLoading(false);
-                showToast("Laporan kolam berjaya dijana!", "success");
-
+                showToast(coverage.found ? `Laporan dijana; ${coverage.found}/${coverage.total} bacaan tepat dipadankan.` :
+                    'Tiada bacaan tepat dipadankan. Semak fail, tarikh dan masa.', coverage.found ? 'success' : 'error');
             } catch (err) {
                 showLoading(false);
+                document.getElementById('kolam-import-status').textContent = `Laporan tidak dijana: ${err.message}`;
                 showToast("Ralat membaca fail kolam: " + err.message, "error");
             }
         });
