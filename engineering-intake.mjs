@@ -156,6 +156,16 @@ if (typeof document!=='undefined') document.addEventListener('DOMContentLoaded',
       report(`Model ${data.models[0].model_id} v${data.models[0].version} · ${data.models[0].validation_status}. Pilih rekod sebenar dan pratonton dahulu.`);
     }catch(error){report(`Senarai model tidak tersedia: ${error.message}`);}
   });
+  window.aiEngQuickAutofill=async()=>{
+    if(!selectedDma())return report('Pilih DMA dahulu.');
+    try{
+      const data=await api({action:'listHydraulicModelsForDma',dma:selectedDma()});
+      if(!data.models.length)return report(`Tiada model berdaftar bagi ${selectedDma()}. Daftar model DRAFT selepas menyemak DMA.`);
+      byId('ai-eng-model').value=data.models[0].model_id;
+      byId('ai-eng-version').value=data.models[0].version;
+      byId('ai-eng-autofill').click();
+    }catch(error){report(`Auto-Fill tidak tersedia: ${error.message}`);}
+  };
   byId('ai-eng-register-model')?.addEventListener('click',async()=>{
     reset();if(!selectedDma())return report('Pilih DMA dahulu.');
     if(!window.confirm(`Daftar model DRAFT untuk DMA tepat: ${selectedDma()}? Ini tidak membenarkan simulasi.`))return;
@@ -172,14 +182,12 @@ if (typeof document!=='undefined') document.addEventListener('DOMContentLoaded',
     try{
       const data=await api({action:'autoFillHydraulicPreview',...base()});autoFill=data.autoFill;
       const a=autoFill,s=a.summary;
-      byId('ai-eng-autofill-report').textContent=`Auto-Fill Result — ${a.dma}\n`+
-        `Pipe IDs found: ${s.pipeIdsFound}; Diameters found: ${s.diametersFound}; GIS lengths found (GEOMETRY_DERIVED): ${s.gisLengthsFound}.\n`+
-        `Reviewed engineering lengths found: ${s.reviewedEngineeringLengthsFound}; Reviewed Hazen C found: ${s.reviewedHazenCFound}.\n`+
-        `Node elevations found: ${s.nodeElevationsFound}; Demands found: ${s.demandsFound}; Source heads found: ${s.sourceHeadsFound}; Sensor mappings found: ${s.approvedSensorMappingsFound}; linked approved observations: ${s.approvedObservationsFound}.\n`+
-        `Calon DRAFT dipaparkan: ${a.candidates.length}/${a.totalCandidates}; baki selepas batch ini: ${a.remainingCandidates}.\n`+
-        `Unresolved Pipe IDs: ${a.unresolvedPipeIdCount}; konflik: ${a.conflictCount}; rekod sedia ada dilindungi: ${a.alreadyReviewedCount}.\n`+
-        `Missing:\n${a.missing.join('\n')}\nConflicts:\n${a.conflicts.slice(0,10).join('\n')||'Tiada'}\n`+
-        `Duplicate GIS parts: ${s.gisParts-s.distinctGisPipeIds} (bahagian geometri, bukan Pipe ID baharu).`;
+      byId('ai-eng-autofill-report').textContent=`Auto-Fill Existing Data — ${a.dma} · PRATONTON BACA SAHAJA\n`+
+        `FOUND: Pipe ID ${s.pipeIdsFound} (asset/GIS); Diameter ${s.diametersFound} (rujuk provenance setiap baris); Engineering Length disemak ${s.reviewedEngineeringLengthsFound}; Hazen C disemak ${s.reviewedHazenCFound}; Node Elevation ${s.nodeElevationsFound}; Base Demand ${s.demandsFound}; Source Head ${s.sourceHeadsFound}; Sensor Mapping diluluskan ${s.approvedSensorMappingsFound}; Observation diluluskan ${s.approvedObservationsFound}.\n`+
+        `PARTIAL: Panjang GIS ${s.gisLengthsFound} (GEOMETRY_DERIVED sahaja — BUKAN engineering length disahkan); Pipe ID belum dipadankan ${a.unresolvedPipeIdCount}; bahagian GIS pendua ${s.gisParts-s.distinctGisPipeIds}.\n`+
+        `MISSING: ${a.missing.join('; ')||'Tiada dilaporkan'}.\n`+
+        `CONFLICT: ${a.conflicts.slice(0,10).join('; ')||'Tiada'}; jumlah ${a.conflictCount}; rekod telah disemak/dilindungi ${a.alreadyReviewedCount}.\n`+
+        `Calon DRAFT ${a.candidates.length}/${a.totalCandidates}; baki ${a.remainingCandidates}. Semak sumber pada setiap baris sebelum menyimpan.`;
       for(const row of a.candidates){const line=document.createElement('div');line.className='border-b py-1';
         line.textContent=`${row.entity_id}/${row.parameter}: ${row.value} ${row.unit} · ${row.classification} · ${row.source_ref} · ${row.notes}`;
         byId('ai-eng-autofill-rows').append(line);}
