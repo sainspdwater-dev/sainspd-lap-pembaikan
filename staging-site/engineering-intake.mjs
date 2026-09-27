@@ -1,6 +1,6 @@
 // Staging-only engineering intake PREVIEW. No network calls, persistence or approval.
 export const definitions = {
-  PIPE: {pipe_id:'TEXT',diameter_mm:'mm',length_m:'m',hazen_c:'1'},
+  PIPE: {pipe_id:'TEXT',from_node_id:'TEXT',to_node_id:'TEXT',diameter_mm:'mm',length_m:'m',hazen_c:'1'},
   NODE: {elevation_m:'m',base_demand_m3s:'m3/s'},
   SOURCE: {head_m:'m'},
   VALVE: {type:'TEXT',diameter_mm:'mm',setting:'1',status:'TEXT'},
@@ -9,6 +9,7 @@ export const definitions = {
   PATTERN: {multipliers_json:'JSON'},
   MODEL: {equipment_inventory_status:'TEXT',demand_allocation_method:'TEXT',temporal_boundary_status:'TEXT'}
 };
+export const IMPORT_COLUMNS=['entity_type','entity_id','parameter','value','unit','classification','source_ref','effective_at','notes','review_status'];
 const positive = new Set(['diameter_mm','length_m','hazen_c','diameter_m']);
 const nonnegative = new Set(['base_demand_m3s']);
 const trimmed = value => String(value ?? '').trim();
@@ -25,6 +26,7 @@ export function validateEngineeringRow(row, context) {
   const sourceRef=trimmed(row.source_ref);
   const effectiveAt=trimmed(row.effective_at);
   const notes=trimmed(row.notes);
+  const reviewStatus=trimmed(row.review_status||'DRAFT').toUpperCase();
   const modelId=trimmed(context.modelId);
   const enteredBy=trimmed(context.enteredBy);
   const version=Number(context.version);
@@ -36,6 +38,7 @@ export function validateEngineeringRow(row, context) {
   const expectedUnit=definitions[entityType]?.[parameter];
   if (!expectedUnit) errors.push('Parameter tidak disokong untuk entiti.');
   if (!['VERIFIED','MANUAL','ASSUMED','MISSING'].includes(classification)) errors.push('Klasifikasi tidak sah.');
+  if (reviewStatus!=='DRAFT') errors.push('Fail import hanya boleh mengandungi review_status DRAFT; kelulusan jurutera dibuat berasingan.');
   if (classification!=='MISSING' && (!value || !sourceRef)) errors.push('Nilai dan rujukan sumber wajib.');
   if (classification==='MISSING' && value) errors.push('MISSING tidak boleh mempunyai nilai.');
   if (classification!=='MISSING' && !isoTime(effectiveAt)) errors.push('Tarikh efektif ISO dengan zon masa wajib.');
@@ -85,7 +88,7 @@ export function previewEngineeringRows(rows, context) {
 
 if (typeof document!=='undefined') document.addEventListener('DOMContentLoaded',()=>{
   const byId=id=>document.getElementById(id);
-  const fields=['entity_type','entity_id','parameter','value','unit','classification','source_ref','effective_at','notes'];
+  const fields=IMPORT_COLUMNS;
   const aliases={source_ref:'source',effective_at:'effective'};
   const report=message=>{byId('ai-eng-report').textContent=message;};
   const selectedDma=()=>byId('ai-filter-district')?.value?.trim()||'';

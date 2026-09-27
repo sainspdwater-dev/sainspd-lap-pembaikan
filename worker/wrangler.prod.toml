@@ -1,0 +1,26 @@
+# Production settings checked against the live Worker on 2026-09-26.
+# Dashboard-managed plain-text variables and encrypted secrets stay remote.
+name = "laporanpembaikan"
+main = "worker.js"
+account_id = "077904f9afb5422fccb5221876cf9ae3"
+compatibility_date = "2026-08-12"
+workers_dev = true
+preview_urls = false
+keep_vars = true
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[ai]
+binding = "AI"
+
+[[kv_namespaces]]
+binding = "CAHCE_KV"
+id = "dc5ce0759d0541ff8d5a398d06fc0440"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sains-ai-db"
+database_id = "1aac9116-6457-47bd-b4d5-d84c16ca8672"
+

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {validateEngineeringRow,previewEngineeringRows} from '../staging-site/engineering-intake.mjs';
+import {readFileSync} from 'node:fs';
+import {validateEngineeringRow,previewEngineeringRows,definitions,IMPORT_COLUMNS} from '../staging-site/engineering-intake.mjs';
 
 const context={modelId:'SAINS-PD-CANDIDATE',version:1,enteredBy:'engineer-reviewer'};
 const pipe={entity_type:'PIPE',entity_id:'SOURCE-SEGMENT-1',parameter:'diameter_mm',value:'300',unit:'mm',
@@ -24,4 +25,12 @@ test('MISSING is explicit and has no fabricated value',()=>{
   const row=validateEngineeringRow({...pipe,classification:'MISSING',value:'',source_ref:''},context);
   assert.equal(row.valid,true);
   assert.equal(validateEngineeringRow({...pipe,classification:'MISSING'},context).valid,false);
+});
+test('downloadable engineering template matches accepted schema without fabricated values',()=>{
+  const csv=readFileSync(new URL('../staging-site/engineering-template.csv',import.meta.url),'utf8').trim().split(/\r?\n/);
+  assert.deepEqual(csv[0].split(','),IMPORT_COLUMNS);
+  const parameterRows=csv.slice(1).map(line=>Object.fromEntries(IMPORT_COLUMNS.map((key,index)=>[key,line.split(',')[index]||''])));
+  assert.ok(parameterRows.every(row=>definitions[row.entity_type]?.[row.parameter]===row.unit));
+  assert.ok(parameterRows.every(row=>row.value===''&&row.entity_id===''&&row.review_status==='DRAFT'));
+  assert.equal(validateEngineeringRow({...pipe,review_status:'APPROVED'},context).valid,false);
 });
