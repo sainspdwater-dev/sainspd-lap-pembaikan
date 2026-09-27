@@ -1,5 +1,6 @@
 import { handlePhase2aAction } from './phase2a.js';
 import { handlePhase2bAction } from './phase2b.js';
+import { handleHydraulicIntakeAction } from './hydraulic-intake.js';
 import { handleStagingHydraulicAction, stagingEnabled } from './hydraulic-staging.js';
 
 const rateLimitMap = new Map();
@@ -759,6 +760,10 @@ export default { async scheduled(controller, env, ctx) { console.log(JSON.string
           action, data: reqData, env, user: decodedUser, headers: securityHeaders, request
         });
         if (stagingHydraulicResponse) return stagingHydraulicResponse;
+        const hydraulicIntakeResponse = await handleHydraulicIntakeAction({
+          action, data: reqData, env, user: decodedUser, headers: securityHeaders
+        });
+        if (hydraulicIntakeResponse) return hydraulicIntakeResponse;
         const phase2bResponse = await handlePhase2bAction({
           action, data: reqData, env, user: decodedUser, headers: securityHeaders
         });

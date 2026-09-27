@@ -26,7 +26,8 @@ function startServer({port,token,database}){
   return {child,get output(){return output;}};
 }
 async function ready(port,token,server){
-  for(let i=0;i<200;i++){
+  // Cold Windows WNTR import can approach 20 s before the HTTP listener opens.
+  for(let i=0;i<500;i++){
     if(server.child.exitCode!==null)throw new Error(`staging service exited before health check: ${server.output.slice(-600)}`);
     try{const result=await fetch(`http://127.0.0.1:${port}/v1/health`,{headers:{'X-Sains-Simulation-Token':token}});
       if(result.ok)return;}

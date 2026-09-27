@@ -127,7 +127,9 @@ test('hydraulic endpoint is ADMIN only and never returns invented solver results
   const status=await productionHydraulicStatus(db,'ZONE TEST');
   assert.equal(status.status,'NOT_READY');
   assert.equal(status.gis.missingPipeIdSegments,2);
-  assert.ok(status.issues.some(issue=>issue.code==='PIPE_ID_MISSING'&&issue.count===2));
+  assert.ok(status.issues.some(issue=>issue.code==='PIPE_ID_MISSING_UNASSIGNED'));
+  assert.equal(status.fields.pipeId.status,'PARTIAL');
+  assert.equal((await productionHydraulicStatus(db,'')).issues[0].code,'SELECT_DMA');
   assert.equal(status.engine.integration,'TEST_ONLY');
   assert.equal(status.scenarioCapabilities.PIPE_CLOSED.status,'NOT_READY');
   assert.match(status.scenarioCapabilities.RESERVE_MARGIN.reasons.join(' '),/Formula/);

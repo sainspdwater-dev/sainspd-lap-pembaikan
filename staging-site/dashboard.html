@@ -724,18 +724,24 @@
                             <p class="mt-1 text-amber-700 dark:text-amber-300">Jajaran GIS bukan model tekanan. EPANET masih ujian model contoh; tiada simulasi SAINS sehingga data kejuruteraan disahkan.</p>
                             <button type="button" id="ai-hydraulic-refresh" class="mt-2 px-2 py-1 rounded bg-violet-700 text-white">Semak Model</button>
                             <div id="ai-hydraulic-status" aria-live="polite" class="mt-2 whitespace-pre-line text-slate-700 dark:text-slate-200">Pilih DMA dan tekan Semak Model.</div>
+                            <div id="ai-hydraulic-fields" class="mt-2 grid grid-cols-2 gap-1 text-xs" aria-label="Status parameter hidraulik DMA"></div>
+                            <div id="ai-hydraulic-capabilities" class="mt-2 whitespace-pre-line text-xs" aria-live="polite"></div>
+                            <button type="button" id="ai-hydraulic-issues-map" disabled class="mt-2 px-2 py-1 rounded bg-slate-700 text-white disabled:opacity-40">Show Hydraulic Issues</button>
                             <details class="mt-2"><summary class="font-semibold cursor-pointer">Hydraulic Model Issues</summary><ul id="ai-hydraulic-issues" class="list-disc pl-4 mt-1"></ul></details>
                             <details class="mt-2"><summary class="font-semibold cursor-pointer">Kesediaan senario kejuruteraan</summary><ul id="ai-hydraulic-scenarios" class="list-disc pl-4 mt-1"></ul></details>
                             <details class="mt-2 border-t pt-2" id="ai-engineering-intake">
-                                <summary class="font-semibold cursor-pointer">Missing Data / Import Engineering CSV / Manual Parameter Entry — pratonton sahaja</summary>
-                                <p class="mt-1 text-amber-700">ADMIN staging sahaja. Tiada nilai disimpan atau dihantar; VERIFIED dalam fail masih DRAFT sehingga semakan jurutera dan model versi yang diluluskan.</p>
+                                <summary class="font-semibold cursor-pointer">Lengkapkan Data — Manual / Engineering CSV / Excel</summary>
+                                <p class="mt-1 text-amber-700">Pilih satu DMA di atas. Pratonton dahulu; simpan hanya pada model/versi DMA yang berdaftar. Nilai kekal DRAFT sehingga diluluskan jurutera lain. Akaun TEST staging tidak boleh menulis data SAINS.</p>
                                 <div class="grid grid-cols-2 gap-2 mt-2">
                                     <input id="ai-eng-model" class="form-input text-xs" placeholder="Model ID SAINS (cadangan)">
                                     <input id="ai-eng-version" class="form-input text-xs" type="number" min="1" step="1" placeholder="Versi model">
                                     <input id="ai-eng-operator" class="form-input text-xs" placeholder="Nama pengimport / penyedia">
                                     <input id="ai-eng-file" class="form-input text-xs" type="file" accept=".csv,.xlsx,.xls" aria-label="Import Engineering CSV / Excel">
                                 </div>
+                                <button type="button" id="ai-eng-find-model" class="mt-2 px-2 py-1 rounded bg-slate-700 text-white">Cari model DMA ini</button>
+                                <button type="button" id="ai-eng-register-model" class="mt-2 px-2 py-1 rounded bg-amber-700 text-white">Daftar model DRAFT untuk DMA sah</button>
                                 <button type="button" id="ai-eng-preview-file" class="mt-2 px-2 py-1 rounded bg-violet-700 text-white">Pratonton fail kejuruteraan</button>
+                                <div id="ai-eng-column-map" class="mt-2 grid grid-cols-2 gap-1 text-xs" aria-label="Pemetaan kolum CSV/Excel"></div>
                                 <p class="mt-2">Entri manual (semua medan wajib kecuali nota):</p>
                                 <div class="grid grid-cols-2 gap-2 mt-1">
                                     <select id="ai-eng-entity-type" class="form-input text-xs"><option>PIPE</option><option>NODE</option><option>SOURCE</option><option>VALVE</option><option>PUMP</option><option>TANK</option><option>PATTERN</option><option>MODEL</option></select>
@@ -749,9 +755,14 @@
                                     <input id="ai-eng-notes" class="form-input text-xs col-span-2" placeholder="Nota / kaedah agihan / had andaian">
                                 </div>
                                 <button type="button" id="ai-eng-preview-manual" class="mt-2 px-2 py-1 rounded bg-slate-700 text-white">Pratonton entri manual</button>
+                                <div class="mt-2 flex items-center gap-2"><input id="ai-eng-confirm" type="checkbox"><label for="ai-eng-confirm">Saya telah semak baris, DMA, sumber dan masa efektif; simpan sebagai DRAFT sahaja.</label></div>
+                                <button type="button" id="ai-eng-save" disabled class="mt-2 px-2 py-1 rounded bg-emerald-700 text-white disabled:opacity-40">Simpan DRAFT yang disemak</button>
+                                <button type="button" id="ai-eng-load-reviews" class="mt-2 px-2 py-1 rounded bg-slate-700 text-white">Lihat rekod semakan</button>
+                                <div id="ai-eng-reviews" class="mt-2 text-xs whitespace-pre-line"></div>
                                 <div id="ai-eng-report" class="mt-2 whitespace-pre-line" aria-live="polite">Tiada import atau simpan aktif. Sediakan bukti kejuruteraan dahulu.</div>
                             </details>
                             <div class="flex flex-wrap gap-1 mt-2">
+                                <button type="button" id="ai-run-real-baseline" disabled title="Data DMA belum lulus readiness" class="px-2 py-1 rounded bg-slate-200 text-slate-500">Run Baseline</button>
                                 <button type="button" disabled title="Model hidraulik belum sedia" class="px-2 py-1 rounded bg-slate-200 text-slate-500">Pressure &amp; Flow</button>
                                 <button type="button" disabled title="Model hidraulik belum sedia" class="px-2 py-1 rounded bg-slate-200 text-slate-500">Pipe Failure</button>
                                 <button type="button" disabled title="Definisi dan topologi injap belum disahkan" class="px-2 py-1 rounded bg-slate-200 text-slate-500">Valve Isolation</button>

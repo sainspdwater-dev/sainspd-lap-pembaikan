@@ -1,5 +1,6 @@
 // Phase 2B production-safe facade. No real model or EPANET service is enabled.
 // All hydraulic questions are gated here before the legacy AI prompt path.
+import {reviewedDmaStatus} from './hydraulic-dma-status.js';
 const json=(body,headers,status=200)=>new Response(JSON.stringify(body),{status,headers:{...headers,'Content-Type':'application/json'}});
 export function hydraulicIntent(prompt) {
   const p=String(prompt||'').toLowerCase();
@@ -27,6 +28,9 @@ export function hydraulicScenarioIntent(prompt) {
 
 export async function productionHydraulicStatus(db, dma='') {
   const selected=String(dma||'').trim().slice(0,180);
+  if(!selected)return {zone:null,status:'NOT_READY',modelVersion:null,fields:{},issues:[{code:'SELECT_DMA',severity:'MISSING',detail:'Pilih satu District Metered Area untuk status hidraulik khusus DMA.'}],
+    capabilities:{steadyState:'NOT_READY',baseline:'NOT_READY',calibration:'NOT_READY'},scenarioCapabilities:{},gis:null,
+    engine:{version:'EPANET 2.2.0',integration:'TEST_ONLY'}};
   const sql=`SELECT COUNT(*) AS lineParts, COUNT(DISTINCT z.segment_key) AS segmentCount,
       COUNT(DISTINCT z.asset_num) AS assetCount,
       SUM(CASE WHEN s.size_mm IS NULL OR s.size_mm<=0 THEN 1 ELSE 0 END) AS missingDiameterParts,
@@ -34,8 +38,8 @@ export async function productionHydraulicStatus(db, dma='') {
     FROM pipe_network_zone_lines z
     JOIN pipe_network_active a ON a.import_id=z.import_id AND a.singleton=1
     JOIN pipe_network_segments s ON s.import_id=z.import_id AND s.segment_key=z.segment_key
-    WHERE (?='' OR z.zone_name=?)`;
-  const row=await db.prepare(sql).bind(selected,selected).first();
+    WHERE z.zone_name=? COLLATE NOCASE`;
+  const row=await db.prepare(sql).bind(selected).first();
   // Zone lines require a CSV asset ID, so they cannot reveal KML source
   // segments without one. Count those from the active source import instead.
   const network=await db.prepare(`SELECT COUNT(*) AS sourceSegments,
@@ -47,8 +51,10 @@ export async function productionHydraulicStatus(db, dma='') {
   const issues=[];
   if(!count) issues.push({code:'NO_PIPE_LINES_FOR_ZONE',severity:'CRITICAL',detail:'Tiada jajaran GIS aktif bagi zon yang dipilih.'});
   if(Number(row?.missingDiameterParts||0)) issues.push({code:'MISSING_DIAMETER',severity:'MISSING',count:Number(row.missingDiameterParts),detail:'Bahagian garisan tanpa diameter aset.'});
-  if(Number(network?.missingPipeIdSegments||0))issues.push({code:'PIPE_ID_MISSING',severity:'MISSING',
-    count:Number(network.missingPipeIdSegments),detail:`${Number(network.missingPipeIdSegments)} segmen sumber tanpa Pipe ID dalam import aktif; tidak dimasukkan dalam garisan DMA berasaskan ID CSV.`});
+  // Unidentified source segments have no deterministic DMA membership. Do not
+  // misattribute their global count to this selected DMA.
+  if(Number(network?.missingPipeIdSegments||0))issues.push({code:'PIPE_ID_MISSING_UNASSIGNED',severity:'MISSING',
+    detail:'Segmen sumber tanpa Pipe ID wujud dalam import aktif, tetapi DMA baginya belum dapat ditentukan secara sah.'});
   issues.push({code:'PIPE_ID_MAPPING_UNVERIFIED',severity:'MISSING',detail:'Pipe ID model mesti dipadankan secara deterministik dengan aset/sumber; kedekatan GIS bukan bukti.'});
   issues.push({code:'LENGTH_PROVENANCE_UNVERIFIED',severity:'MISSING',detail:'Panjang jajaran GIS bukan panjang paip kejuruteraan yang telah disahkan.'});
   // Phase 2A has GIS geometry but no hydraulic model tables in production.
@@ -72,11 +78,33 @@ export async function productionHydraulicStatus(db, dma='') {
     ...(['VALVE_ISOLATION','ALTERNATIVE_SUPPLY'].includes(type)?['Topologi injap/laluan alternatif belum disahkan.']:[]),
     ...(type==='RESERVE_MARGIN'?['Formula dan asas kapasiti belum diluluskan.']:[])
   ]}]));
-  return {zone:selected||'Semua zon',gis:{segmentCount:count,lineParts:Number(row?.lineParts||0),assetCount:Number(row?.assetCount||0),
+  const fields=Object.fromEntries([
+    ['pipeId','Pipe ID'],['diameter','Diameter'],['length','Engineering Length'],['roughness','Hazen-Williams C / Roughness'],
+    ['topology','Topology / Connectivity'],['elevation','Node Elevation'],['demand','Base Demand'],
+    ['pattern','Demand Pattern'],['sourceHead','Source / Reservoir Head'],['valves','Valve Data'],
+    ['pumps','Pump Data'],['tanks','Tank Data'],['sensorMapping','Sensor Mapping'],['calibration','Calibration Observations']
+  ].map(([key,label])=>[key,{label,status:'MISSING',detail:'Model/versi DMA dan bukti kejuruteraan diluluskan belum tersedia.'}]));
+  if(count){fields.pipeId.status='PARTIAL';fields.pipeId.detail='Aset dalam garisan GIS ada ID CSV; padanan Pipe ID hidraulik belum disahkan.';
+    fields.diameter.status='PARTIAL';fields.diameter.detail=`${Number(row?.missingDiameterParts||0)} bahagian garisan GIS tanpa diameter; nilai kejuruteraan belum disahkan.`;
+    fields.length.status='PARTIAL';fields.length.detail='Panjang GIS terbitan geometri sahaja, bukan panjang kejuruteraan.';}
+  let reviewed=null;
+  try{reviewed=await reviewedDmaStatus(db,selected);}catch(error){
+    // 0005/0006 may not yet be present in a rollback environment. Never
+    // upgrade readiness from an unavailable review source.
+    console.warn('hydraulic_review_status_unavailable',String(error?.message||error));
+  }
+  if(reviewed){
+    Object.assign(fields,reviewed.fields);
+    for(const [field,item] of Object.entries(reviewed.fields))if(!['VERIFIED','MANUAL','NOT APPLICABLE'].includes(item.status))
+      issues.push({code:`HYDRAULIC_${field.toUpperCase()}_${item.status.replaceAll(' ','_')}`,severity:'MISSING',
+        count:item.missing??undefined,detail:`${item.label}: ${item.detail}`});
+  }
+  return {zone:selected,gis:{segmentCount:count,lineParts:Number(row?.lineParts||0),assetCount:Number(row?.assetCount||0),
       missingDiameterParts:Number(row?.missingDiameterParts||0),sourceSegments:Number(network?.sourceSegments||0),
       missingPipeIdSegments:Number(network?.missingPipeIdSegments||0),missingDiameterSegments:Number(network?.missingDiameterSegments||0),
       lengthSource:'GEOMETRY_DERIVED'},
-    status:'NOT_READY',modelVersion:null,calibrationStatus:'CALIBRATION DATA INSUFFICIENT',calibrationMatchedCount:0,
+    status:reviewed?'PARTIAL':'NOT_READY',modelVersion:reviewed?.modelVersion||null,modelId:reviewed?.modelId||null,
+    inventory:reviewed?.inventory||null,fields,calibrationStatus:'CALIBRATION DATA INSUFFICIENT',calibrationMatchedCount:0,
     engine:{version:'EPANET 2.2.0',integration:'TEST_ONLY'},
     capabilities:{geometry:Number(network?.sourceSegments||0)>0?'PARTIAL':'NOT_READY',topology:'NOT_READY',
       steadyState:'NOT_READY',extendedPeriod:'NOT_READY',calibration:'NOT_READY',baseline:'NOT_READY',scenario:'NOT_READY',

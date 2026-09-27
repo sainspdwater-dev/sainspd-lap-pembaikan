@@ -4,6 +4,7 @@ main = "worker.js"
 account_id = "077904f9afb5422fccb5221876cf9ae3"
 compatibility_date = "2026-09-25"
 workers_dev = true
+keep_vars = true
 
 [vars]
 GOOGLE_SHEET_ID = "STAGING_TEST_ONLY"
