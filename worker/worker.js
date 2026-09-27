@@ -1,6 +1,8 @@
 import { handlePhase2aAction } from './phase2a.js';
 import { handlePhase2bAction } from './phase2b.js';
 import { handleHydraulicIntakeAction } from './hydraulic-intake.js';
+import { attachHydraulicPromptContext } from './hydraulic-prompt-context.js';
+import { handlePipeCandidateAction } from './pipe-candidate-intake.js';
 import { handleStagingHydraulicAction, stagingEnabled } from './hydraulic-staging.js';
 
 const rateLimitMap = new Map();
@@ -181,7 +183,7 @@ function buildLeakRiskProfile(telemetryRows = [], aldRows = [], params = {}, sel
   };
 }
 
-function buildOperationalAnalysis(records, params, prompt, assetProfile = {}, monitoringProfile = {}) {
+export function buildOperationalAnalysis(records, params, prompt, assetProfile = {}, monitoringProfile = {}) {
   const intent = classifyIntent(prompt);
   const selectedDma = String(params?.dma || '').trim();
   const scopeLabel = selectedDma && selectedDma.toLowerCase() !== 'semua' ? selectedDma : 'Semua DMA';
@@ -209,12 +211,12 @@ function buildOperationalAnalysis(records, params, prompt, assetProfile = {}, mo
     if (/\bBUKIT KUAU (LAMA|BARU)\b/.test(normaliseText(selectedDma))) {
       return scopeText.includes(normaliseText(selectedDma));
     }
-    const matchingTokens = selectedTokens.filter(token => scopeText.includes(token)).length;
-    return scopeText.includes(normaliseText(selectedDma)) || matchingTokens >= Math.min(2, selectedTokens.length);
+    return scopeText.includes(normaliseText(selectedDma)) ||
+      (selectedTokens.length > 0 && selectedTokens.every(token => scopeText.split(' ').includes(token)));
   });
-  // Jangan mendakwa tiada data hanya kerana nama DMA pada kawalan UI dan sheet tidak sama.
-  const usedFallbackScope = Boolean(selectedDma) && !/\bBUKIT KUAU (LAMA|BARU)\b/.test(normaliseText(selectedDma)) && scopedIncidents.length === 0 && allIncidents.length > 0;
-  const incidents = usedFallbackScope ? allIncidents : scopedIncidents;
+  // A missing DMA match must not silently become an all-DMA analysis.
+  const usedFallbackScope = false;
+  const incidents = scopedIncidents;
   const targetMonth = parseSelectedMonth(params?.bulan);
   const dated = incidents.filter(item => item.date);
   const latestDate = dated.length ? new Date(Math.max(...dated.map(item => item.date.getTime()))) : null;
@@ -254,8 +256,13 @@ function buildOperationalAnalysis(records, params, prompt, assetProfile = {}, mo
   let reason = `Tumpukan pemeriksaan pada ${topHotspot} dan semak keadaan ${topProfile}.`;
 
   if (intent === 'forecast') {
-    answer = `Unjuran ${periodLabel} bagi ${scopeLabel} ialah sekitar ${forecast} kes paip pecah/bocor dalam 30 hari (julat indikatif ${range} kes). Trend terkini ${trendText}; lokasi risiko utama ialah ${topHotspot} dengan profil ${topProfile}.`;
-    action = isHighRisk ? 'Jadualkan ALD dan pemeriksaan tapak dalam 7 hari' : action;
+    if (!historical.length) {
+      answer = `Ramalan kes bagi ${scopeLabel} belum boleh dikira: tiada sejarah insiden bertarikh yang sepadan dengan DMA/tempoh dipilih. Angka sifar tidak bermaksud tiada risiko.`;
+      action = 'Semak padanan DMA dan lengkapkan tarikh insiden sebelum membuat unjuran';
+    } else {
+      answer = `Unjuran ${periodLabel} bagi ${scopeLabel} ialah sekitar ${forecast} kes paip pecah/bocor dalam 30 hari (julat indikatif ${range} kes). Trend terkini ${trendText}; lokasi risiko utama ialah ${topHotspot} dengan profil ${topProfile}.`;
+      action = isHighRisk ? 'Jadualkan ALD dan pemeriksaan tapak dalam 7 hari' : action;
+    }
   } else if (intent === 'hotspot') {
     answer = `Hotspot utama ${scopeLabel} ialah ${hotspots.slice(0, 3).map(([name, count]) => `${name} (${count} kes)`).join(', ') || 'belum dapat dikenal pasti'}. Penanda merah pada peta menunjukkan lokasi yang mempunyai koordinat sah.`;
     action = 'Sahkan jajaran paip berhampiran hotspot dan buat pengesanan kebocoran';
@@ -296,6 +303,10 @@ function buildOperationalAnalysis(records, params, prompt, assetProfile = {}, mo
     `Profil insiden utama: ${pipeProfiles.map(([name, count]) => `${name} (${count} kes)`).join(', ') || 'jenis dan saiz paip belum lengkap'}.`,
     `Hotspot: ${hotspots.slice(0, 3).map(([name, count]) => `${name} (${count} kes)`).join(', ') || 'lokasi belum lengkap'}.`
   ];
+  if (selectedDma && !incidents.length && allIncidents.length)
+    findings.push(`Tiada padanan insiden yang boleh disahkan untuk DMA ${scopeLabel}; rekod DMA lain tidak dipinjam.`);
+  if (selectedDma && !assetProfile.available)
+    findings.push(`Tiada profil aset D1 yang boleh dipadankan dengan DMA ${scopeLabel}; aset DMA lain tidak dipinjam.`);
   if (assetProfile.available) findings.push(`D1 Master (${assetProfile.sourceScope || 'semua source_file'}): ${assetProfile.assetCount} aset / jumlah panjang ${assetProfile.totalLength} (unit sumber D1) dirujuk; kumpulan dominan ${assetGroups.slice(0, 2).map(group => `${group.material || 'Tidak dinyatakan'} ${group.size || ''} (${group.total_length})`).join(', ')}.`);
   if (risk.available) {
     findings.push(`Pemantauan tekanan DMA: skor heuristik ${risk.score}/100 (${risk.label}), ${risk.telemetryCount} masa bacaan, ${risk.deltaPressure !== null ? `ΔP ${risk.deltaPressure.toFixed(2)} bar` : 'ΔP belum lengkap'}${risk.usesIwaFallback ? '; penggunaan sah malam ESTIMATED menggunakan andaian 15% daripada aliran, bukan bacaan SCADA/manual' : ''}.`);
@@ -308,7 +319,7 @@ function buildOperationalAnalysis(records, params, prompt, assetProfile = {}, mo
     answer,
     confidence: { level: confidence, reason: `${historical.length} kes bertarikh, ${months.length} bulan rujukan${assetProfile.available ? ' dan profil aset D1' : ''} digunakan.` },
     metrics: [
-      { label: intent === 'forecast' ? 'Unjuran 30 hari' : 'Kes paip pecah/bocor', value: intent === 'forecast' ? forecast : incidents.length, unit: 'kes' },
+      { label: intent === 'forecast' ? 'Unjuran 30 hari' : 'Kes paip pecah/bocor', value: intent === 'forecast' ? (historical.length ? forecast : 'N/A') : incidents.length, unit: 'kes' },
       { label: 'Hotspot utama', value: hotspots[0]?.[1] || 0, unit: 'kes' },
       { label: 'Aset D1 dirujuk', value: assetProfile.available ? assetProfile.assetCount : 'N/A', unit: assetProfile.available ? 'aset' : '' },
       { label: 'Panjang aset D1', value: assetProfile.available ? assetProfile.totalLength : 'N/A', unit: assetProfile.available ? 'unit D1' : '' },
@@ -316,7 +327,7 @@ function buildOperationalAnalysis(records, params, prompt, assetProfile = {}, mo
     ],
     findings,
     calculations: [
-      ...(intent === 'forecast' ? [{ name: 'Ramalan purata berwajaran 3 bulan', formula: 'Bulan paling baharu menerima wajaran tertinggi.', result: forecast, unit: 'kes / 30 hari' }] : []),
+      ...(intent === 'forecast' && historical.length ? [{ name: 'Ramalan purata berwajaran 3 bulan', formula: 'Bulan paling baharu menerima wajaran tertinggi.', result: forecast, unit: 'kes / 30 hari' }] : []),
       ...(risk.available ? [{ name: 'Skor risiko kebocoran DMA', formula: 'Gabungan aliran malam melebihi penggunaan sah, perubahan ΔP, tekanan CP rendah, trend aliran dan keputusan ALD. Skor ini untuk triage, bukan pengesahan kebocoran.', result: `${risk.score}/100 — ${risk.label}`, unit: risk.usesIwaFallback ? 'Penggunaan sah: anggaran awal 15% aliran' : 'Penggunaan sah: nilai DMA' }] : [])
     ],
     recommendations: [
@@ -393,9 +404,9 @@ async function logAiHistory(db, { dma, sessionId, agentType, role, content, para
 // Call `handlePipeNetworkRequest` AFTER JWT verification and BEFORE generic GET.
 // D1 geometry is never served through GitHub Pages or a public unauthenticated URL.
 
-async function handlePipeNetworkRequest(request, env, decodedUser, securityHeaders) {
+export async function handlePipeNetworkRequest(request, env, decodedUser, securityHeaders) {
   const url = new URL(request.url);
-  if (url.pathname !== '/api/pipe-lines' && url.pathname !== '/api/pipe-summary') return null;
+  if (!['/api/pipe-lines','/api/pipe-summary','/api/pipe-import-active'].includes(url.pathname)) return null;
   const headers = { ...securityHeaders, 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' };
   const reply = (body, status = 200) => new Response(JSON.stringify(body), { status, headers });
   if (request.method !== 'GET') return reply({ status: 'error', message: 'Method not allowed' }, 405);
@@ -406,6 +417,14 @@ async function handlePipeNetworkRequest(request, env, decodedUser, securityHeade
     const active = await env.DB.prepare('SELECT import_id FROM pipe_network_active WHERE singleton = 1').first();
     if (!active?.import_id) return reply({ status: 'error', message: 'Jajaran paip belum diaktifkan' }, 503);
     const importId = active.import_id;
+    if (url.pathname === '/api/pipe-import-active') {
+      const metadata = await env.DB.prepare(`SELECT source_name,source_sha256,line_count,zone_line_count,created_at
+        FROM pipe_network_imports WHERE import_id=?`).bind(importId).first();
+      if (!metadata) return reply({status:'error',message:'Metadata import aktif tidak ditemui'},503);
+      return reply({status:'success',active:{importId,sourceName:metadata.source_name,
+        sourceSha256:metadata.source_sha256,lineCount:metadata.line_count,
+        zoneLineCount:metadata.zone_line_count,createdAt:metadata.created_at}});
+    }
     const zone = (url.searchParams.get('zone') || '').trim();
     if (zone.length > 180) return reply({ status: 'error', message: 'Nama zon terlalu panjang' }, 400);
 
@@ -764,6 +783,10 @@ export default { async scheduled(controller, env, ctx) { console.log(JSON.string
           action, data: reqData, env, user: decodedUser, headers: securityHeaders
         });
         if (hydraulicIntakeResponse) return hydraulicIntakeResponse;
+        const pipeCandidateResponse = await handlePipeCandidateAction({
+          action, data: reqData, env, user: decodedUser, headers: securityHeaders
+        });
+        if (pipeCandidateResponse) return pipeCandidateResponse;
         const phase2bResponse = await handlePhase2bAction({
           action, data: reqData, env, user: decodedUser, headers: securityHeaders
         });
@@ -914,27 +937,23 @@ export default { async scheduled(controller, env, ctx) { console.log(JSON.string
                 `).all();
                 const allGroups = assetResult.results || [];
                 const selectedSource = normaliseText(clientParams.dma);
-                const sourceTokens = selectedSource.split(' ').filter(token => token.length >= 3);
-                const minTokenMatches = Math.min(2, sourceTokens.length);
+                const sourceTokens = selectedSource.split(' ').filter(token => token.length >= 3 && !/^\d+MM$/.test(token));
                 const exactGroups = selectedSource ? allGroups.filter(group =>
                   normaliseText(group.source_file).replace(/ (CSV|XLSX|XLS)$/, '') === selectedSource
                 ) : [];
                 const matchedGroups = exactGroups.length ? exactGroups : selectedSource && sourceTokens.length ? allGroups.filter(group => {
-                  const sourceName = normaliseText(group.source_file);
-                  const matchingTokens = sourceTokens.filter(token => sourceName.includes(token)).length;
-                  return sourceName.includes(selectedSource) || matchingTokens >= minTokenMatches;
+                  const sourceName = normaliseText(group.source_file).split(' ');
+                  return sourceTokens.every(token => sourceName.includes(token));
                 }) : allGroups;
-                // source_file ialah pautan aset kepada District Metered Area. Jika
-                // tiada padanan fail, tunjukkan semua D1 secara jelas, bukan data
-                // kosong atau padanan palsu.
-                const groups = (matchedGroups.length ? matchedGroups : allGroups).sort((a, b) => (Number(b.asset_count) || 0) - (Number(a.asset_count) || 0));
+                // Never borrow other DMA asset rows when the chosen name has no match.
+                const groups = [...matchedGroups].sort((a, b) => (Number(b.asset_count) || 0) - (Number(a.asset_count) || 0));
                 const sourceFiles = [...new Set(groups.map(group => group.source_file).filter(Boolean))];
                 assetProfile = {
                   available: groups.length > 0,
                   assetCount: groups.reduce((sum, group) => sum + (Number(group.asset_count) || 0), 0),
                   totalLength: Math.round(groups.reduce((sum, group) => sum + (Number(group.total_length) || 0), 0) * 100) / 100,
                   groups,
-                  sourceScope: matchedGroups.length && selectedSource ? `source_file DMA: ${sourceFiles.slice(0, 3).join(', ')}` : 'semua source_file D1'
+                  sourceScope: selectedSource ? `source_file DMA: ${sourceFiles.slice(0, 3).join(', ')}` : 'semua source_file D1'
                 };
               } catch (d1Error) {
                 // Analisis aduan terus berjalan jika binding atau data D1 bermasalah.
@@ -956,6 +975,7 @@ export default { async scheduled(controller, env, ctx) { console.log(JSON.string
 
             const operationalResponse = buildOperationalAnalysis(records, clientParams, userPrompt, assetProfile, monitoringProfile);
             await addPipeEvidenceToAiResponse(env, clientParams.dma, operationalResponse);
+            await attachHydraulicPromptContext(operationalResponse, env.DB, clientParams.dma);
             const historyContext = { ...clientParams, intent: operationalResponse.intent, risk_score: monitoringProfile.available ? monitoringProfile.score : null };
             const userLogged = await logAiHistory(env.DB, {
               dma: clientParams.dma, sessionId: reqData.sessionId, agentType: reqData.agentType,
