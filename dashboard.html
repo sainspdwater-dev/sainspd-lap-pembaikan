@@ -719,6 +719,52 @@
                             </details>
                         </details>
 
+                        <details class="rounded border border-violet-200 dark:border-violet-800 p-2 text-xs" id="ai-hydraulic-panel">
+                            <summary class="font-bold cursor-pointer">Hydraulic Model Status — ADMIN</summary>
+                            <p class="mt-1 text-amber-700">Jajaran GIS bukan model tekanan. Baseline SAINS kekal terkunci sehingga model DMA lengkap dan disahkan.</p>
+                            <button type="button" id="ai-hydraulic-refresh" class="mt-2 px-2 py-1 rounded bg-violet-700 text-white">Semak Model DMA</button>
+                            <div id="ai-hydraulic-status" aria-live="polite" class="mt-2 whitespace-pre-line">Pilih satu DMA di atas.</div>
+                            <div id="ai-hydraulic-fields" class="mt-2 grid grid-cols-2 gap-1" aria-label="Status parameter hidraulik DMA"></div>
+                            <div id="ai-hydraulic-capabilities" class="mt-2 whitespace-pre-line" aria-live="polite"></div>
+                            <button type="button" id="ai-hydraulic-issues-map" disabled class="mt-2 px-2 py-1 rounded bg-slate-700 text-white disabled:opacity-40">Show Hydraulic Issues</button>
+                            <details class="mt-2"><summary class="font-semibold cursor-pointer">Hydraulic Model Issues</summary><ul id="ai-hydraulic-issues" class="list-disc pl-4 mt-1"></ul></details>
+                            <details class="mt-2"><summary class="font-semibold cursor-pointer">Kesediaan senario kejuruteraan</summary><ul id="ai-hydraulic-scenarios" class="list-disc pl-4 mt-1"></ul></details>
+                            <details class="mt-2 border-t pt-2" id="ai-engineering-intake">
+                                <summary class="font-semibold cursor-pointer">Lengkapkan Data — Manual / Engineering CSV / Excel</summary>
+                                <p class="mt-1 text-amber-700">Pilih DMA di atas. Pratonton dahulu; hanya model/versi DMA berdaftar boleh menyimpan DRAFT. Kelulusan jurutera lain diperlukan.</p>
+                                <div class="grid grid-cols-2 gap-2 mt-2">
+                                    <input id="ai-eng-model" class="form-input text-xs" placeholder="Model ID SAINS">
+                                    <input id="ai-eng-version" class="form-input text-xs" type="number" min="1" step="1" placeholder="Versi model">
+                                    <input id="ai-eng-operator" class="form-input text-xs" placeholder="Nama penyedia (identiti simpan ikut login)">
+                                    <input id="ai-eng-file" class="form-input text-xs" type="file" accept=".csv,.xlsx,.xls" aria-label="Import Engineering CSV / Excel">
+                                </div>
+                                <button type="button" id="ai-eng-find-model" class="mt-2 px-2 py-1 rounded bg-slate-700 text-white">Cari model DMA ini</button>
+                                <button type="button" id="ai-eng-register-model" class="mt-2 px-2 py-1 rounded bg-amber-700 text-white">Daftar model DRAFT untuk DMA sah</button>
+                                <button type="button" id="ai-eng-preview-file" class="mt-2 px-2 py-1 rounded bg-violet-700 text-white">Pratonton fail kejuruteraan</button>
+                                <a href="engineering-template.csv" download="engineering-template.csv" class="mt-2 inline-block px-2 py-1 rounded bg-blue-700 text-white">Muat turun templat import sebenar</a>
+                                <div id="ai-eng-column-map" class="mt-2 grid grid-cols-2 gap-1" aria-label="Pemetaan kolum CSV/Excel"></div>
+                                <p class="mt-2">Entri manual (semua medan wajib kecuali nota):</p>
+                                <div class="grid grid-cols-2 gap-2 mt-1">
+                                    <select id="ai-eng-entity-type" class="form-input text-xs"><option>PIPE</option><option>NODE</option><option>SOURCE</option><option>VALVE</option><option>PUMP</option><option>TANK</option><option>PATTERN</option><option>MODEL</option></select>
+                                    <input id="ai-eng-entity-id" class="form-input text-xs" placeholder="Entity ID sebenar">
+                                    <input id="ai-eng-parameter" class="form-input text-xs" placeholder="Parameter: diameter_mm, elevation_m, head_m…">
+                                    <input id="ai-eng-value" class="form-input text-xs" placeholder="Nilai">
+                                    <input id="ai-eng-unit" class="form-input text-xs" placeholder="Unit: mm, m, m3/s…">
+                                    <select id="ai-eng-classification" class="form-input text-xs"><option>VERIFIED</option><option>MANUAL</option><option>ASSUMED</option><option>MISSING</option></select>
+                                    <input id="ai-eng-source" class="form-input text-xs" placeholder="Rujukan sumber / dokumen">
+                                    <input id="ai-eng-effective" class="form-input text-xs" placeholder="Tarikh efektif ISO + zon masa">
+                                    <input id="ai-eng-notes" class="form-input text-xs col-span-2" placeholder="Nota / kaedah agihan / had andaian">
+                                </div>
+                                <button type="button" id="ai-eng-preview-manual" class="mt-2 px-2 py-1 rounded bg-slate-700 text-white">Pratonton entri manual</button>
+                                <div class="mt-2 flex items-center gap-2"><input id="ai-eng-confirm" type="checkbox"><label for="ai-eng-confirm">Saya telah semak DMA, baris, sumber dan masa efektif; simpan sebagai DRAFT sahaja.</label></div>
+                                <button type="button" id="ai-eng-save" disabled class="mt-2 px-2 py-1 rounded bg-emerald-700 text-white disabled:opacity-40">Simpan DRAFT yang disemak</button>
+                                <button type="button" id="ai-eng-load-reviews" class="mt-2 px-2 py-1 rounded bg-slate-700 text-white">Lihat rekod semakan</button>
+                                <div id="ai-eng-reviews" class="mt-2 whitespace-pre-line"></div>
+                                <div id="ai-eng-report" class="mt-2 whitespace-pre-line" aria-live="polite">Tiada data kejuruteraan disimpan.</div>
+                            </details>
+                            <button type="button" id="ai-run-real-baseline" disabled title="Data DMA belum lulus readiness" class="mt-2 px-2 py-1 rounded bg-slate-200 text-slate-500">Run Baseline</button>
+                        </details>
+
                         <div class="flex gap-2 pt-1">
                             <input type="text" id="ai-chat-input" aria-label="Soalan kepada AI Agent" class="form-input flex-1 text-xs bg-white dark:bg-gray-900 py-1.5" placeholder="Pilih prompt di atas atau taip soalan..." autocomplete="off">
                             <button type="button" onclick="resetAiInputs()" class="px-3 py-1.5 bg-slate-500 hover:bg-slate-600 text-white rounded-md text-xs font-bold flex items-center gap-1 transition shadow-sm" title="Reset">
@@ -4166,5 +4212,7 @@ finalReport = finalReport.replace(/\{([^}]+)\}(M?)/g, (matchPattern, pureName, u
         });
     </script>
     <script src="phase2a-ui.js" defer></script>
+    <script src="phase2b-ui.js" defer></script>
+    <script src="engineering-intake.mjs" type="module"></script>
 </body>
 </html>
