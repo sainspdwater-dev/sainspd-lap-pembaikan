@@ -740,24 +740,35 @@
                                 </div>
                                 <button type="button" id="ai-eng-find-model" class="mt-2 px-2 py-1 rounded bg-slate-700 text-white">Cari model DMA ini</button>
                                 <button type="button" id="ai-eng-register-model" class="mt-2 px-2 py-1 rounded bg-amber-700 text-white">Daftar model DRAFT untuk DMA sah</button>
+                                <div class="mt-2 rounded border border-blue-200 p-2">
+                                    <button type="button" id="ai-eng-autofill" class="px-2 py-1 rounded bg-blue-700 text-white">Auto-Fill From Existing Data</button>
+                                    <label class="block mt-2">Tarikh efektif sumber yang telah disemak (masa tempatan; wajib sebelum simpan)
+                                        <input id="ai-eng-autofill-effective" type="datetime-local" class="form-input text-xs" aria-label="Tarikh efektif Auto-Fill">
+                                    </label>
+                                    <button type="button" id="ai-eng-preview-autofill" disabled class="mt-2 px-2 py-1 rounded bg-violet-700 text-white disabled:opacity-40">Pratonton Auto-Fill untuk DRAFT</button>
+                                    <div id="ai-eng-autofill-report" class="mt-2 whitespace-pre-line text-xs" aria-live="polite">Auto-Fill belum dijalankan. Pratonton tidak menulis D1.</div>
+                                    <div id="ai-eng-autofill-rows" class="mt-2 max-h-56 overflow-auto text-xs" aria-label="Nilai dan sumber Auto-Fill"></div>
+                                </div>
                                 <button type="button" id="ai-eng-preview-file" class="mt-2 px-2 py-1 rounded bg-violet-700 text-white">Pratonton fail kejuruteraan</button>
                                 <a href="engineering-template.csv" download="engineering-template.csv" class="mt-2 inline-block px-2 py-1 rounded bg-blue-700 text-white">Muat turun templat import sebenar</a>
                                 <div id="ai-eng-column-map" class="mt-2 grid grid-cols-2 gap-1" aria-label="Pemetaan kolum CSV/Excel"></div>
                                 <p class="mt-2">Entri manual (semua medan wajib kecuali nota):</p>
                                 <div class="grid grid-cols-2 gap-2 mt-1">
                                     <select id="ai-eng-entity-type" class="form-input text-xs"><option>PIPE</option><option>NODE</option><option>SOURCE</option><option>VALVE</option><option>PUMP</option><option>TANK</option><option>PATTERN</option><option>MODEL</option></select>
-                                    <input id="ai-eng-entity-id" class="form-input text-xs" placeholder="Entity ID sebenar">
-                                    <input id="ai-eng-parameter" class="form-input text-xs" placeholder="Parameter: diameter_mm, elevation_m, head_m…">
+                                    <input id="ai-eng-entity-id" class="form-input text-xs" list="ai-eng-entity-options" placeholder="Cari atau taip Entity ID sebenar"><datalist id="ai-eng-entity-options"></datalist>
+                                    <select id="ai-eng-parameter" class="form-input text-xs" aria-label="Parameter mengikut jenis entiti"></select>
                                     <input id="ai-eng-value" class="form-input text-xs" placeholder="Nilai">
-                                    <input id="ai-eng-unit" class="form-input text-xs" placeholder="Unit: mm, m, m3/s…">
+                                    <input id="ai-eng-unit" class="form-input text-xs" readonly aria-label="Unit parameter">
                                     <select id="ai-eng-classification" class="form-input text-xs"><option>VERIFIED</option><option>MANUAL</option><option>ASSUMED</option><option>MISSING</option></select>
                                     <input id="ai-eng-source" class="form-input text-xs" placeholder="Rujukan sumber / dokumen">
-                                    <input id="ai-eng-effective" class="form-input text-xs" placeholder="Tarikh efektif ISO + zon masa">
-                                    <input id="ai-eng-notes" class="form-input text-xs col-span-2" placeholder="Nota / kaedah agihan / had andaian">
+                                    <input id="ai-eng-effective" type="datetime-local" class="form-input text-xs" aria-label="Tarikh dan masa efektif tempatan">
+                                    <textarea id="ai-eng-notes" class="form-input text-xs col-span-2" placeholder="Nota / kaedah agihan / had andaian"></textarea>
                                 </div>
-                                <button type="button" id="ai-eng-preview-manual" class="mt-2 px-2 py-1 rounded bg-slate-700 text-white">Pratonton entri manual</button>
+                                <div class="mt-1">Review Status: <strong>DRAFT</strong></div>
+                                <button type="button" id="ai-eng-preview-manual" class="mt-2 px-2 py-1 rounded bg-slate-700 text-white">Preview entri manual</button>
                                 <div class="mt-2 flex items-center gap-2"><input id="ai-eng-confirm" type="checkbox"><label for="ai-eng-confirm">Saya telah semak DMA, baris, sumber dan masa efektif; simpan sebagai DRAFT sahaja.</label></div>
-                                <button type="button" id="ai-eng-save" disabled class="mt-2 px-2 py-1 rounded bg-emerald-700 text-white disabled:opacity-40">Simpan DRAFT yang disemak</button>
+                                <button type="button" id="ai-eng-save" disabled class="mt-2 px-2 py-1 rounded bg-emerald-700 text-white disabled:opacity-40">Save Draft yang disemak</button>
+                                <button type="button" id="ai-eng-cancel" class="mt-2 px-2 py-1 rounded bg-slate-500 text-white">Cancel</button>
                                 <button type="button" id="ai-eng-load-reviews" class="mt-2 px-2 py-1 rounded bg-slate-700 text-white">Lihat rekod semakan</button>
                                 <div id="ai-eng-reviews" class="mt-2 whitespace-pre-line"></div>
                                 <div id="ai-eng-report" class="mt-2 whitespace-pre-line" aria-live="polite">Tiada data kejuruteraan disimpan.</div>
