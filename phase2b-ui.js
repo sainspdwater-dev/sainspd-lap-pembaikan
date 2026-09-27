@@ -8,16 +8,34 @@
     if(target==='intake')byId('ai-engineering-intake').open=true;
     byId(target==='intake'?'ai-engineering-intake':'ai-hydraulic-fields').scrollIntoView({behavior:'smooth',block:'nearest'});
   };
+  const fieldGuides={
+    pipeId:'PIPE → pipe_id. Padankan Pipe ID kepada daftar aset/as-built; ID GIS sahaja belum membuktikan sambungan hidraulik.',
+    diameter:'PIPE → diameter_mm. Rujuk daftar aset atau as-built yang disahkan; bahagian tanpa diameter boleh dilihat melalui Lihat isu pada peta.',
+    length:'PIPE → length_m. Masukkan panjang kejuruteraan yang disemak, bukan panjang garisan KML.',
+    roughness:'PIPE → hazen_c. Gunakan nilai dan sumber yang diluluskan jurutera; angka Hazen pada borang operasi di atas bukan nilai model yang disahkan.',
+    topology:'PIPE → from_node_id dan to_node_id. Kedua-dua nod serta sambungan fizikal perlu disahkan daripada lukisan/as-built atau semakan tapak.',
+    elevation:'NODE → elevation_m. Rujuk aras survei atau dataset elevasi yang diluluskan.',
+    demand:'NODE → base_demand_m3s. Perlu agihan permintaan kepada nod berserta kaedah/sumber yang disemak.',
+    pattern:'PATTERN → multipliers_json. Perlu corak permintaan dan jadual operasi yang disemak.',
+    sourceHead:'SOURCE → head_m. Rujuk paras operasi reservoir/sumber pada masa yang berkaitan dan semak unit serta datum.',
+    valves:'VALVE → jenis, diameter, setting dan status mengikut inventori peralatan yang disemak. Tandakan tidak berkenaan hanya selepas pengesahan jurutera.',
+    pumps:'PUMP → curve_ref dan status daripada inventori/keluk pam yang diluluskan. Sahkan tidak berkenaan jika tiada pam.',
+    tanks:'TANK → aras asas, paras awal/min/maks dan diameter daripada as-built/rekod operasi yang disemak. Sahkan tidak berkenaan jika tiada tangki.',
+    sensorMapping:'Pemetaan sensor ke nod/paip model memerlukan tag SCADA, lokasi dan bukti liputan yang diluluskan. Borang parameter manual di bawah tidak menggantikan proses pemetaan sensor.',
+    calibration:'Pemerhatian tekanan/aliran sebenar perlu dipadankan dengan masa dan lokasi model serta disemak jurutera. Borang parameter manual di bawah bukan proses kelulusan kalibrasi.'
+  };
   const goToField=key=>{
     const inputs={pipeId:['PIPE','pipe_id'],diameter:['PIPE','diameter_mm'],length:['PIPE','length_m'],
       roughness:['PIPE','hazen_c'],topology:['PIPE','from_node_id'],elevation:['NODE','elevation_m'],
       demand:['NODE','base_demand_m3s'],pattern:['PATTERN','multipliers_json'],sourceHead:['SOURCE','head_m'],
       valves:['VALVE','setting'],pumps:['PUMP','curve_ref'],tanks:['TANK','initial_level_m']};
-    if(!inputs[key])return openDetails('status');
+    byId('ai-hydraulic-field-guide').textContent=fieldGuides[key]||'Semak sumber kejuruteraan dan proses kelulusan bagi data ini.';
+    if(!inputs[key]){byId('ai-hydraulic-field-guide').scrollIntoView({behavior:'smooth',block:'nearest'});return;}
     openDetails('intake');
     const [type,parameter]=inputs[key],typeControl=byId('ai-eng-entity-type');
     typeControl.value=type;typeControl.dispatchEvent(new Event('change'));
     byId('ai-eng-parameter').value=parameter;byId('ai-eng-parameter').dispatchEvent(new Event('change'));
+    byId('ai-eng-report').textContent=fieldGuides[key]+' Masukkan hanya nilai sebenar bersumber; pratonton dan simpan DRAFT sebelum semakan bebas.';
     byId('ai-eng-entity-id').focus();
   };
   const renderQuick=(h=null)=>{
@@ -146,6 +164,8 @@
     byId('ai-quick-complete')?.addEventListener('click',()=>openDetails('intake'));
     byId('ai-quick-issues')?.addEventListener('click',()=>{openDetails('status');byId('ai-hydraulic-issues-map').click();});
     byId('ai-quick-view-missing')?.addEventListener('click',()=>openDetails('status'));
+    byId('ai-guide-manual')?.addEventListener('click',()=>{openDetails('intake');byId('ai-eng-entity-id').focus();});
+    byId('ai-guide-file')?.addEventListener('click',()=>{openDetails('intake');byId('ai-eng-file').focus();});
     byId('ai-view-baseline-blockers')?.addEventListener('click',()=>openDetails('status'));
     renderQuick();
   });

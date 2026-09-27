@@ -662,6 +662,17 @@
                                 <div id="ai-hydraulic-quick-title" class="font-bold break-words">HYDRAULIC MODEL — Pilih DMA</div>
                                 <div id="ai-hydraulic-quick-status" class="mt-1 flex flex-wrap gap-x-3 gap-y-1">Status belum disemak.</div>
                                 <div class="mt-1"><span class="font-semibold">Missing / Partial:</span> <span id="ai-hydraulic-quick-missing">Pilih DMA dahulu.</span></div>
+                                <div class="mt-2 rounded border border-violet-200 bg-white dark:bg-gray-900 p-2">
+                                    <p class="font-semibold">Apa saya perlu buat untuk model DMA ini?</p>
+                                    <p class="mt-1">1. Pilih DMA, tekan <strong>Semak Model DMA</strong>, kemudian <strong>Cari model DMA ini</strong> dan <strong>Auto-Fill Data</strong> untuk melihat data sedia ada (pratonton sahaja). 2. Tekan nama MISSING untuk ke borang, atau gunakan templat CSV/Excel bagi banyak rekod. 3. Pratonton dan simpan DRAFT, minta jurutera lain semak/lulus, kemudian semak readiness semula.</p>
+                                    <p class="mt-1 text-amber-700 dark:text-amber-300">KML menunjukkan jajaran, bukan elevasi, sambungan nod, demand atau head reservoir yang disahkan. Simulasi SAINS sebenar belum diaktifkan.</p>
+                                    <div class="mt-2 flex flex-wrap gap-2">
+                                        <button type="button" id="ai-guide-manual" class="px-2 py-1 rounded bg-slate-700 text-white">Isi data satu demi satu ↓</button>
+                                        <button type="button" id="ai-guide-file" class="px-2 py-1 rounded bg-blue-700 text-white">Upload data kejuruteraan ↓</button>
+                                        <a href="engineering-template.csv" download="engineering-template.csv" class="px-2 py-1 rounded border border-blue-600 text-blue-700 dark:text-blue-300">Muat turun templat CSV</a>
+                                    </div>
+                                    <p id="ai-hydraulic-field-guide" class="mt-2" role="status" aria-live="polite">Tekan nama data yang MISSING di atas untuk lihat medan dan sumber yang diperlukan.</p>
+                                </div>
                                 <button type="button" id="ai-quick-view-missing" disabled class="mt-2 px-2 py-1 rounded border border-violet-400 disabled:opacity-40">View Missing Data</button>
                             </div>
                             <div id="ai-hydraulic-workflow" class="mt-2 flex flex-wrap gap-1" aria-label="Aliran kerja hidraulik">
@@ -4263,7 +4274,7 @@
         });
     </script>
     <script src="phase2a-ui.js" defer></script>
-    <script src="phase2b-ui.js" defer></script>
+    <script src="phase2b-ui.js?v=hydraulic-guide-1" defer></script>
     <script src="engineering-intake.mjs" type="module"></script>
     <script src="ai-prompt-hydraulic-guide.mjs" type="module"></script>
     <script src="pipe-clip-ui.mjs?v=fd486b6" type="module"></script>
