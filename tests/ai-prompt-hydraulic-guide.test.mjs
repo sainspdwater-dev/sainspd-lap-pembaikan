@@ -20,6 +20,7 @@ test('every existing AI chip has a distinct hydraulic evidence guide',()=>{
   assert.match(html,/id="ai-pipe-clip-audit" disabled/);
   assert.match(html,/id="ai-pipe-clip-stage" disabled/);
   assert.match(html,/pipe-clip-ui\.mjs/);
+  assert.match(html,/layer\.toGeoJSON\(false\)/);
   const clipUi=readFileSync(new URL('../pipe-clip-ui.mjs',import.meta.url),'utf8');
   assert.match(clipUi,/beginPipeCandidateDraft/);
   assert.match(clipUi,/appendPipeCandidateParts/);

@@ -3182,7 +3182,9 @@
             const layer = omnivore.kml.parse(kmlString);
             // KML MultiGeometry can create nested Leaflet groups. GeoJSON export
             // traverses those groups, whereas one-level eachLayer silently loses them.
-            mountCustomSpatialLayer(layer, layer.toGeoJSON(), sourceName);
+            // Leaflet defaults to 6 decimal places (~0.1 m). Keep the source
+            // coordinates for boundary clipping and candidate DRAFT geometry.
+            mountCustomSpatialLayer(layer, layer.toGeoJSON(false), sourceName);
         }
 
         window.ujiPaipTurfJS = function() {
