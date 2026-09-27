@@ -376,12 +376,14 @@
             </section>
 
             <div class="text-lg font-bold text-slate-800 dark:text-white mb-4"><i class="fa-solid fa-chart-pie mr-2 text-blue-500"></i> Analisis Terperinci Paip & Pembaikan</div>
-            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6" aria-label="Jenis paip rosak dan paip baru">
                 <div class="dashboard-card p-4"><h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-wrench text-amber-500"></i> KEROSAKAN PAIP: JENIS PAIP</h3><div id="chart-jenis-paip" class="h-64 min-h-[256px]"></div></div>
-                <div class="dashboard-card p-4"><h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-ruler-combined text-amber-500"></i> KEROSAKAN PAIP: SAIZ PAIP</h3><p id="chart-saiz-paip-summary" class="text-xs text-slate-500 dark:text-slate-300">Semua saiz bagi penapis semasa.</p><div class="max-h-[420px] overflow-y-auto"><div id="chart-saiz-paip" class="min-h-[256px]"></div></div></div>
                 <div class="dashboard-card p-4"><h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-circle-plus text-emerald-500"></i> PAIP BARU: JENIS PAIP BARU</h3><div id="chart-jenis-baru" class="h-64 min-h-[256px]"></div></div>
+            </section>
+            <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6" aria-label="Saiz dan panjang paip">
+                <div class="dashboard-card p-4"><h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-ruler-combined text-amber-500"></i> KEROSAKAN PAIP: SAIZ PAIP</h3><p id="chart-saiz-paip-summary" class="text-xs text-slate-500 dark:text-slate-300">Semua saiz bagi penapis semasa.</p><div class="max-h-[420px] overflow-y-auto"><div id="chart-saiz-paip" class="min-h-[256px]"></div></div></div>
                 <div class="dashboard-card p-4"><h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-arrows-split-up-and-left text-emerald-500"></i> PAIP BARU: SAIZ</h3><p id="chart-saiz-baru-summary" class="text-xs text-slate-500 dark:text-slate-300">Semua saiz bagi penapis semasa.</p><div class="max-h-[420px] overflow-y-auto"><div id="chart-saiz-baru" class="min-h-[256px]"></div></div></div>
-                <div class="dashboard-card p-4 md:col-span-2 lg:col-span-1"><h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-column text-purple-500"></i> PAIP BARU: PANJANG PAIP (M)</h3><div id="chart-panjang-paip" class="h-64 min-h-[256px]"></div></div>
+                <div class="dashboard-card p-4"><h3 class="font-semibold mb-2 text-slate-800 dark:text-white flex items-center gap-2"><i class="fa-solid fa-chart-column text-purple-500"></i> PAIP BARU: PANJANG PAIP (M)</h3><p id="chart-panjang-paip-summary" class="text-xs text-slate-500 dark:text-slate-300">Semua panjang bagi penapis semasa.</p><div class="max-h-[420px] overflow-y-auto"><div id="chart-panjang-paip" class="min-h-[256px]"></div></div></div>
             </section>
 
             <section class="mb-6 dashboard-card overflow-hidden" style="min-height: 550px;">
@@ -3608,7 +3610,7 @@
             charts.saizPaip = new ApexCharts(document.querySelector("#chart-saiz-paip"), {...opt, series: [], chart: {type:'bar', height:256}, plotOptions:{bar:{horizontal:true}}, colors:['#f59e0b']}); charts.saizPaip.render();
             charts.jenisBaru = new ApexCharts(document.querySelector("#chart-jenis-baru"), {...opt, series: [], chart: {type:'donut'}, labels:[], stroke:{width:0}}); charts.jenisBaru.render();
             charts.saizBaru = new ApexCharts(document.querySelector("#chart-saiz-baru"), {...opt, series: [], chart: {type:'bar', height:256}, plotOptions:{bar:{horizontal:true}}, colors:['#10b981']}); charts.saizBaru.render();
-            charts.panjangPaip = new ApexCharts(document.querySelector("#chart-panjang-paip"), {...opt, series: [], chart: {type:'bar'}, colors:['#8b5cf6']}); charts.panjangPaip.render();
+            charts.panjangPaip = new ApexCharts(document.querySelector("#chart-panjang-paip"), {...opt, series: [], chart: {type:'bar',height:256}, plotOptions:{bar:{horizontal:true}}, colors:['#8b5cf6']}); charts.panjangPaip.render();
         }
 
         function initMap() {
@@ -3755,8 +3757,10 @@
             charts.saizBaru.updateOptions({chart:{height:Math.max(256,dSaizBaru.length*38)},xaxis:{categories:dSaizBaru.map(d=>d[0])}});
             charts.saizBaru.updateSeries([{name:'Kes',data:dSaizBaru.map(d=>d[1])}]);
 
-            const dPanjang = countBy('PANJANG PAIP (M)').slice(0,5);
-            charts.panjangPaip.updateSeries([{name: 'Nilai', data: dPanjang.map(d=>d[1])}]); charts.panjangPaip.updateOptions({xaxis: {categories: dPanjang.map(d=>d[0])}});
+            const dPanjang = countBy('PANJANG PAIP (M)');
+            document.getElementById('chart-panjang-paip-summary').textContent = `${dPanjang.length} nilai panjang · ${filteredData.length} rekod ditapis${dPanjang.length > 9 ? ' · skrol untuk lihat semua' : ''}`;
+            charts.panjangPaip.updateOptions({chart:{height:Math.max(256,dPanjang.length*38)},xaxis:{categories:dPanjang.map(d=>d[0])}});
+            charts.panjangPaip.updateSeries([{name:'Rekod',data:dPanjang.map(d=>d[1])}]);
 
             updateMapMarkers(); updateTable();
         }
