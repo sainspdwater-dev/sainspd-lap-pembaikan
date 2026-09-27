@@ -31,6 +31,11 @@ if(typeof document!=='undefined')document.addEventListener('DOMContentLoaded',()
     markers.clear();
     status.textContent='Koordinat dikosongkan. Klik lokasi sebenar pada peta dan semak sebelum menyimpan.';
   };
+  byId('ai-filter-district')?.addEventListener('change',()=>{
+    for(const target of targets)byId(target.input).value='';
+    window.aiMapCaptureClear();
+    status.textContent='DMA berubah; lokasi Flow Meter, CP dan PRV lama dikosongkan. Pilih titik untuk DMA baharu sebelum Simpan.';
+  });
   for(const target of targets)byId(target.button)?.addEventListener('click',()=>{
     if(localStorage.getItem('sainsUserLevel')!=='ADMIN'){
       status.textContent='Pemilihan lokasi sensor/PRV terhad kepada ADMIN.';return;
