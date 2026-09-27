@@ -611,6 +611,17 @@
                             <button onclick="setAiPrompt('Analisis ramalan paip bocor dan zon berisiko tinggi', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-water text-cyan-500 mr-1"></i> Ramalan Paip Bocor</button>
                             <button onclick="setAiPrompt('Cadangan jadual Active Leakage Detection (ALD) mengikut zon', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-magnifying-glass-chart text-emerald-500 mr-1"></i> Penjadualan ALD</button>
                         </div>
+                        <section id="ai-prompt-hydraulic-guide" class="rounded border border-violet-200 dark:border-violet-800 bg-white dark:bg-gray-800 p-2 text-xs" aria-live="polite">
+                            <div class="font-bold text-violet-700 dark:text-violet-300">Panduan data prompt &amp; model hidraulik</div>
+                            <p id="ai-prompt-guide-purpose" class="mt-1">Pilih satu prompt untuk lihat kegunaan, sumber sebenar dan kaitannya dengan model DMA.</p>
+                            <p id="ai-prompt-guide-evidence" class="mt-1 text-slate-600 dark:text-gray-300"></p>
+                            <p id="ai-prompt-guide-readiness" class="mt-1 text-amber-700 dark:text-amber-300">Pilih DMA untuk semakan readiness. Analisis operasi bukan hasil EPANET.</p>
+                            <div class="flex flex-wrap gap-1 mt-2">
+                                <button type="button" id="ai-prompt-guide-check" class="px-2 py-1 rounded bg-violet-700 text-white">Semak model DMA</button>
+                                <button type="button" id="ai-prompt-guide-complete" class="px-2 py-1 rounded border border-violet-500">Isi data hilang</button>
+                                <button type="button" id="ai-prompt-guide-map" class="px-2 py-1 rounded border border-violet-500">Lihat isu pada peta</button>
+                            </div>
+                        </section>
 
                         <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs">
                             <div>
@@ -660,7 +671,7 @@
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 items-center text-xs pt-1">
                             <div>
-                                <label class="font-bold text-blue-600 dark:text-blue-400 mb-0.5 block text-[10px]"><i class="fa-solid fa-map-location-dot mr-1"></i> Fail Sempadan KML / KMZ Spatial</label>
+                                <label class="font-bold text-blue-600 dark:text-blue-400 mb-0.5 block text-[10px]"><i class="fa-solid fa-map-location-dot mr-1"></i> Fail Spatial KML / KMZ / GeoJSON (sempadan atau jajaran)</label>
                                 <input type="file" id="ai-spatial-file" accept=".kml, .kmz, .geojson" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-0.5 file:px-2 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
                             </div>
                             <div>
@@ -668,6 +679,23 @@
                                 <input type="file" id="ai-flow-file" accept=".csv, .xls, .xlsx" class="w-full text-[11px] text-slate-500 file:mr-2 file:py-0.5 file:px-2 file:rounded file:border-0 file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer">
                             </div>
                         </div>
+
+                        <details id="ai-pipe-clip-panel" class="rounded border border-blue-200 dark:border-blue-800 p-2 text-xs">
+                            <summary class="font-bold cursor-pointer">Pratonton clip jajaran paip seluruh DMA — ADMIN</summary>
+                            <p class="mt-1 text-amber-700 dark:text-amber-300">Muat naik KML/KMZ/GeoJSON jajaran melalui kotak Fail Spatial di atas, kemudian semak semua polygon DMA. Pertindihan geometri ialah calon spatial sahaja, bukan pengesahan pemilikan aset, panjang kejuruteraan atau topologi EPANET. Pratonton ini tidak menulis D1.</p>
+                            <button type="button" id="ai-pipe-clip-preview" class="mt-2 px-2 py-1 rounded bg-blue-700 text-white">Semak &amp; clip mengikut semua DMA</button>
+                            <button type="button" id="ai-pipe-clip-clear" class="mt-2 px-2 py-1 rounded border border-slate-400">Kosongkan pratonton</button>
+                            <button type="button" id="ai-pipe-clip-audit" disabled class="mt-2 px-2 py-1 rounded border border-blue-500 disabled:opacity-40">Muat turun audit CSV (tanpa geometri)</button>
+                            <div class="mt-2 flex flex-wrap items-center gap-1">
+                                <label for="ai-pipe-clip-confirm" class="font-semibold">Untuk simpan calon sahaja, taip SIMPAN DRAFT:</label>
+                                <input id="ai-pipe-clip-confirm" class="form-input py-1 text-xs w-36" autocomplete="off" placeholder="SIMPAN DRAFT">
+                                <button type="button" id="ai-pipe-clip-stage" disabled class="px-2 py-1 rounded bg-amber-700 text-white disabled:opacity-40">Simpan calon DRAFT ke D1</button>
+                            </div>
+                            <div id="ai-pipe-clip-stage-status" role="status" aria-live="polite" class="mt-1 text-amber-700 dark:text-amber-300">Tiada calon disimpan. Jajaran aktif tidak akan diganti oleh butang ini.</div>
+                            <div id="ai-pipe-clip-progress" role="status" aria-live="polite" class="mt-2">Belum ada pratonton.</div>
+                            <div id="ai-pipe-clip-compare" aria-live="polite" class="mt-1 text-slate-600 dark:text-gray-300">Perbandingan versi aktif D1 belum dibuat.</div>
+                            <div id="ai-pipe-clip-summary" class="mt-2 overflow-auto max-h-64"></div>
+                        </details>
 
                         <details id="ai-import-panel" class="hidden rounded border border-emerald-200 dark:border-emerald-800 bg-emerald-50/50 p-2 text-xs">
                             <summary class="font-bold cursor-pointer">Pratonton & pemetaan kolum SCADA</summary>
@@ -703,6 +731,8 @@
                                 <input id="ai-ald-pipe-id" class="form-input py-1 text-xs" placeholder="Pipe ID disahkan (pilihan)">
                                 <input id="ai-ald-repair-ref" class="form-input py-1 text-xs" placeholder="Rujukan pembaikan (pilihan)">
                             </div>
+                            <button type="button" id="ai-pick-pressure-cp-map" class="mt-2 px-2 py-1 rounded border border-cyan-600 text-cyan-700 dark:text-cyan-300">Pilih titik tekanan CP di peta</button>
+                            <span id="ai-pick-pressure-cp-status" role="status" class="ml-2 text-[10px]">Koordinat dipilih secara manual; isi tekanan dan masa sebenar sebelum Simpan.</span>
                             <p class="mt-1 text-[10px]">Sumber bacaan dalam borang ini: <strong>MANUAL</strong>. Masa bacaan ialah masa ukuran sebenar, bukan masa import.</p>
                             <input id="ai-investigation-id" class="form-input py-1 text-xs mt-2" placeholder="ID penyiasatan (dijana selepas simpan; guna semula untuk kes sama)" autocomplete="off">
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
@@ -2931,11 +2961,13 @@
             document.getElementById('ai-flow-file').value = '';
             document.getElementById('ai-spatial-file').value = '';
             document.getElementById('ai-chat-input').value = '';
+            window.aiMapCaptureClear?.();
 
             if (window.customSpatialLayer && aiAgentMap) {
                 aiAgentMap.removeLayer(window.customSpatialLayer);
                 window.customSpatialLayer = null;
                 window.customSpatialGeoJSON = null;
+                window.aiPipeClipOnUpload?.();
             }
 
             const chips = document.querySelectorAll('.ai-chip');
@@ -3120,6 +3152,7 @@
             window.customSpatialLayer = layer;
             window.customSpatialGeoJSON = geoJson;
             aiSpatialSummary = summary;
+            window.aiPipeClipOnUpload?.();
         }
 
         function parseGeoJsonTextToMap(geoJsonString, sourceName) {
@@ -3259,6 +3292,7 @@
                 if (!res.ok || jsonRes.status !== 'success') {
                     throw new Error(jsonRes.message || 'Gagal menjana respons AI.');
                 }
+                window.aiPromptGuideOnResponse?.(jsonRes);
 
                 let confidenceColor = jsonRes.confidence?.level === 'HIGH' ? 'text-emerald-500' : (jsonRes.confidence?.level === 'MEDIUM' ? 'text-amber-500' : 'text-red-500');
                 
@@ -3326,6 +3360,14 @@
 
                 const mappedHotspotCount = jsonRes.map?.markers?.length || 0;
                 const mappedRiskZoneCount = jsonRes.map?.risk_zones?.length || 0;
+                const hydraulicContext = jsonRes.hydraulicContext || (jsonRes.hydraulic ? {
+                    scope: jsonRes.hydraulic.zone, baseline: jsonRes.hydraulic.capabilities?.baseline,
+                    simulation: 'DISABLED', message: 'Status model sahaja; tiada simulasi SAINS dijalankan.'
+                } : null);
+                const hydraulicContextHtml = hydraulicContext ? `<div class="mt-3 text-xs rounded border border-amber-300 bg-amber-50 dark:bg-amber-900/20 p-2 text-amber-900 dark:text-amber-200">
+                    <b>Model DMA: ${escapeHTML(hydraulicContext.scope || 'belum dipilih')}</b> · Baseline ${escapeHTML(hydraulicContext.baseline || 'NOT_READY')} · Simulasi ${escapeHTML(hydraulicContext.simulation || 'DISABLED')}.
+                    ${escapeHTML(hydraulicContext.message || '')}
+                </div>` : '';
                 const mapStatusHtml = `<div class="mt-3 text-xs rounded p-2 ${mappedHotspotCount ? 'bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300' : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300'}">
                     <i class="fa-solid fa-map-location-dot"></i> ${mappedRiskZoneCount ? `Lapisan zon risiko DMA telah diwarnakan (${escapeHTML(jsonRes.map.risk_zones[0].label || jsonRes.map.risk_zones[0].status)}). ` : ''}${mappedHotspotCount ? `${mappedHotspotCount} hotspot respons AI dipaparkan pada peta. Klik penanda untuk melihat kes, jenis dan saiz paip.` : (mappedRiskZoneCount ? 'Jika sempadan tidak berubah warna, muat naik KML/GeoJSON zon atau semak nama District Metered Area.' : 'Tiada koordinat sah untuk dipetakan bagi respons ini. Lengkapkan medan Kordinat pada Pengurusan Data.')}
                 </div>`;
@@ -3345,6 +3387,7 @@
                         ${calcHtml}
                         ${recommendationsHtml}
                         ${evidenceHtml}
+                        ${hydraulicContextHtml}
                         ${mapStatusHtml}
                     </div>
                 `;
@@ -4213,5 +4256,8 @@
     <script src="phase2a-ui.js" defer></script>
     <script src="phase2b-ui.js" defer></script>
     <script src="engineering-intake.mjs" type="module"></script>
+    <script src="ai-prompt-hydraulic-guide.mjs" type="module"></script>
+    <script src="pipe-clip-ui.mjs" type="module"></script>
+    <script src="ai-map-capture.mjs" type="module"></script>
 </body>
 </html>

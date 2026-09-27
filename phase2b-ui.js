@@ -85,6 +85,14 @@
             codes.unshift('GIS_DIAMETER_MISSING_OR_CONFLICT');
           box.textContent=`ISU HIDRAULIK · aset ${feature.properties.asset_num||'ID belum disahkan'} · DMA ${dma}: `+
             `${codes.map(code=>labels[code]||code).join('; ')}. Peta tidak mengesahkan topologi atau lokasi nod.`;
+          const button=document.createElement('button');button.type='button';
+          button.className='block mt-2 underline text-violet-700';
+          button.textContent='Buka borang data paip';
+          button.addEventListener('click',()=>{
+            goToField('diameter');
+            byId('ai-eng-report').textContent=`Aset GIS calon: ${feature.properties.asset_num||'ID tiada'}. Sahkan Pipe ID, diameter dan sumber terhadap daftar aset/as-built sebelum simpan DRAFT; peta tidak mengisi nilai secara automatik.`;
+          });
+          box.append(button);
           layer.bindPopup(box);}}).addTo(aiAgentMap);
       issueZone=dma;const bounds=issueLayer.getBounds();if(bounds.isValid())aiAgentMap.fitBounds(bounds.pad(0.25),{maxZoom:15});
       byId('ai-hydraulic-status').textContent+='\nIsu pipe GIS yang boleh dipadankan disorot. Elevasi nod, demand dan source head tanpa lokasi model disahkan kekal dalam senarai status, bukan titik rekaan.';
