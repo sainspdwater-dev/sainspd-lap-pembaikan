@@ -52,8 +52,10 @@ function bbox(coords) {
 const boxesOverlap=(a,b)=>a[0]<=b[2] && a[2]>=b[0] && a[1]<=b[3] && a[3]>=b[1];
 const polygonParts=geometry=>geometry.type==='Polygon'?[geometry.coordinates]:
   geometry.type==='MultiPolygon'?geometry.coordinates:[];
-const lineParts=geometry=>geometry.type==='LineString'?[geometry.coordinates]:
-  geometry.type==='MultiLineString'?geometry.coordinates:[];
+const lineParts=geometry=>geometry?.type==='LineString'?[geometry.coordinates]:
+  geometry?.type==='MultiLineString'?geometry.coordinates:
+  geometry?.type==='GeometryCollection'?(geometry.geometries||[]).flatMap(lineParts):[];
+export const hasPipeLine=feature=>lineParts(feature?.geometry).length>0;
 
 export function clipLineToPolygon(coordinates,rings) {
   if(!Array.isArray(coordinates)||coordinates.length<2||!rings?.[0]?.length)return [];

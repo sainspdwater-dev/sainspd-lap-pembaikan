@@ -1,4 +1,4 @@
-import {previewPipeClip,clipAuditCsv} from './pipe-clip-preview.mjs';
+import {previewPipeClip,clipAuditCsv,hasPipeLine} from './pipe-clip-preview.mjs';
 
 if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded',()=>{
   const byId=id=>document.getElementById(id);
@@ -135,7 +135,7 @@ if (typeof document !== 'undefined') document.addEventListener('DOMContentLoaded
     const sourceFile=byId('ai-spatial-file')?.files?.[0];
     if(!sourceFile){progress.textContent='Fail sumber tidak dapat disahkan; muat naik semula.';return;}
     const features=data.type==='FeatureCollection'?data.features:data.type==='Feature'?[data]:[];
-    if(!features.some(item=>/LineString$/.test(item.geometry?.type||''))){
+    if(!features.some(hasPipeLine)){
       progress.textContent='Fail dimuat naik tiada garisan paip. Pilih fail jajaran, bukan fail polygon sahaja.';return;
     }
     controller?.abort();controller=new AbortController();

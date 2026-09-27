@@ -3171,11 +3171,9 @@
             if (kmlDoc.querySelector('parsererror')) throw new Error('Struktur KML tidak sah.');
 
             const layer = omnivore.kml.parse(kmlString);
-            const features = [];
-            layer.eachLayer(featureLayer => {
-                if (featureLayer.feature) features.push(featureLayer.feature);
-            });
-            mountCustomSpatialLayer(layer, { type: 'FeatureCollection', features }, sourceName);
+            // KML MultiGeometry can create nested Leaflet groups. GeoJSON export
+            // traverses those groups, whereas one-level eachLayer silently loses them.
+            mountCustomSpatialLayer(layer, layer.toGeoJSON(), sourceName);
         }
 
         window.ujiPaipTurfJS = function() {

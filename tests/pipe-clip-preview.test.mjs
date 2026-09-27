@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {clipLineToPolygon,previewPipeClip,clipAuditCsv} from '../pipe-clip-preview.mjs';
+import {clipLineToPolygon,previewPipeClip,clipAuditCsv,hasPipeLine} from '../pipe-clip-preview.mjs';
 
 const square=(x0,y0,x1,y1)=>[[x0,y0],[x1,y0],[x1,y1],[x0,y1],[x0,y0]];
 const zone=(name,ring)=>({name,feature:{type:'Feature',properties:{name},
@@ -52,6 +52,16 @@ test('KML table description supplies diameter when no direct field exists',async
   feature.properties.description='<table><tr><td>PIPESIZE</td><td>300</td></tr></table>';
   const result=await previewPipeClip([feature],[zone('DMA A',square(0,0,10,10))]);
   assert.equal(result.zones[0].noDiameterParts,0);
+});
+
+test('KML MultiGeometry line remains visible to preview and clip',async()=>{
+  const feature={type:'Feature',properties:{name:'KML-MULTI'},geometry:{type:'GeometryCollection',
+    geometries:[{type:'Point',coordinates:[2,2]},
+      {type:'MultiLineString',coordinates:[[[1,1],[2,2]],[[3,3],[4,4]]]}]}};
+  assert.equal(hasPipeLine(feature),true);
+  const result=await previewPipeClip([feature],[zone('DMA A',square(0,0,10,10))]);
+  assert.equal(result.sourceLines,2);
+  assert.equal(result.stagedParts.length,2);
 });
 
 test('downloadable audit includes file identity and neutralizes spreadsheet formulas',()=>{
