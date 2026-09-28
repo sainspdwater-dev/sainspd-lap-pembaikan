@@ -4,6 +4,7 @@ import {readFileSync} from 'node:fs';
 
 const html=readFileSync(new URL('../dashboard.html',import.meta.url),'utf8');
 const script=readFileSync(new URL('../phase2b-ui.js',import.meta.url),'utf8');
+const intake=readFileSync(new URL('../engineering-intake.mjs',import.meta.url),'utf8');
 
 test('DMA map worklist exposes issue-specific navigation and PRV capture',()=>{
   for(const id of ['ai-hydraulic-worklist','ai-issue-diameter','ai-issue-length','ai-issue-prv',
@@ -33,4 +34,11 @@ test('manual PIPE record can locate its exact ID on the selected DMA map',()=>{
   assert.match(script,/Pipe ID.*tiada padanan garisan yang disahkan/);
   assert.match(script,/Garisan ungu ialah lokasi calon, bukan bukti diameter\/panjang kejuruteraan/);
   assert.match(script,/byId\('ai-eng-show-pipe-map'\)\?\.addEventListener\('click',showExactPipe\)/);
+});
+
+test('new hydraulic targets clear stale values and never default to VERIFIED',()=>{
+  assert.match(html,/id="ai-eng-classification"[^>]*><option value="" selected disabled>/);
+  assert.match(intake,/const clearValueForNewTarget=\(\)=>/);
+  assert.match(intake,/byId\('ai-eng-entity-id'\)\?\.addEventListener\('input',\(\)=>\{clearValueForNewTarget\(\)/);
+  assert.match(intake,/Head sumber\/reservoir \(m\) bukan bacaan pressure gauge \(bar\) secara terus/);
 });

@@ -836,20 +836,21 @@
                                 <div id="ai-eng-column-map" class="mt-2 grid grid-cols-2 gap-1" aria-label="Pemetaan kolum CSV/Excel"></div>
                                 <p class="mt-2">Entri manual (semua medan wajib kecuali nota):</p>
                                 <div class="mt-1 rounded border border-amber-300 bg-amber-50 dark:bg-amber-950/30 p-2 text-amber-900 dark:text-amber-200">
-                                    <strong>Cara isi:</strong> pilih Entity ID sebenar, pilih parameter, kemudian isi nilai untuk <em>ID yang sama sahaja</em>. Jangan salin nilai daripada paip bersebelahan. Semak sumber dan tarikh efektif; pratonton sebelum simpan DRAFT. Jika nilai belum diketahui, jangan teka atau tandakan VERIFIED.
+                                    <strong>Cara isi:</strong> pilih DMA → Auto-Fill Existing Data → pilih Pipe ID daripada senarai calon → tekan <strong>Tunjuk Pipe ID ini di peta</strong>. Hanya isi diameter/panjang untuk ID yang sama selepas semak daftar aset atau as-built. ID ringkas seperti “01” tidak semestinya Pipe ID GIS. Jika tiada padanan atau nilai belum diketahui, jangan pilih paip berhampiran, teka nilai, atau tandakan VERIFIED.
                                 </div>
                                 <div id="ai-eng-selected-evidence" class="mt-1 rounded border border-blue-200 p-2 text-blue-900 dark:text-blue-200" role="status" aria-live="polite">Tekan Auto-Fill Existing Data untuk melihat sama ada ID dan parameter yang dipilih mempunyai calon nilai bersumber.</div>
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
                                     <label>Entity Type<select id="ai-eng-entity-type" class="form-input text-xs"><option>PIPE</option><option>NODE</option><option>SOURCE</option><option>VALVE</option><option>PUMP</option><option>TANK</option><option>PATTERN</option><option>MODEL</option></select><small class="block text-slate-500">Pilih PIPE, NODE, SOURCE atau jenis peralatan.</small></label>
-                                    <label>Entity ID<input id="ai-eng-entity-id" class="form-input text-xs" list="ai-eng-entity-options" placeholder="Cari atau taip Entity ID sebenar"><datalist id="ai-eng-entity-options"></datalist><small class="block text-slate-500">ID aset/nod sebenar bagi DMA ini.</small></label>
+                                    <label>Entity ID<input id="ai-eng-entity-id" class="form-input text-xs" list="ai-eng-entity-options" placeholder="Contoh Pipe ID: N2000372735"><datalist id="ai-eng-entity-options"></datalist><small class="block text-slate-500">Pilih ID aset sebenar daripada Auto-Fill atau daftar aset, bukan nombor urutan seperti “01”.</small></label>
                                     <div class="sm:col-span-2 rounded border border-violet-300 bg-violet-50 p-2 dark:bg-violet-950/30">
                                         <button type="button" id="ai-eng-show-pipe-map" class="rounded bg-violet-700 px-3 py-1.5 text-white">Tunjuk Pipe ID ini di peta</button>
                                         <p id="ai-eng-pipe-map-status" class="mt-1 text-xs" role="status" aria-live="polite">Pilih DMA dan Pipe ID dahulu. Peta hanya menyorot lokasi calon; diameter mesti disemak daripada rekod aset/as-built.</p>
                                     </div>
                                     <label>Parameter<select id="ai-eng-parameter" class="form-input text-xs" aria-label="Parameter mengikut jenis entiti"></select><small class="block text-slate-500">Pilih parameter kejuruteraan yang hendak dilengkapkan.</small></label>
                                     <label>Value<input id="ai-eng-value" class="form-input text-xs" placeholder="Nilai"><small class="block text-slate-500">Isi nilai bersumber; andaian mesti ditanda ASSUMED.</small></label>
+                                    <p id="ai-eng-context-help" class="sm:col-span-2 rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-200" role="note"></p>
                                     <input id="ai-eng-unit" class="form-input text-xs" readonly aria-label="Unit parameter">
-                                    <label>Classification<select id="ai-eng-classification" class="form-input text-xs"><option>VERIFIED</option><option>MANUAL</option><option>ASSUMED</option><option>MISSING</option></select><small class="block text-slate-500">VERIFIED: bukti diluluskan; MANUAL: sumber diketahui; ASSUMED: andaian, bukan disahkan.</small></label>
+                                    <label>Classification<select id="ai-eng-classification" class="form-input text-xs"><option value="" selected disabled>Pilih klasifikasi selepas semak bukti</option><option>VERIFIED</option><option>MANUAL</option><option>ASSUMED</option><option>MISSING</option></select><small class="block text-slate-500">VERIFIED: bukti diluluskan; MANUAL: sumber diketahui; ASSUMED: andaian, bukan disahkan.</small></label>
                                     <label>Source Reference<input id="ai-eng-source" class="form-input text-xs" placeholder="Rujukan sumber / dokumen"><small class="block text-slate-500">Contoh: lukisan as-built, survei atau daftar aset.</small></label>
                                     <label>Effective Date<input id="ai-eng-effective" type="datetime-local" class="form-input text-xs" aria-label="Tarikh dan masa efektif tempatan"><small class="block text-slate-500">Tarikh nilai mula sah atau disahkan.</small></label>
                                     <textarea id="ai-eng-notes" class="form-input text-xs col-span-2" placeholder="Nota / kaedah agihan / had andaian"></textarea>
@@ -1383,9 +1384,27 @@
                 const getOptions = () =>
                     Array.from(datalist.options).map(o => o.value).filter(v => v !== '');
 
+                // Padanan tepat/awalan dahulu; pilihan lain kekal tersedia dalam turutan asal.
+                function rankedOptions(filter) {
+                    const all = getOptions();
+                    const query = (filter || '').trim().toLocaleLowerCase('ms-MY');
+                    if (!query) return all;
+                    const score = value => {
+                        const name = value.toLocaleLowerCase('ms-MY');
+                        if (name === query) return 0;
+                        if (name.startsWith(query)) return 1;
+                        if (name.split(/\s+/).some(word => word.startsWith(query))) return 2;
+                        if (name.includes(query)) return 3;
+                        return 4;
+                    };
+                    return all.map((value, index) => ({ value, index }))
+                        .sort((a, b) => score(a.value) - score(b.value) || a.index - b.index)
+                        .map(item => item.value);
+                }
+
                 // === FUNGSI RENDER DENGAN HIGHLIGHT ===
                 function renderPanel(filter) {
-    const all = getOptions();
+    const all = rankedOptions(filter);
     const f = (filter || '').trim().toLowerCase();
 
     if (!all.length) {
@@ -1406,6 +1425,7 @@
         }
         return `<div class="custom-combobox-option" data-value="${escapeHTML(o)}">${displayHtml}</div>`;
     }).join('');
+    panel.scrollTop = 0;
 }
 
                 function showPanel() {
@@ -4314,7 +4334,7 @@
     </script>
     <script src="phase2a-ui.js" defer></script>
     <script src="phase2b-ui.js?v=hydraulic-map-pipe-id-2" defer></script>
-    <script src="engineering-intake.mjs?v=selected-evidence-1" type="module"></script>
+    <script src="engineering-intake.mjs?v=field-safety-2" type="module"></script>
     <script src="ai-prompt-hydraulic-guide.mjs" type="module"></script>
     <script src="pipe-clip-ui.mjs?v=fd486b6" type="module"></script>
     <script src="ai-map-capture.mjs?v=map-points-2" type="module"></script>

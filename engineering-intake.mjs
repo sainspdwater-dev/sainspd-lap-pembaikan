@@ -102,6 +102,19 @@ if (typeof document!=='undefined') document.addEventListener('DOMContentLoaded',
     enteredBy:byId('ai-eng-operator').value});
   let fileRows=null,sourceSha256='',pending=null,autoFill=null;
   const reset=()=>{pending=null;byId('ai-eng-save').disabled=true;byId('ai-eng-confirm').checked=false;};
+  const clearValueForNewTarget=()=>{
+    for(const id of ['ai-eng-value','ai-eng-source','ai-eng-effective','ai-eng-notes'])byId(id).value='';
+    byId('ai-eng-classification').value='';
+    reset();
+  };
+  const updateContextHelp=()=>{
+    const type=byId('ai-eng-entity-type').value,parameter=byId('ai-eng-parameter').value;
+    const help=byId('ai-eng-context-help');
+    if(type==='SOURCE'&&parameter==='head_m')help.textContent='Head sumber/reservoir (m) bukan bacaan pressure gauge (bar) secara terus. Sahkan lokasi sumber, aras/datum dan kaedah pengiraan oleh jurutera; bacaan tekanan CP/inlet sahaja tidak cukup untuk baseline.';
+    else if(type==='PIPE'&&parameter==='diameter_mm')help.textContent='Satu nilai untuk satu Pipe ID tepat. Tekan “Tunjuk Pipe ID ini di peta”, semak garisan ungu, kemudian rujuk diameter aset/as-built bagi ID yang sama. Nama DMA 300mm tidak bermakna semua paip berdiameter 300 mm.';
+    else if(type==='PIPE'&&parameter==='length_m')help.textContent='Peta menunjukkan jajaran calon. Panjang geometri KML bukan panjang kejuruteraan yang disahkan; rujuk as-built atau survei bagi Pipe ID yang sama.';
+    else help.textContent='Pastikan Entity ID, parameter, unit, bukti sumber dan tarikh efektif merujuk aset yang sama. Jika bukti belum ada, biarkan kosong dan jangan simpan sebagai VERIFIED.';
+  };
   const selectedEvidence=()=>{
     const panel=byId('ai-eng-selected-evidence');panel.replaceChildren();
     const type=byId('ai-eng-entity-type').value,id=byId('ai-eng-entity-id').value.trim();
@@ -166,12 +179,12 @@ if (typeof document!=='undefined') document.addEventListener('DOMContentLoaded',
     byId('ai-eng-unit').value=definitions[type]?.[parameter.value]||'';
     const list=byId('ai-eng-entity-options');list.replaceChildren();
     for(const id of autoFill?.entityIds?.[type]||[]){const option=document.createElement('option');option.value=id;list.append(option);}
-    reset();selectedEvidence();
+    clearValueForNewTarget();updateContextHelp();selectedEvidence();
   };
   byId('ai-eng-entity-type')?.addEventListener('change',updateEntityOptions);
   byId('ai-eng-parameter')?.addEventListener('change',()=>{byId('ai-eng-unit').value=
-    definitions[byId('ai-eng-entity-type').value]?.[byId('ai-eng-parameter').value]||'';reset();selectedEvidence();});
-  byId('ai-eng-entity-id')?.addEventListener('input',()=>{reset();selectedEvidence();});
+    definitions[byId('ai-eng-entity-type').value]?.[byId('ai-eng-parameter').value]||'';clearValueForNewTarget();updateContextHelp();selectedEvidence();});
+  byId('ai-eng-entity-id')?.addEventListener('input',()=>{clearValueForNewTarget();selectedEvidence();});
   for(const id of ['ai-eng-value','ai-eng-classification','ai-eng-source','ai-eng-effective','ai-eng-notes']){
     byId(id)?.addEventListener('input',reset);
     byId(id)?.addEventListener('change',reset);
@@ -179,7 +192,7 @@ if (typeof document!=='undefined') document.addEventListener('DOMContentLoaded',
   updateEntityOptions();
   byId('ai-eng-preview-manual')?.addEventListener('click',()=>{sourceSha256='';preview([manualRow()]);});
   byId('ai-eng-cancel')?.addEventListener('click',()=>{
-    reset();for(const id of ['ai-eng-entity-id','ai-eng-value','ai-eng-source','ai-eng-effective','ai-eng-notes'])byId(id).value='';
+    clearValueForNewTarget();byId('ai-eng-entity-id').value='';selectedEvidence();
     report('Entri manual dibatalkan; tiada data disimpan.');
   });
   byId('ai-eng-find-model')?.addEventListener('click',async()=>{
