@@ -1,7 +1,7 @@
 // Small production-safe status panel in the existing AI Agent; no model runs.
 (() => {
   const byId=id=>document.getElementById(id);
-  let issueLayer=null,issueZone='',issueKind='',selectedIssue=null,currentHydraulic=null,refreshSerial=0,issueSerial=0;
+  let issueLayer=null,targetPipeLayer=null,issueZone='',issueKind='',selectedIssue=null,currentHydraulic=null,refreshSerial=0,issueSerial=0,targetSerial=0;
   const selectedDma=()=>byId('ai-filter-district')?.value?.trim()||'';
   const openDetails=(target)=>{
     byId('ai-hydraulic-panel').open=true;
@@ -92,15 +92,50 @@
   const clearIssueLayer=()=>{
     if(issueLayer&&typeof aiAgentMap!=='undefined'&&aiAgentMap)aiAgentMap.removeLayer(issueLayer);
     issueLayer=null;issueZone='';issueKind='';selectedIssue=null;
+    clearTargetPipe();
     byId('ai-issue-list')?.replaceChildren();
     byId('ai-issue-selected')?.classList.add('hidden');
+  };
+  const clearTargetPipe=()=>{
+    if(targetPipeLayer&&typeof aiAgentMap!=='undefined'&&aiAgentMap)aiAgentMap.removeLayer(targetPipeLayer);
+    targetPipeLayer=null;
+    byId('ai-map-pipe-target')?.classList.add('hidden');
+  };
+  const highlightPipe=(features,asset,dma)=>{
+    clearTargetPipe();
+    if(typeof aiAgentMap==='undefined'||!aiAgentMap)initAiAgentMap();
+    aiAgentMap.closePopup();
+    targetPipeLayer=L.geoJSON({type:'FeatureCollection',features},{style:{color:'#7c3aed',weight:11,opacity:1}}).addTo(aiAgentMap);
+    targetPipeLayer.eachLayer(layer=>layer.bringToFront?.());
+    const label=`Pipe ID calon ${asset} · ${features.length} bahagian GIS dalam ${dma}. Garisan ungu ialah lokasi calon, bukan bukti diameter/panjang kejuruteraan.`;
+    const target=byId('ai-map-pipe-target');target.textContent=label;target.classList.remove('hidden');
+    aiAgentMap.invalidateSize();
+    const bounds=targetPipeLayer.getBounds();if(bounds.isValid())aiAgentMap.fitBounds(bounds.pad(0.6),{maxZoom:17});
+    if(matchMedia('(max-width: 1023px)').matches)byId('ai-agent-map').scrollIntoView({behavior:'smooth',block:'center'});
+    return label;
+  };
+  const showExactPipe=async()=>{
+    const dma=selectedDma(),type=byId('ai-eng-entity-type')?.value,asset=byId('ai-eng-entity-id')?.value.trim();
+    const status=byId('ai-eng-pipe-map-status');
+    if(localStorage.getItem('sainsUserLevel')!=='ADMIN'){status.textContent='Peta paip ini untuk ADMIN sahaja.';return;}
+    if(!dma||type!=='PIPE'||!asset){status.textContent='Pilih DMA, Entity Type PIPE dan Pipe ID sebenar dahulu.';return;}
+    const serial=++targetSerial;clearTargetPipe();status.textContent=`Mencari Pipe ID ${asset} dalam jajaran ${dma}…`;
+    try{
+      const url=new URL('/api/pipe-lines',WORKER_URL);url.searchParams.set('zone',dma);url.searchParams.set('limit','500');
+      const response=await fetch(url,{headers:{Authorization:`Bearer ${localStorage.getItem('sainsToken')||''}`}});
+      const data=await response.json();if(!response.ok||data.status!=='success')throw new Error(data.message||`API ${response.status}`);
+      if(serial!==targetSerial||dma!==selectedDma()||asset!==byId('ai-eng-entity-id').value.trim())return;
+      if(data.nextOffset!==null)throw new Error('Senarai paip melebihi 500 bahagian; carian belum lengkap.');
+      const matches=(data.features||[]).filter(feature=>String(feature.properties?.asset_num||'').trim()===asset);
+      if(!matches.length){status.textContent=`Pipe ID ${asset} tiada padanan garisan yang disahkan dalam GIS ${dma}. Jangan pilih paip berhampiran sebagai ganti; semak ID dan rekod aset.`;return;}
+      status.textContent=highlightPipe(matches,asset,dma);
+    }catch(error){if(serial===targetSerial)status.textContent=`Tidak dapat tunjuk Pipe ID pada peta: ${error.message}`;}
   };
   const selectIssue=(record)=>{
     selectedIssue=record;
     const asset=String(record.feature.properties?.asset_num||'').trim();
-    const bounds=record.layer.getBounds?.();
-    if(bounds?.isValid())aiAgentMap.fitBounds(bounds.pad(0.5),{maxZoom:17});
-    record.layer.openPopup();
+    if(asset)highlightPipe([record.feature],asset,selectedDma());
+    else{const bounds=record.layer.getBounds?.();if(bounds?.isValid())aiAgentMap.fitBounds(bounds.pad(0.5),{maxZoom:17});record.layer.openPopup();}
     byId('ai-issue-selected').classList.remove('hidden');
     byId('ai-issue-selected-text').textContent=`${asset?`Pipe ID calon ${asset}`:'Pipe ID belum diketahui'} · ${record.kind==='length'?'Panjang GIS bukan panjang kejuruteraan yang diluluskan. Semak as-built/survei untuk paip yang sama.':'Diameter GIS hilang atau bercanggah. Semak daftar aset/as-built untuk paip yang sama.'} Peta tidak mengisi nilai secara automatik.`;
     byId('ai-issue-selected').scrollIntoView({behavior:'smooth',block:'nearest'});
@@ -197,7 +232,7 @@
     if(!host||!issues)return;
     if(localStorage.getItem('sainsUserLevel')!=='ADMIN') {host.textContent='ADMIN sahaja.';issues.replaceChildren();scenarios?.replaceChildren();fields?.replaceChildren();renderQuick();return;}
     const dma=byId('ai-filter-district')?.value?.trim()||'';
-    ++issueSerial;clearIssueLayer();currentHydraulic=null;host.textContent='Menyemak status model…';issues.replaceChildren();scenarios?.replaceChildren();fields?.replaceChildren();
+    ++issueSerial;++targetSerial;clearIssueLayer();currentHydraulic=null;host.textContent='Menyemak status model…';issues.replaceChildren();scenarios?.replaceChildren();fields?.replaceChildren();
     byId('ai-issue-status').textContent='Tekan jenis isu untuk lihat senarai paip yang boleh dipadankan dengan peta.';
     capabilities.textContent='';byId('ai-run-real-baseline').disabled=true;
     byId('ai-hydraulic-issues-map').disabled=true;
@@ -249,6 +284,7 @@
       byId('ai-pick-prv-map').click();
     });
     byId('ai-issue-open-form')?.addEventListener('click',openSelectedIssueForm);
+    byId('ai-eng-show-pipe-map')?.addEventListener('click',showExactPipe);
     byId('ai-quick-check')?.addEventListener('click',()=>{openDetails('status');refresh();});
     byId('ai-quick-autofill')?.addEventListener('click',()=>{openDetails('intake');window.aiEngQuickAutofill?.();});
     byId('ai-quick-complete')?.addEventListener('click',()=>openDetails('intake'));

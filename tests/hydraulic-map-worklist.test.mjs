@@ -24,3 +24,13 @@ test('map worklist keeps unverified geometry read-only and baseline locked',()=>
   assert.match(script,/byId\('ai-run-real-baseline'\)\.disabled=true/);
   assert.doesNotMatch(script,/action:\s*['"](?:saveHydraulic|approveHydraulic|runHydraulic)/);
 });
+
+test('manual PIPE record can locate its exact ID on the selected DMA map',()=>{
+  assert.match(html,/id="ai-eng-show-pipe-map"/);
+  assert.match(html,/id="ai-eng-pipe-map-status"/);
+  assert.match(html,/id="ai-map-pipe-target"/);
+  assert.match(script,/feature\.properties\?\.asset_num\|\|''\)\.trim\(\)===asset/);
+  assert.match(script,/Pipe ID.*tiada padanan garisan yang disahkan/);
+  assert.match(script,/Garisan ungu ialah lokasi calon, bukan bukti diameter\/panjang kejuruteraan/);
+  assert.match(script,/byId\('ai-eng-show-pipe-map'\)\?\.addEventListener\('click',showExactPipe\)/);
+});

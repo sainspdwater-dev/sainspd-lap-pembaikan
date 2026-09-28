@@ -842,6 +842,10 @@
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
                                     <label>Entity Type<select id="ai-eng-entity-type" class="form-input text-xs"><option>PIPE</option><option>NODE</option><option>SOURCE</option><option>VALVE</option><option>PUMP</option><option>TANK</option><option>PATTERN</option><option>MODEL</option></select><small class="block text-slate-500">Pilih PIPE, NODE, SOURCE atau jenis peralatan.</small></label>
                                     <label>Entity ID<input id="ai-eng-entity-id" class="form-input text-xs" list="ai-eng-entity-options" placeholder="Cari atau taip Entity ID sebenar"><datalist id="ai-eng-entity-options"></datalist><small class="block text-slate-500">ID aset/nod sebenar bagi DMA ini.</small></label>
+                                    <div class="sm:col-span-2 rounded border border-violet-300 bg-violet-50 p-2 dark:bg-violet-950/30">
+                                        <button type="button" id="ai-eng-show-pipe-map" class="rounded bg-violet-700 px-3 py-1.5 text-white">Tunjuk Pipe ID ini di peta</button>
+                                        <p id="ai-eng-pipe-map-status" class="mt-1 text-xs" role="status" aria-live="polite">Pilih DMA dan Pipe ID dahulu. Peta hanya menyorot lokasi calon; diameter mesti disemak daripada rekod aset/as-built.</p>
+                                    </div>
                                     <label>Parameter<select id="ai-eng-parameter" class="form-input text-xs" aria-label="Parameter mengikut jenis entiti"></select><small class="block text-slate-500">Pilih parameter kejuruteraan yang hendak dilengkapkan.</small></label>
                                     <label>Value<input id="ai-eng-value" class="form-input text-xs" placeholder="Nilai"><small class="block text-slate-500">Isi nilai bersumber; andaian mesti ditanda ASSUMED.</small></label>
                                     <input id="ai-eng-unit" class="form-input text-xs" readonly aria-label="Unit parameter">
@@ -899,6 +903,7 @@
                         </div>
                     </div>
                     <div id="ai-agent-map" class="flex-1 w-full h-full min-h-[300px] z-10"></div>
+                    <div id="ai-map-pipe-target" class="absolute left-3 top-16 z-[500] hidden max-w-[80%] rounded border-2 border-violet-700 bg-white/95 px-3 py-2 text-xs font-semibold text-violet-900 shadow dark:bg-slate-900/95 dark:text-violet-200" role="status" aria-live="polite"></div>
                     <div id="ai-risk-map-legend" class="absolute bottom-3 left-3 z-[500] hidden rounded-md border border-slate-200 bg-white/95 px-2 py-1.5 text-[10px] shadow dark:border-slate-600 dark:bg-slate-800/95"></div>
                 </div>
             </div>
@@ -4308,7 +4313,7 @@
         });
     </script>
     <script src="phase2a-ui.js" defer></script>
-    <script src="phase2b-ui.js?v=hydraulic-map-worklist-1" defer></script>
+    <script src="phase2b-ui.js?v=hydraulic-map-pipe-id-2" defer></script>
     <script src="engineering-intake.mjs?v=selected-evidence-1" type="module"></script>
     <script src="ai-prompt-hydraulic-guide.mjs" type="module"></script>
     <script src="pipe-clip-ui.mjs?v=fd486b6" type="module"></script>
