@@ -27,5 +27,5 @@ test('every existing AI chip has a distinct hydraulic evidence guide',()=>{
   assert.match(clipUi,/finalizePipeCandidateDraft/);
   const mapUi=readFileSync(new URL('../phase2b-ui.js',import.meta.url),'utf8');
   assert.match(mapUi,/Buka borang data paip/);
-  assert.match(mapUi,/Sahkan Pipe ID, diameter dan sumber/);
+  assert.match(mapUi,/Sahkan identiti dan sumber aset sebelum memasukkan nilai/);
 });

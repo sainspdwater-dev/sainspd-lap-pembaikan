@@ -1,7 +1,7 @@
 // Small production-safe status panel in the existing AI Agent; no model runs.
 (() => {
   const byId=id=>document.getElementById(id);
-  let issueLayer=null,issueZone='',currentHydraulic=null,refreshSerial=0;
+  let issueLayer=null,issueZone='',issueKind='',selectedIssue=null,currentHydraulic=null,refreshSerial=0,issueSerial=0;
   const selectedDma=()=>byId('ai-filter-district')?.value?.trim()||'';
   const openDetails=(target)=>{
     byId('ai-hydraulic-panel').open=true;
@@ -82,56 +82,113 @@
     for(const item of byId('ai-hydraulic-workflow').children){const current=Number(item.dataset.step)===stage;
       item.classList.toggle('bg-violet-700',current);item.classList.toggle('text-white',current);}
     byId('ai-baseline-lock-message').hidden=!byId('ai-run-real-baseline').disabled;
+    const worklist=byId('ai-hydraulic-worklist');
+    worklist.classList.toggle('hidden',!active||!h);
+    if(active&&h){
+      byId('ai-issue-diameter').textContent=`${h.gis?.missingDiameterParts||0} bahagian tanpa diameter GIS`;
+      byId('ai-issue-intro').textContent=`${dma}: ${h.gis?.segmentCount||0} segmen GIS. Pilih jenis isu untuk zum ke garisan yang dapat dipadankan. Data model yang belum diluluskan mungkin belum mempunyai lokasi tepat.`;
+    }
   };
-  const clearIssueLayer=()=>{if(issueLayer&&typeof aiAgentMap!=='undefined'&&aiAgentMap)aiAgentMap.removeLayer(issueLayer);issueLayer=null;issueZone='';};
-  const showIssues=async()=>{
+  const clearIssueLayer=()=>{
+    if(issueLayer&&typeof aiAgentMap!=='undefined'&&aiAgentMap)aiAgentMap.removeLayer(issueLayer);
+    issueLayer=null;issueZone='';issueKind='';selectedIssue=null;
+    byId('ai-issue-list')?.replaceChildren();
+    byId('ai-issue-selected')?.classList.add('hidden');
+  };
+  const selectIssue=(record)=>{
+    selectedIssue=record;
+    const asset=String(record.feature.properties?.asset_num||'').trim();
+    const bounds=record.layer.getBounds?.();
+    if(bounds?.isValid())aiAgentMap.fitBounds(bounds.pad(0.5),{maxZoom:17});
+    record.layer.openPopup();
+    byId('ai-issue-selected').classList.remove('hidden');
+    byId('ai-issue-selected-text').textContent=`${asset?`Pipe ID calon ${asset}`:'Pipe ID belum diketahui'} · ${record.kind==='length'?'Panjang GIS bukan panjang kejuruteraan yang diluluskan. Semak as-built/survei untuk paip yang sama.':'Diameter GIS hilang atau bercanggah. Semak daftar aset/as-built untuk paip yang sama.'} Peta tidak mengisi nilai secara automatik.`;
+    byId('ai-issue-selected').scrollIntoView({behavior:'smooth',block:'nearest'});
+  };
+  const openSelectedIssueForm=()=>{
+    if(!selectedIssue)return;
+    const asset=String(selectedIssue.feature.properties?.asset_num||'').trim();
+    goToField(selectedIssue.kind);
+    if(asset){const input=byId('ai-eng-entity-id');input.value=asset;input.dispatchEvent(new Event('input',{bubbles:true}));}
+    byId('ai-eng-report').textContent=`${asset?`Pipe ID calon ${asset}`:'Pipe ID belum diketahui'} daripada GIS. Sahkan identiti dan sumber aset sebelum memasukkan nilai; tiada nilai diisi atau disimpan secara automatik.`;
+  };
+  const showIssues=async(kind='all')=>{
     const dma=byId('ai-filter-district')?.value?.trim();if(!dma)return;
-    if(issueLayer&&issueZone===dma){clearIssueLayer();return;}
+    if(issueLayer&&issueZone===dma&&issueKind===kind){
+      if(kind==='all'){clearIssueLayer();return;}
+      byId('ai-agent-map').scrollIntoView({behavior:'smooth',block:'center'});return;
+    }
+    const serial=++issueSerial;
     clearIssueLayer();
+    byId('ai-issue-status').textContent='Memuatkan isu yang dapat dipadankan dengan jajaran GIS…';
     try{
       const url=new URL('/api/pipe-lines',WORKER_URL);url.searchParams.set('zone',dma);url.searchParams.set('limit','500');
       const response=await fetch(url,{headers:{Authorization:`Bearer ${localStorage.getItem('sainsToken')||''}`}});
       const data=await response.json();if(!response.ok||data.status!=='success')throw new Error(data.message||`API ${response.status}`);
+      if(serial!==issueSerial||dma!==selectedDma())return;
       if(data.nextOffset!==null)throw new Error('Lebih 500 bahagian; paparan isu belum lengkap.');
       let issueByAsset=new Map();
       if(currentHydraulic?.modelId&&currentHydraulic?.modelVersion){
         const detail=await fetch(WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json',
           Authorization:`Bearer ${localStorage.getItem('sainsToken')||''}`},body:JSON.stringify({
           action:'autoFillHydraulicPreview',dma,modelId:currentHydraulic.modelId,version:currentHydraulic.modelVersion})});
-        const result=await detail.json();if(detail.ok&&result.status==='success')
-          issueByAsset=new Map(result.autoFill.mapIssues.map(item=>[item.assetNum,item.issueCodes]));
+        const result=await detail.json();if(serial!==issueSerial||dma!==selectedDma())return;
+        if(detail.ok&&result.status==='success')
+          issueByAsset=new Map(result.autoFill.mapIssues.map(item=>[String(item.assetNum),item.issueCodes]));
       }
-      const features=data.features.filter(feature=>!(Number(feature.properties?.size_mm)>0)||
-        issueByAsset.has(String(feature.properties?.asset_num||'')));
-      if(!features.length){byId('ai-hydraulic-status').textContent+='\nPeta: tiada diameter GIS hilang yang boleh dilokasikan. Isu lain belum mempunyai lokasi disahkan.';return;}
+      const codesFor=feature=>issueByAsset.get(String(feature.properties?.asset_num||''))||[];
+      const features=data.features.filter(feature=>{
+        const codes=codesFor(feature),diameterMissing=!(Number(feature.properties?.size_mm)>0)||codes.includes('GIS_DIAMETER_MISSING_OR_CONFLICT');
+        if(kind==='diameter')return diameterMissing;
+        if(kind==='length')return codes.includes('ENGINEERING_LENGTH_UNREVIEWED');
+        return diameterMissing||codes.length>0;
+      });
+      if(!features.length){
+        byId('ai-issue-status').textContent=kind==='length'?'Tiada paip dengan isu panjang yang dapat dipadankan secara sah ke peta. Panjang model masih belum diluluskan; semak daftar aset/as-built.':'Tiada garisan isu yang dapat dilokasikan. Semak rekod aset dan jangan pilih lokasi anggaran.';
+        return;
+      }
       if(typeof aiAgentMap==='undefined'||!aiAgentMap)initAiAgentMap();
       const labels={PIPE_ID_UNRESOLVED:'Pipe ID belum dipadankan ke asset master',
         GIS_DIAMETER_MISSING_OR_CONFLICT:'diameter GIS/asset hilang atau bercanggah',
         ENGINEERING_LENGTH_UNREVIEWED:'engineering length belum diluluskan',
         ROUGHNESS_UNREVIEWED:'Hazen-Williams C belum diluluskan',
         TOPOLOGY_UNRESOLVED:'sambungan topologi belum diluluskan'};
+      const records=[];
       issueLayer=L.geoJSON({type:'FeatureCollection',features},{style:feature=>{
         const codes=issueByAsset.get(String(feature.properties?.asset_num||''))||[];
         return {color:!(Number(feature.properties?.size_mm)>0)||codes.includes('GIS_DIAMETER_MISSING_OR_CONFLICT')
           ?'#dc2626':codes.includes('PIPE_ID_UNRESOLVED')?'#ea580c':'#d97706',weight:6,opacity:0.9};},
         onEachFeature:(feature,layer)=>{const box=document.createElement('div');
-          const codes=issueByAsset.get(String(feature.properties?.asset_num||''))||[];
+          const codes=[...(issueByAsset.get(String(feature.properties?.asset_num||''))||[])];
           if(!(Number(feature.properties?.size_mm)>0)&&!codes.includes('GIS_DIAMETER_MISSING_OR_CONFLICT'))
             codes.unshift('GIS_DIAMETER_MISSING_OR_CONFLICT');
+          const record={feature,layer,kind:kind==='length'?'length':codes.includes('GIS_DIAMETER_MISSING_OR_CONFLICT')?'diameter':'length'};
+          records.push(record);
           box.textContent=`ISU HIDRAULIK · aset ${feature.properties.asset_num||'ID belum disahkan'} · DMA ${dma}: `+
             `${codes.map(code=>labels[code]||code).join('; ')}. Peta tidak mengesahkan topologi atau lokasi nod.`;
           const button=document.createElement('button');button.type='button';
           button.className='block mt-2 underline text-violet-700';
           button.textContent='Buka borang data paip';
-          button.addEventListener('click',()=>{
-            goToField('diameter');
-            byId('ai-eng-report').textContent=`Aset GIS calon: ${feature.properties.asset_num||'ID tiada'}. Sahkan Pipe ID, diameter dan sumber terhadap daftar aset/as-built sebelum simpan DRAFT; peta tidak mengisi nilai secara automatik.`;
-          });
+          button.addEventListener('click',()=>{selectIssue(record);openSelectedIssueForm();});
           box.append(button);
-          layer.bindPopup(box);}}).addTo(aiAgentMap);
-      issueZone=dma;const bounds=issueLayer.getBounds();if(bounds.isValid())aiAgentMap.fitBounds(bounds.pad(0.25),{maxZoom:15});
+          layer.bindPopup(box);layer.on('click',()=>selectIssue(record));}}).addTo(aiAgentMap);
+      issueZone=dma;issueKind=kind;
+      const list=byId('ai-issue-list');list.replaceChildren();
+      for(const [index,record] of records.entries()){
+        const asset=String(record.feature.properties?.asset_num||'').trim();
+        const button=document.createElement('button');button.type='button';
+        button.className='block w-full rounded border border-blue-200 bg-white px-2 py-1 text-left hover:border-blue-600 focus-visible:outline-2 focus-visible:outline-blue-600 dark:bg-slate-800';
+        button.textContent=`${index+1}. ${asset?`Pipe ID calon ${asset}`:'Bahagian tanpa Pipe ID'} — ${record.kind==='length'?'semak panjang kejuruteraan':'semak diameter'}`;
+        button.addEventListener('click',()=>selectIssue(record));list.append(button);
+      }
+      byId('ai-issue-status').textContent=`${records.length} garisan isu dipaparkan. Klik baris untuk zum ke paip, kemudian buka borang DRAFT. Bilangan ini ialah bahagian GIS, bukan bilangan aset unik yang disahkan.`;
+      const bounds=issueLayer.getBounds();if(bounds.isValid())aiAgentMap.fitBounds(bounds.pad(0.25),{maxZoom:15});
       byId('ai-hydraulic-status').textContent+='\nIsu pipe GIS yang boleh dipadankan disorot. Elevasi nod, demand dan source head tanpa lokasi model disahkan kekal dalam senarai status, bukan titik rekaan.';
-    }catch(error){clearIssueLayer();byId('ai-hydraulic-status').textContent+=`\nPeta isu tidak tersedia: ${error.message}`;}
+    }catch(error){
+      if(serial!==issueSerial||dma!==selectedDma())return;
+      clearIssueLayer();byId('ai-issue-status').textContent=`Peta isu tidak tersedia: ${error.message}`;
+      byId('ai-hydraulic-status').textContent+=`\nPeta isu tidak tersedia: ${error.message}`;
+    }
   };
   const refresh=async()=>{
     const serial=++refreshSerial;
@@ -140,7 +197,8 @@
     if(!host||!issues)return;
     if(localStorage.getItem('sainsUserLevel')!=='ADMIN') {host.textContent='ADMIN sahaja.';issues.replaceChildren();scenarios?.replaceChildren();fields?.replaceChildren();renderQuick();return;}
     const dma=byId('ai-filter-district')?.value?.trim()||'';
-    clearIssueLayer();currentHydraulic=null;host.textContent='Menyemak status model…';issues.replaceChildren();scenarios?.replaceChildren();fields?.replaceChildren();
+    ++issueSerial;clearIssueLayer();currentHydraulic=null;host.textContent='Menyemak status model…';issues.replaceChildren();scenarios?.replaceChildren();fields?.replaceChildren();
+    byId('ai-issue-status').textContent='Tekan jenis isu untuk lihat senarai paip yang boleh dipadankan dengan peta.';
     capabilities.textContent='';byId('ai-run-real-baseline').disabled=true;
     byId('ai-hydraulic-issues-map').disabled=true;
     renderQuick();
@@ -183,7 +241,14 @@
   document.addEventListener('DOMContentLoaded',()=>{
     byId('ai-hydraulic-refresh')?.addEventListener('click',refresh);
     byId('ai-filter-district')?.addEventListener('change',refresh);
-    byId('ai-hydraulic-issues-map')?.addEventListener('click',showIssues);
+    byId('ai-hydraulic-issues-map')?.addEventListener('click',()=>showIssues());
+    byId('ai-issue-diameter')?.addEventListener('click',()=>showIssues('diameter'));
+    byId('ai-issue-length')?.addEventListener('click',()=>showIssues('length'));
+    byId('ai-issue-prv')?.addEventListener('click',()=>{
+      byId('ai-issue-status').textContent='Pilih hanya lokasi PRV yang diketahui. Koordinat akan masuk ke borang pemantauan; jenis injap, setting dan sambungan model perlu semakan berasingan.';
+      byId('ai-pick-prv-map').click();
+    });
+    byId('ai-issue-open-form')?.addEventListener('click',openSelectedIssueForm);
     byId('ai-quick-check')?.addEventListener('click',()=>{openDetails('status');refresh();});
     byId('ai-quick-autofill')?.addEventListener('click',()=>{openDetails('intake');window.aiEngQuickAutofill?.();});
     byId('ai-quick-complete')?.addEventListener('click',()=>openDetails('intake'));
