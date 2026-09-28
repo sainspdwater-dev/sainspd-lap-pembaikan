@@ -391,8 +391,17 @@
                     <h3 class="font-semibold flex items-center gap-2 text-slate-800 dark:text-white"><i class="fa-solid fa-map-location-dot text-blue-500"></i>Peta Lokasi & Sempadan DMZ</h3>
                     <div class="flex items-center gap-2">
                         <button id="btn-pipe-map" type="button" class="hidden text-sm bg-cyan-700 hover:bg-cyan-600 px-3 py-1 rounded text-white transition" title="Jajaran paip D1, admin sahaja"><i class="fa-solid fa-route"></i> Jajaran Paip</button>
-                        <button id="btn-toggle-map" class="text-sm bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded text-white transition"><i class="fa-solid fa-fire"></i> Toggle Heatmap</button>
+                        <button id="btn-toggle-map" type="button" aria-pressed="false" class="text-sm bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded text-white transition"><i class="fa-solid fa-fire"></i> Tunjuk Heatmap</button>
                     </div>
+                </div>
+                <div class="flex flex-wrap items-center gap-2 px-4 py-2 border-b border-slate-200 dark:border-gray-700" aria-label="Tapis kategori kes pada peta">
+                    <span class="text-xs font-semibold text-slate-600 dark:text-gray-300">Heatmap mengikut kategori:</span>
+                    <button type="button" class="heat-category rounded border px-2 py-1 text-xs" data-heat-category="" aria-pressed="true">Semua</button>
+                    <button type="button" class="heat-category rounded border px-2 py-1 text-xs" data-heat-category="__PECAH__" aria-pressed="false">Pecah</button>
+                    <button type="button" class="heat-category rounded border px-2 py-1 text-xs" data-heat-category="__BOCOR__" aria-pressed="false">Bocor</button>
+                    <button type="button" class="heat-category rounded border px-2 py-1 text-xs" data-heat-category="__LAIN__" aria-pressed="false">Lain-lain</button>
+                    <span id="heatmap-count" role="status" aria-live="polite" class="text-xs text-slate-600 dark:text-gray-300"></span>
+                    <span class="text-xs text-slate-500 dark:text-gray-400">Biru = kurang, merah = lebih banyak kes berdekatan.</span>
                 </div>
                 <div id="map" class="w-full h-[500px] min-h-[500px]"></div>
             </section>
@@ -851,7 +860,7 @@
                                     <label>Value<input id="ai-eng-value" class="form-input text-xs" placeholder="Nilai"><small class="block text-slate-500">Isi nilai bersumber; andaian mesti ditanda ASSUMED.</small></label>
                                     <p id="ai-eng-context-help" class="sm:col-span-2 rounded border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:bg-amber-950/30 dark:text-amber-200" role="note"></p>
                                     <input id="ai-eng-unit" class="form-input text-xs" readonly aria-label="Unit parameter">
-                                    <label>Classification<select id="ai-eng-classification" class="form-input text-xs"><option value="" selected disabled>Pilih klasifikasi selepas semak bukti</option><option>VERIFIED</option><option>MANUAL</option><option>ASSUMED</option><option>MISSING</option></select><small class="block text-slate-500">VERIFIED: bukti diluluskan; MANUAL: sumber diketahui; ASSUMED: andaian, bukan disahkan.</small></label>
+                                    <label>Jenis nilai<select id="ai-eng-classification" class="form-input text-xs"><option value="" selected disabled>Pilih jenis nilai</option><option value="MANUAL">Diukur / dicatat manual</option><option value="ASSUMED">Andaian untuk percubaan</option><option value="VERIFIED">Disahkan dengan bukti</option><option value="MISSING">Masih tidak diketahui</option></select><small class="block text-slate-500">Andaian disimpan sebagai DRAFT mengikut DMA, model, ID aset dan parameter; bukan nilai disahkan atau kebenaran menjalankan baseline.</small></label>
                                     <label>Source Reference<input id="ai-eng-source" class="form-input text-xs" placeholder="Rujukan sumber / dokumen"><small class="block text-slate-500">Contoh: lukisan as-built, survei atau daftar aset.</small></label>
                                     <label>Effective Date<input id="ai-eng-effective" type="datetime-local" class="form-input text-xs" aria-label="Tarikh dan masa efektif tempatan"><small class="block text-slate-500">Tarikh nilai mula sah atau disahkan.</small></label>
                                     <textarea id="ai-eng-notes" class="form-input text-xs col-span-2" placeholder="Nota / kaedah agihan / had andaian"></textarea>
@@ -862,6 +871,7 @@
                                         <li>Pipe ID: daftar aset, lapisan GIS, lukisan as-built.</li><li>Diameter: daftar aset, as-built, rekod siap projek.</li><li>Engineering Length: as-built, reka bentuk diluluskan, ukuran survei.</li><li>Hazen-Williams C: standard kejuruteraan, model disemak, nilai diluluskan jurutera.</li><li>Topology / From-To Node: lukisan rangkaian, sambungan diluluskan, semakan lapangan.</li><li>Node Elevation: aras survei, dataset elevasi diluluskan, lukisan kejuruteraan.</li><li>Base Demand: agihan bil/permintaan, kajian permintaan diluluskan.</li><li>Source Head: aras operasi takungan/tangki, SCADA, syarat sempadan diluluskan.</li><li>Valve / Pump / Tank: daftar peralatan, as-built, rekod operasi.</li><li>Sensor Mapping: daftar tag SCADA, daftar meter, pemetaan sensor–model diluluskan.</li>
                                     </ul><p class="mt-1 text-amber-700">Panduan sahaja; tiada nilai diisi secara automatik.</p>
                                 </details>
+                                <p class="mt-2 text-xs text-slate-600 dark:text-slate-300">Jika nilai dianggarkan: pilih <b>Andaian untuk percubaan</b>, isi asal/kaedah anggaran pada Rujukan sumber dan Nota, kemudian Pratonton → tandakan semakan → Simpan DRAFT. Ini menyimpan data sahaja; Run Model Percubaan belum tersedia. Jangan masukkan bacaan pressure gauge sebagai paras reservoir tanpa datum dan lokasi sumber yang disahkan.</p>
                                 <button type="button" id="ai-eng-preview-manual" class="mt-2 px-2 py-1 rounded bg-slate-700 text-white">Preview entri manual</button>
                                 <div class="mt-2 flex items-center gap-2"><input id="ai-eng-confirm" type="checkbox"><label for="ai-eng-confirm">Saya telah semak DMA, baris, sumber dan masa efektif; simpan sebagai DRAFT sahaja.</label></div>
                                 <button type="button" id="ai-eng-save" disabled class="mt-2 px-2 py-1 rounded bg-emerald-700 text-white disabled:opacity-40">Save Draft yang disemak</button>
@@ -2835,8 +2845,14 @@
             document.getElementById('mgmt-filter-status').addEventListener('change', () => updateManagementTable());
 
             document.getElementById('btn-toggle-map').addEventListener('click', () => {
-                isHeatmapMode = !isHeatmapMode; updateMapMarkers();
+                isHeatmapMode = !isHeatmapMode; updateMapMarkers(true);
             });
+            document.querySelectorAll('.heat-category').forEach(button => button.addEventListener('click', () => {
+                document.getElementById('filter-kategori').value = button.dataset.heatCategory;
+                isHeatmapMode = true;
+                applyFilters();
+                fitDashboardMapToFilteredCases();
+            }));
 
             document.getElementById('cro-filter-bulan').addEventListener('change', () => { croCurrentPage = 1; updateCroTable(); });
             document.getElementById('cro-filter-status').addEventListener('change', () => { croCurrentPage = 1; updateCroTable(); });
@@ -3516,6 +3532,9 @@
             const sortedMonths = sortMonths(uniqueValues('BULAN'));
             populateSel('filter-bulan', sortedMonths);
             populateSel('filter-kategori', uniqueValues('KATEGORI').sort());
+            document.getElementById('filter-kategori').insertAdjacentHTML('afterbegin',
+                '<option value="__PECAH__">Semua kes Pecah</option><option value="__BOCOR__">Semua kes Bocor</option><option value="__LAIN__">Kes Lain-lain</option>');
+            document.getElementById('filter-kategori').value = '';
             populateSel('filter-jenis-paip', uniqueValues('JENIS PAIP').sort());
             populateSel('filter-saiz-paip', sortNumeric(uniqueValues('SAIZ PAIP')));
             populateSel('mgmt-filter-bulan', sortedMonths);
@@ -3609,6 +3628,15 @@
             applyFilters();
         }
 
+        function categoryMatchesFilter(category, selected) {
+            if(!selected) return true;
+            const normalized = String(category || '').trim().toUpperCase();
+            if(selected === '__PECAH__') return /\bPECAH\b/.test(normalized);
+            if(selected === '__BOCOR__') return /\bBOCOR\b/.test(normalized);
+            if(selected === '__LAIN__') return !/\b(?:PECAH|BOCOR)\b/.test(normalized);
+            return category === selected;
+        }
+
         function applyFilters() {
             const sSearch = document.getElementById('filter-search').value.toLowerCase();
             const sBulan = document.getElementById('filter-bulan').value;
@@ -3621,7 +3649,7 @@
 
             filteredData = rawData.filter(row => {
                 if (sBulan && row['BULAN'] !== sBulan) return false;
-                if(sCat && row['KATEGORI'] !== sCat) return false;
+                if(!categoryMatchesFilter(row['KATEGORI'], sCat)) return false;
                 if(sJenisPaip && row['JENIS PAIP'] !== sJenisPaip) return false;
                 if(sSaizPaip && row['SAIZ PAIP'] !== sSaizPaip) return false;
                 if(checkedDmas.length > 0 && !checkedDmas.includes(row['DMA'])) return false;
@@ -3806,24 +3834,32 @@
             updateMapMarkers(); updateTable();
         }
 
-        function updateMapMarkers() {
+        function caseCoordinates(r) {
+            let lat = parseFloat(r['LATITUDE'] || r['LATITUTE']);
+            let lng = parseFloat(r['LONGITUDE'] || r['LONGITUTE']);
+            if(isNaN(lat) || isNaN(lng)) {
+                const parts = String(r['KORDINAT'] || '').split(',');
+                if(parts.length === 2) { lat = parseFloat(parts[0].trim()); lng = parseFloat(parts[1].trim()); }
+            }
+            return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
+                ? [lat, lng] : null;
+        }
+
+        function fitDashboardMapToFilteredCases() {
+            const points = filteredData.map(caseCoordinates).filter(Boolean);
+            if(points.length > 1) map.fitBounds(L.latLngBounds(points), {padding:[25,25], maxZoom:15});
+            else if(points.length === 1) map.setView(points[0], 15);
+        }
+
+        function updateMapMarkers(zoomToCases = false) {
             markerClusterGroup.clearLayers();
             if(heatLayer) map.removeLayer(heatLayer);
             const markers = [], heatPts = [];
-            
-            filteredData.forEach(r => {
-                let lat = parseFloat(r['LATITUDE'] || r['LATITUTE']);
-                let lng = parseFloat(r['LONGITUDE'] || r['LONGITUTE']);
-                
-                if (isNaN(lat) || isNaN(lng)) {
-                    const kordParts = String(r['KORDINAT'] || '').split(',');
-                    if (kordParts.length === 2) {
-                        lat = parseFloat(kordParts[0].trim());
-                        lng = parseFloat(kordParts[1].trim());
-                    }
-                }
 
-                if(!isNaN(lat) && !isNaN(lng)) {
+            filteredData.forEach(r => {
+                const coordinates = caseCoordinates(r);
+                if(coordinates) {
+                    const [lat, lng] = coordinates;
                     const kategori = String(r['KATEGORI'] || '').trim().toUpperCase();
                     let markerColor = '#10b981';
 
@@ -3856,10 +3892,25 @@
             });
 
             if(isHeatmapMode) {
-                heatLayer = L.heatLayer(heatPts, {radius: 25, blur: 15, gradient:{0.4:'blue',0.65:'lime',1:'red'}}).addTo(map);
-            } else { 
-                markerClusterGroup.addLayers(markers); 
+                heatLayer = L.heatLayer(heatPts, {radius: 32, blur: 18, minOpacity: 0.35,
+                    gradient:{0.25:'#2563eb',0.5:'#facc15',0.75:'#f97316',1:'#dc2626'}}).addTo(map);
+            } else {
+                markerClusterGroup.addLayers(markers);
             }
+            const category = document.getElementById('filter-kategori').value;
+            const labels = {'':'semua kategori','__PECAH__':'pecah','__BOCOR__':'bocor','__LAIN__':'lain-lain'};
+            document.getElementById('heatmap-count').textContent =
+                `${heatPts.length} daripada ${filteredData.length} kes ${labels[category] || category} mempunyai koordinat · ${isHeatmapMode?'heatmap':'penanda'}`;
+            const toggle = document.getElementById('btn-toggle-map');
+            toggle.setAttribute('aria-pressed', String(isHeatmapMode));
+            toggle.innerHTML = `<i class="fa-solid fa-fire"></i> ${isHeatmapMode?'Tunjuk Penanda':'Tunjuk Heatmap'}`;
+            document.querySelectorAll('.heat-category').forEach(button => {
+                const active = button.dataset.heatCategory === category;
+                button.setAttribute('aria-pressed', String(active));
+                button.classList.toggle('bg-blue-600', active);
+                button.classList.toggle('text-white', active);
+            });
+            if(zoomToCases) fitDashboardMapToFilteredCases();
         }
 
         function updateTable() {
