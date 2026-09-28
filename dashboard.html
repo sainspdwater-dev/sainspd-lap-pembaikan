@@ -394,12 +394,8 @@
                         <button id="btn-toggle-map" type="button" aria-pressed="false" class="text-sm bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded text-white transition"><i class="fa-solid fa-fire"></i> Tunjuk Heatmap</button>
                     </div>
                 </div>
-                <div class="flex flex-wrap items-center gap-2 px-4 py-2 border-b border-slate-200 dark:border-gray-700" aria-label="Tapis kategori kes pada peta">
-                    <span class="text-xs font-semibold text-slate-600 dark:text-gray-300">Heatmap mengikut kategori:</span>
-                    <button type="button" class="heat-category rounded border px-2 py-1 text-xs" data-heat-category="" aria-pressed="true">Semua</button>
-                    <button type="button" class="heat-category rounded border px-2 py-1 text-xs" data-heat-category="__PECAH__" aria-pressed="false">Pecah</button>
-                    <button type="button" class="heat-category rounded border px-2 py-1 text-xs" data-heat-category="__BOCOR__" aria-pressed="false">Bocor</button>
-                    <button type="button" class="heat-category rounded border px-2 py-1 text-xs" data-heat-category="__LAIN__" aria-pressed="false">Lain-lain</button>
+                <div class="flex flex-wrap items-center gap-2 px-4 py-2 border-b border-slate-200 dark:border-gray-700">
+                    <span class="text-xs font-semibold text-slate-600 dark:text-gray-300">Heatmap ikut filter Kategori di atas; pilih PECAH untuk lihat tumpuan paip pecah.</span>
                     <span id="heatmap-count" role="status" aria-live="polite" class="text-xs text-slate-600 dark:text-gray-300"></span>
                     <span class="text-xs text-slate-500 dark:text-gray-400">Biru = kurang, merah = lebih banyak kes berdekatan.</span>
                 </div>
@@ -2847,12 +2843,9 @@
             document.getElementById('btn-toggle-map').addEventListener('click', () => {
                 isHeatmapMode = !isHeatmapMode; updateMapMarkers(true);
             });
-            document.querySelectorAll('.heat-category').forEach(button => button.addEventListener('click', () => {
-                document.getElementById('filter-kategori').value = button.dataset.heatCategory;
-                isHeatmapMode = true;
-                applyFilters();
-                fitDashboardMapToFilteredCases();
-            }));
+            document.getElementById('filter-kategori').addEventListener('change', () => {
+                if(isHeatmapMode) fitDashboardMapToFilteredCases();
+            });
 
             document.getElementById('cro-filter-bulan').addEventListener('change', () => { croCurrentPage = 1; updateCroTable(); });
             document.getElementById('cro-filter-status').addEventListener('change', () => { croCurrentPage = 1; updateCroTable(); });
@@ -3532,9 +3525,6 @@
             const sortedMonths = sortMonths(uniqueValues('BULAN'));
             populateSel('filter-bulan', sortedMonths);
             populateSel('filter-kategori', uniqueValues('KATEGORI').sort());
-            document.getElementById('filter-kategori').insertAdjacentHTML('afterbegin',
-                '<option value="__PECAH__">Semua kes Pecah</option><option value="__BOCOR__">Semua kes Bocor</option><option value="__LAIN__">Kes Lain-lain</option>');
-            document.getElementById('filter-kategori').value = '';
             populateSel('filter-jenis-paip', uniqueValues('JENIS PAIP').sort());
             populateSel('filter-saiz-paip', sortNumeric(uniqueValues('SAIZ PAIP')));
             populateSel('mgmt-filter-bulan', sortedMonths);
@@ -3628,15 +3618,6 @@
             applyFilters();
         }
 
-        function categoryMatchesFilter(category, selected) {
-            if(!selected) return true;
-            const normalized = String(category || '').trim().toUpperCase();
-            if(selected === '__PECAH__') return /\bPECAH\b/.test(normalized);
-            if(selected === '__BOCOR__') return /\bBOCOR\b/.test(normalized);
-            if(selected === '__LAIN__') return !/\b(?:PECAH|BOCOR)\b/.test(normalized);
-            return category === selected;
-        }
-
         function applyFilters() {
             const sSearch = document.getElementById('filter-search').value.toLowerCase();
             const sBulan = document.getElementById('filter-bulan').value;
@@ -3649,7 +3630,7 @@
 
             filteredData = rawData.filter(row => {
                 if (sBulan && row['BULAN'] !== sBulan) return false;
-                if(!categoryMatchesFilter(row['KATEGORI'], sCat)) return false;
+                if(sCat && row['KATEGORI'] !== sCat) return false;
                 if(sJenisPaip && row['JENIS PAIP'] !== sJenisPaip) return false;
                 if(sSaizPaip && row['SAIZ PAIP'] !== sSaizPaip) return false;
                 if(checkedDmas.length > 0 && !checkedDmas.includes(row['DMA'])) return false;
@@ -3898,18 +3879,11 @@
                 markerClusterGroup.addLayers(markers);
             }
             const category = document.getElementById('filter-kategori').value;
-            const labels = {'':'semua kategori','__PECAH__':'pecah','__BOCOR__':'bocor','__LAIN__':'lain-lain'};
             document.getElementById('heatmap-count').textContent =
-                `${heatPts.length} daripada ${filteredData.length} kes ${labels[category] || category} mempunyai koordinat · ${isHeatmapMode?'heatmap':'penanda'}`;
+                `${heatPts.length} daripada ${filteredData.length} kes ${category || 'semua kategori'} mempunyai koordinat · ${isHeatmapMode?'heatmap':'penanda'}`;
             const toggle = document.getElementById('btn-toggle-map');
             toggle.setAttribute('aria-pressed', String(isHeatmapMode));
             toggle.innerHTML = `<i class="fa-solid fa-fire"></i> ${isHeatmapMode?'Tunjuk Penanda':'Tunjuk Heatmap'}`;
-            document.querySelectorAll('.heat-category').forEach(button => {
-                const active = button.dataset.heatCategory === category;
-                button.setAttribute('aria-pressed', String(active));
-                button.classList.toggle('bg-blue-600', active);
-                button.classList.toggle('text-white', active);
-            });
             if(zoomToCases) fitDashboardMapToFilteredCases();
         }
 
