@@ -654,28 +654,29 @@
 
                         <section class="rounded border border-violet-200 dark:border-violet-800 p-2 text-xs" aria-label="Tindakan model hidraulik DMA">
                             <div class="flex flex-wrap gap-2" id="ai-hydraulic-actions">
-                                <button type="button" id="ai-quick-check" disabled class="px-2 py-1 rounded bg-violet-700 text-white disabled:opacity-40">Semak Model DMA</button>
-                                <button type="button" id="ai-quick-autofill" disabled class="px-2 py-1 rounded bg-blue-700 text-white disabled:opacity-40">Auto-Fill Data</button>
-                                <button type="button" id="ai-quick-complete" disabled class="px-2 py-1 rounded bg-slate-700 text-white disabled:opacity-40">Lengkapkan Data</button>
-                                <button type="button" id="ai-quick-issues" disabled class="px-2 py-1 rounded bg-slate-700 text-white disabled:opacity-40">Show Hydraulic Issues</button>
+                                <button type="button" id="ai-quick-autofill" disabled class="px-2 py-1 rounded bg-blue-700 text-white disabled:opacity-40">1. Baca data sedia ada</button>
+                                <button type="button" id="ai-quick-complete" disabled class="px-2 py-1 rounded bg-slate-700 text-white disabled:opacity-40">2. Semak baki data</button>
+                                <button type="button" id="ai-quick-check" disabled class="px-2 py-1 rounded bg-violet-700 text-white disabled:opacity-40">3. Semak status model</button>
+                                <button type="button" id="ai-quick-issues" disabled class="px-2 py-1 rounded bg-slate-700 text-white disabled:opacity-40">Lihat isu pada peta</button>
                             </div>
                             <p id="ai-hydraulic-action-hint" class="mt-1 text-slate-600 dark:text-gray-300" aria-live="polite">Pilih satu DMA untuk menggunakan tindakan model hidraulik.</p>
                             <div id="ai-hydraulic-quick-card" class="mt-2 rounded bg-violet-50 dark:bg-gray-800 p-2" aria-live="polite">
                                 <div id="ai-hydraulic-quick-title" class="font-bold break-words">HYDRAULIC MODEL — Pilih DMA</div>
                                 <div id="ai-hydraulic-quick-status" class="mt-1 flex flex-wrap gap-x-3 gap-y-1">Status belum disemak.</div>
-                                <div class="mt-1"><span class="font-semibold">Missing / Partial:</span> <span id="ai-hydraulic-quick-missing">Pilih DMA dahulu.</span></div>
+                                <p id="ai-baseline-plain" class="mt-2 rounded border border-amber-300 bg-amber-50 p-2 font-semibold text-amber-900 dark:bg-amber-950/30 dark:text-amber-200" role="status" aria-live="polite">Pilih DMA untuk lihat apa yang sudah ada dan mengapa baseline belum boleh dijalankan.</p>
                                 <div class="mt-2 rounded border border-violet-200 bg-white dark:bg-gray-900 p-2">
-                                    <p class="font-semibold">Apa saya perlu buat untuk model DMA ini?</p>
-                                    <p class="mt-1">1. Pilih DMA, tekan <strong>Semak Model DMA</strong>, kemudian <strong>Cari model DMA ini</strong> dan <strong>Auto-Fill Data</strong> untuk melihat data sedia ada (pratonton sahaja). 2. Tekan nama MISSING untuk ke borang, atau gunakan templat CSV/Excel bagi banyak rekod. 3. Pratonton dan simpan DRAFT, minta jurutera lain semak/lulus, kemudian semak readiness semula.</p>
-                                    <p class="mt-1 text-amber-700 dark:text-amber-300">KML menunjukkan jajaran, bukan elevasi, sambungan nod, demand atau head reservoir yang disahkan. Simulasi SAINS sebenar belum diaktifkan.</p>
+                                    <p class="font-semibold">Cara paling ringkas</p>
+                                    <p class="mt-1">Tekan <strong>1. Baca data sedia ada</strong> dahulu. Sistem akan senaraikan Pipe ID dan diameter calon secara automatik—jangan isi semula satu per satu tanpa melihat hasil itu. Kemudian semak hanya baki yang belum sah melalui fail CSV/Excel atau borang. Jurutera lain meluluskan DRAFT sebelum status model disemak semula.</p>
+                                    <p class="mt-1 text-amber-700 dark:text-amber-300">Fail PDS_PIPE.kml yang disemak mengandungi PIPESIZE dan PIPELENGTH, tetapi panjang GIS/asset belum boleh dianggap panjang model diluluskan. Bacaan pressure gauge juga bukan head reservoir secara terus.</p>
                                     <div class="mt-2 flex flex-wrap gap-2">
-                                        <button type="button" id="ai-guide-manual" class="px-2 py-1 rounded bg-slate-700 text-white">Isi data satu demi satu ↓</button>
-                                        <button type="button" id="ai-guide-file" class="px-2 py-1 rounded bg-blue-700 text-white">Upload data kejuruteraan ↓</button>
+                                        <button type="button" id="ai-guide-manual" class="px-2 py-1 rounded bg-slate-700 text-white">Isi satu rekod jika perlu ↓</button>
+                                        <button type="button" id="ai-guide-file" class="px-2 py-1 rounded bg-blue-700 text-white">Import banyak rekod ↓</button>
                                         <a href="engineering-template.csv" download="engineering-template.csv" class="px-2 py-1 rounded border border-blue-600 text-blue-700 dark:text-blue-300">Muat turun templat CSV</a>
                                     </div>
                                     <p id="ai-hydraulic-field-guide" class="mt-2" role="status" aria-live="polite">Tekan nama data yang MISSING di atas untuk lihat medan dan sumber yang diperlukan.</p>
                                 </div>
-                                <button type="button" id="ai-quick-view-missing" disabled class="mt-2 px-2 py-1 rounded border border-violet-400 disabled:opacity-40">View Missing Data</button>
+                                <details id="ai-technical-missing" class="mt-2"><summary class="cursor-pointer font-semibold">Butiran teknikal yang belum disahkan (klik jika perlu)</summary><div class="mt-1"><span id="ai-hydraulic-quick-missing">Pilih DMA dahulu.</span></div></details>
+                                <button type="button" id="ai-quick-view-missing" disabled class="mt-2 px-2 py-1 rounded border border-violet-400 disabled:opacity-40">Lihat butiran teknikal</button>
                             </div>
                             <section id="ai-hydraulic-worklist" class="hidden mt-2 rounded border border-blue-300 bg-blue-50 p-2 text-slate-800 dark:bg-slate-900 dark:text-slate-100" aria-label="Senarai kerja model mengikut peta">
                                 <p class="font-bold">Apa yang perlu saya semak pada peta?</p>
@@ -693,7 +694,7 @@
                                 </div>
                             </section>
                             <div id="ai-hydraulic-workflow" class="mt-2 flex flex-wrap gap-1" aria-label="Aliran kerja hidraulik">
-                                <span data-step="1" class="rounded border px-2 py-1">1. Select DMA</span><span data-step="2" class="rounded border px-2 py-1">2. Auto-Fill</span><span data-step="3" class="rounded border px-2 py-1">3. Complete Missing Data</span><span data-step="4" class="rounded border px-2 py-1">4. Review / Approve</span><span data-step="5" class="rounded border px-2 py-1">5. Check Readiness</span><span data-step="6" class="rounded border px-2 py-1">6. Run Baseline</span>
+                                <span data-step="1" class="rounded border px-2 py-1">1. Baca data tersedia</span><span data-step="2" class="rounded border px-2 py-1">2. Semak dan luluskan</span><span data-step="3" class="rounded border px-2 py-1">3. Baseline selepas model siap</span>
                             </div>
                         </section>
 
@@ -869,8 +870,8 @@
                                 <div id="ai-eng-reviews" class="mt-2 whitespace-pre-line"></div>
                                 <div id="ai-eng-report" class="mt-2 whitespace-pre-line" aria-live="polite">Tiada data kejuruteraan disimpan.</div>
                             </details>
-                            <button type="button" id="ai-run-real-baseline" disabled title="Data DMA belum lulus readiness" class="mt-2 px-2 py-1 rounded bg-slate-200 text-slate-500">Run Baseline</button>
-                            <p id="ai-baseline-lock-message" class="mt-1 text-amber-700">Baseline locked because required engineering data is incomplete.</p>
+                            <button type="button" id="ai-run-real-baseline" disabled title="Model DMA dan sambungan simulasi produksi belum siap" class="mt-2 px-2 py-1 rounded bg-slate-200 text-slate-500">Run Baseline SAINS — belum tersedia</button>
+                            <p id="ai-baseline-lock-message" class="mt-1 text-amber-700">Tiada simulasi produksi dijalankan: model kejuruteraan belum disahkan dan butang ini belum disambung kepada pelaksanaan produksi. Ujian EPANET pada model rujukan bukan baseline SAINS.</p>
                             <button type="button" id="ai-view-baseline-blockers" class="mt-1 px-2 py-1 rounded border border-amber-500">View Blockers</button>
                         </details>
 
@@ -4333,7 +4334,7 @@
         });
     </script>
     <script src="phase2a-ui.js" defer></script>
-    <script src="phase2b-ui.js?v=hydraulic-map-pipe-id-2" defer></script>
+    <script src="phase2b-ui.js?v=hydraulic-plain-guide-3" defer></script>
     <script src="engineering-intake.mjs?v=field-safety-2" type="module"></script>
     <script src="ai-prompt-hydraulic-guide.mjs" type="module"></script>
     <script src="pipe-clip-ui.mjs?v=fd486b6" type="module"></script>

@@ -78,9 +78,14 @@
       button.className='mr-1 mb-1 underline text-violet-700 dark:text-violet-300';
       button.textContent=`${field.label||key} (${field.status})${index<unresolved.length-1?',':''}`;
       button.addEventListener('click',()=>goToField(key));missing.append(button);});
-    const stage=!dma?1:h?.capabilities?.baseline==='READY'?6:h?3:2;
+    const stage=!dma?1:h?.capabilities?.steadyState==='READY'?3:h?2:1;
     for(const item of byId('ai-hydraulic-workflow').children){const current=Number(item.dataset.step)===stage;
       item.classList.toggle('bg-violet-700',current);item.classList.toggle('text-white',current);}
+    const plain=byId('ai-baseline-plain');
+    if(!dma)plain.textContent='Pilih DMA untuk lihat apa yang sudah ada dan mengapa baseline belum boleh dijalankan.';
+    else if(!h)plain.textContent=`${dma}: sedang menyemak data sedia ada. Tiada nilai perlu diteka atau disimpan sekarang.`;
+    else if(h.capabilities?.steadyState==='READY')plain.textContent=`${dma}: data steady-state dilaporkan READY, tetapi Run Baseline SAINS masih belum disambung kepada simulasi produksi. Status ini bukan hasil EPANET.`;
+    else plain.textContent=`${dma}: ${h.gis?.segmentCount||0} bahagian jajaran GIS tersedia; ${h.gis?.missingDiameterParts||0} tanpa diameter GIS. Data GIS/calon bukan model hidraulik yang sudah diluluskan. Baca data sedia ada dahulu, semak baki dengan jurutera, kemudian semak readiness. Run Baseline SAINS belum diaktifkan.`;
     byId('ai-baseline-lock-message').hidden=!byId('ai-run-real-baseline').disabled;
     const worklist=byId('ai-hydraulic-worklist');
     worklist.classList.toggle('hidden',!active||!h);
@@ -289,7 +294,7 @@
     byId('ai-quick-autofill')?.addEventListener('click',()=>{openDetails('intake');window.aiEngQuickAutofill?.();});
     byId('ai-quick-complete')?.addEventListener('click',()=>openDetails('intake'));
     byId('ai-quick-issues')?.addEventListener('click',()=>{openDetails('status');byId('ai-hydraulic-issues-map').click();});
-    byId('ai-quick-view-missing')?.addEventListener('click',()=>openDetails('status'));
+    byId('ai-quick-view-missing')?.addEventListener('click',()=>{byId('ai-technical-missing').open=true;byId('ai-technical-missing').scrollIntoView({behavior:'smooth',block:'nearest'});});
     byId('ai-guide-manual')?.addEventListener('click',()=>{openDetails('intake');byId('ai-eng-entity-id').focus();});
     byId('ai-guide-file')?.addEventListener('click',()=>{openDetails('intake');byId('ai-eng-file').focus();});
     byId('ai-view-baseline-blockers')?.addEventListener('click',()=>openDetails('status'));

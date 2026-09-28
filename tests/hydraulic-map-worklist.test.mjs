@@ -42,3 +42,12 @@ test('new hydraulic targets clear stale values and never default to VERIFIED',()
   assert.match(intake,/byId\('ai-eng-entity-id'\)\?\.addEventListener\('input',\(\)=>\{clearValueForNewTarget\(\)/);
   assert.match(intake,/Head sumber\/reservoir \(m\) bukan bacaan pressure gauge \(bar\) secara terus/);
 });
+
+test('plain guide distinguishes existing GIS data from a runnable SAINS baseline',()=>{
+  assert.match(html,/id="ai-baseline-plain"/);
+  assert.match(html,/1\. Baca data sedia ada/);
+  assert.match(html,/id="ai-technical-missing"/);
+  assert.match(html,/id="ai-run-real-baseline" disabled[^>]*>Run Baseline SAINS — belum tersedia/);
+  assert.match(script,/Data GIS\/calon bukan model hidraulik yang sudah diluluskan/);
+  assert.match(script,/Run Baseline SAINS masih belum disambung kepada simulasi produksi/);
+});
