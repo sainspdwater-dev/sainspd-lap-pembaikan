@@ -1,0 +1,91 @@
+name: SAINS PD desktop pilot update
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/desktop-release.yml'
+      - 'desktop/**'
+      - 'index.html'
+      - 'dashboard.html'
+      - '*.mjs'
+      - '*.csv'
+      - 'map polygon/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sains-pd-desktop-release
+  cancel-in-progress: false
+
+jobs:
+  build-and-publish:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: desktop/package-lock.json
+      - name: Install desktop dependencies
+        run: npm ci
+        working-directory: desktop
+      - name: Test web and desktop logic
+        shell: pwsh
+        run: |
+          node --test tests/*.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Push-Location desktop
+          npm test
+          $testCode = $LASTEXITCODE
+          Pop-Location
+          exit $testCode
+      - name: Give this build a newer desktop version
+        shell: pwsh
+        working-directory: desktop
+        run: npm version "0.2.$env:GITHUB_RUN_NUMBER" --no-git-tag-version
+      - name: Build installer and test the packaged application
+        shell: pwsh
+        working-directory: desktop
+        run: |
+          npm run package:win
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tests/smoke.mjs 'release/win-unpacked/SAINS PD.exe'
+          exit $LASTEXITCODE
+      - name: Publish pilot installer, then update version feed
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = "0.2.$env:GITHUB_RUN_NUMBER"
+          $tag = "desktop-v$version"
+          $installer = "desktop/release/SAINS PD Setup $version.exe"
+          if (-not (Test-Path -LiteralPath $installer)) { throw 'Installer not found.' }
+          $sha256 = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          gh release create $tag $installer --title "SAINS PD Desktop Pilot $version" --notes "Windows pilot installer for web commit $env:GITHUB_SHA. Unsigned; staff rollout requires IT approval." --prerelease --target $env:GITHUB_SHA
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git restore -- desktop/package.json desktop/package-lock.json
+          git fetch origin main
+          git checkout main
+          git pull --ff-only origin main
+          $manifest = [ordered]@{
+            schema = 1
+            version = $version
+            release_url = "https://github.com/sainspdwater-dev/sainspd-lap-pembaikan/releases/tag/$tag"
+            sha256 = $sha256
+            web_commit = $env:GITHUB_SHA
+            published_at = (Get-Date).ToUniversalTime().ToString('o')
+          }
+          $manifest | ConvertTo-Json | Set-Content -LiteralPath desktop-update.json -Encoding utf8
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- desktop-update.json
+          git commit -m "Publish desktop update $version"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          git push origin HEAD:main
+          exit $LASTEXITCODE

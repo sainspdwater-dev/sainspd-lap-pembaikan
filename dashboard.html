@@ -1754,15 +1754,18 @@
                 try {
                     setTimeout(() => showLoading(true, 40, "Memuatkan data tempatan..."), 100);
                     rawData = JSON.parse(cachedData);
+                    if (window.sainsDesktop) window.sainsDesktopOverlayDrafts?.(rawData);
                     if(cachedDropdowns) dropdownOptions = JSON.parse(cachedDropdowns);
                     filteredData = [...rawData];
                     populateModalDropdowns();
                     populateFilters();
-                    if(!map) initMap();
-                    if(!charts.month) initCharts();
-                    applyFilters();
                     updateManagementTable();
                     updateCroTable();
+                    try {
+                        if(!map) initMap();
+                        if(!charts.month) initCharts();
+                        applyFilters();
+                    } catch (visualError) { console.warn('Paparan carta/peta setempat belum sedia; jadual rekod tetap boleh digunakan.', visualError); }
                 } catch(e) {}
             }
 
@@ -2120,6 +2123,10 @@
         }
 
         async function fetchFreshData(isManualRefresh = false) {
+            if (window.sainsDesktop && localStorage.getItem('sainsDesktopOffline') === 'true') {
+                if (isManualRefresh) showToast('Log masuk online semula untuk memuat data terkini.', 'error');
+                return;
+            }
             if(isManualRefresh) { showLoading(true, 20, "Menyegar data baharu..."); showToast("Memuat data baharu..."); }
             try {
                 if(isManualRefresh) showLoading(true, 50, "Memuat turun dari pelayan...");
@@ -2173,12 +2180,20 @@
                     return dateB - dateA;
                 });
 
+                // Keep local desktop drafts visible after an online refresh; the Worker remains authoritative.
+                if (window.sainsDesktop) window.sainsDesktopOverlayDrafts?.(rawData);
+
                 localStorage.setItem('sainsRawData', JSON.stringify(rawData));
+                if (window.sainsDesktop) localStorage.setItem('sainsLastSync', new Date().toISOString());
+                window.sainsDesktopStore?.save().catch(error => console.warn('Salinan IndexedDB gagal', error));
                 filteredData = [...rawData];
 
                 populateModalDropdowns(); populateFilters();
-                if(!map) initMap(); if(!charts.month) initCharts();
-                applyFilters(); updateManagementTable(); updateCroTable();
+                updateManagementTable(); updateCroTable();
+                try {
+                    if(!map) initMap(); if(!charts.month) initCharts();
+                    applyFilters();
+                } catch (visualError) { console.warn('Paparan carta/peta belum sedia; jadual rekod tetap boleh digunakan.', visualError); }
                 
                 if(isManualRefresh) {
                     showLoading(true, 100, "Selesai!");
@@ -2236,6 +2251,7 @@
         });
 
         async function sendMutation(actionType, payloadData) {
+            if (window.sainsDesktop) return sendDesktopMutation(actionType, payloadData);
             const noAduan = payloadData['NO ADUAN'] || payloadData.noAduan;
             let targetNoAduanForBackend = noAduan; 
 
@@ -2289,6 +2305,7 @@
         }
 
         async function processOfflineQueue() {
+            if (window.sainsDesktop) return window.sainsDesktopAutoSync?.();
             let queue = JSON.parse(localStorage.getItem('sainsOfflineQueue') || '[]');
             if(queue.length === 0) return;
             let remainingQueue = [];
@@ -2323,6 +2340,7 @@
             const sSearch = document.getElementById('cro-search').value.toLowerCase();
             
             let displayData = rawData.filter(row => {
+                if (window.sainsDesktop && row._desktopDraft) return !sSearch || Object.values(row).join(' ').toLowerCase().includes(sSearch);
                 if (sBulan && row['BULAN'] !== sBulan) return false;
                 const isComplete = window.isRowComplete(row);
                 if (sStatus === 'complete' && !isComplete) return false;
@@ -2355,7 +2373,7 @@
                             <button type="button" onclick="saveCroRow(this)" class="text-blue-600 hover:text-blue-800 bg-blue-100 hover:bg-blue-200 px-2 py-1 rounded text-xs mx-0.5 transition font-bold shadow-sm" title="Simpan"><i class="fa-solid fa-save"></i> SIMPAN</button>
                             <button type="button" onclick="confirmDeleteCro('${escapeHTML(noAduan)}')" class="text-red-600 hover:text-red-800 bg-red-100 hover:bg-red-200 px-2 py-1 rounded text-xs mx-0.5 transition shadow-sm" title="Padam"><i class="fa-solid fa-trash"></i></button>
                         </td>
-                        <td class="col-2" tabindex="0"><input type="text" class="excel-input cro-noAduan font-bold" value="${escapeHTML(noAduan)}" readonly autocomplete="off"></td>
+                        <td class="col-2" tabindex="0"><input type="text" class="excel-input cro-noAduan font-bold" value="${escapeHTML(noAduan)}" readonly autocomplete="off">${row._desktopDraft ? '<span class="text-amber-700 text-xs font-bold">DRAF OFFLINE</span>' : ''}</td>
                         <td tabindex="0"><input type="text" class="excel-input cro-zon" list="list-zon" value="${escapeHTML(row['ZON']||'')}" autocomplete="off"></td>
                         <td tabindex="0"><input type="text" class="excel-input cro-dma" list="list-dma" value="${escapeHTML(row['DMA']||'')}" autocomplete="off"></td>
                         <td tabindex="0"><input type="text" class="excel-input cro-kategori" list="list-kategori" value="${escapeHTML(row['KATEGORI']||'')}" autocomplete="off"></td>
@@ -3060,10 +3078,12 @@
                 return;
             }
             aiAgentMap = L.map('ai-agent-map').setView([2.5225, 101.7946], 12);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
-                maxZoom: 19, 
-                attribution: '&copy; OpenStreetMap' 
-            }).addTo(aiAgentMap);
+            if (!window.sainsDesktop || (navigator.onLine && localStorage.getItem('sainsDesktopOffline') !== 'true')) {
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap'
+                }).addTo(aiAgentMap);
+            }
             
             aiAgentClusterGroup = L.markerClusterGroup();
             aiAgentMap.addLayer(aiAgentClusterGroup);
@@ -3667,7 +3687,9 @@
 
         function initMap() {
             map = L.map('map').setView([2.5225, 101.7946], 12);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+            if (!window.sainsDesktop || (navigator.onLine && localStorage.getItem('sainsDesktopOffline') !== 'true')) {
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+            }
             markerClusterGroup = L.markerClusterGroup(); map.addLayer(markerClusterGroup);
             setupPipeMap(map, 'main', 'btn-pipe-map');
             setTimeout(() => { muatSemuaDMZ(); }, 1500);
@@ -3679,6 +3701,12 @@
             if (pipeMapStates[key]) return;
             const button = document.getElementById(buttonId);
             if (!button || localStorage.getItem('sainsUserLevel') !== 'ADMIN') return;
+            if (window.sainsDesktop && localStorage.getItem('sainsDesktopOffline') === 'true') {
+                button.classList.remove('hidden');
+                button.disabled = true;
+                button.textContent = 'Jajaran paip: online sahaja';
+                return;
+            }
             button.classList.remove('hidden');
             const state = { map: leafletMap, group: L.layerGroup(), button, active: false, requestId: 0 };
             pipeMapStates[key] = state;
@@ -3922,6 +3950,7 @@
             }
 
             const filteredMgmtData = rawData.filter(r => {
+                if (window.sainsDesktop && r._desktopDraft) return true;
                 if (sBulan && r['BULAN'] !== sBulan) return false;
                 const isComplete = window.isRowComplete(r);
                 if (sStatus === 'complete' && !isComplete) return false;
@@ -3931,7 +3960,8 @@
 
             const mgmtData = filteredMgmtData.map(r => {
                 const noAduan = r['NO ADUAN'] || '';
-                const actionBtn = (userLevel === 'GUEST') ? `<span class="text-xs text-gray-400">View Only</span>` : `<button onclick="openEditModal('${escapeHTML(noAduan)}')" aria-label="Kemaskini rekod ${escapeHTML(noAduan)}" class="px-2.5 py-1 bg-blue-600 text-white rounded text-xs"><i class="fa-solid fa-pen-to-square"></i> Edit</button>`;
+                const draftBadge = r._desktopDraft ? '<span class="block text-amber-700 text-xs font-bold">DRAF OFFLINE</span>' : '';
+                const actionBtn = ((userLevel === 'GUEST') ? `<span class="text-xs text-gray-400">View Only</span>` : `<button onclick="openEditModal('${escapeHTML(noAduan)}')" aria-label="Kemaskini rekod ${escapeHTML(noAduan)}" class="px-2.5 py-1 bg-blue-600 text-white rounded text-xs"><i class="fa-solid fa-pen-to-square"></i> Edit</button>`) + draftBadge;
                 const linkMaps = r['LINK MAPS'] ? `<a href="${escapeHTML(r['LINK MAPS'])}" aria-label="Buka Peta Lokasi" target="_blank" class="text-blue-500"><i class="fa-solid fa-map-location-dot"></i></a>` : '-';
                 let districtAreaVal = r['District Metered Area'] || r['DISTRICT METERED AREA'] || r['districtMeteredArea'] || '-';
                 if (parentFolders.includes(districtAreaVal.trim().toLowerCase())) districtAreaVal = '-';

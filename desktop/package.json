@@ -1,0 +1,27 @@
+{
+  "name": "sains-pd-desktop",
+  "version": "0.1.4",
+  "private": true,
+  "description": "SAINS PD desktop offline client",
+  "main": "main.cjs",
+  "scripts": {
+    "prepare:app": "node build-assets.mjs",
+    "start": "npm run prepare:app && electron .",
+    "package:win": "npm run prepare:app && electron-builder --win nsis",
+    "test": "node --test tests/*.test.mjs",
+    "smoke": "npm run prepare:app && node tests/smoke.mjs"
+  },
+  "devDependencies": {
+    "electron": "39.2.6",
+    "electron-builder": "26.0.12"
+  },
+  "build": {
+    "appId": "my.gov.sains.pd.desktop",
+    "productName": "SAINS PD",
+    "directories": { "output": "release" },
+    "files": ["main.cjs", "preload.cjs", "update-check.cjs", "app/**/*"],
+    "asar": true,
+    "win": { "target": ["nsis"], "signAndEditExecutable": false },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true }
+  }
+}
