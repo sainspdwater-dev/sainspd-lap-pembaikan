@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "version": "0.2.1",
-  "release_url": "https://github.com/sainspdwater-dev/sainspd-lap-pembaikan/releases/tag/desktop-v0.2.1",
-  "sha256": "a0481d3dceb4c8b45f066562284ee353e056f744b5a01d476c8b4f86152828ca",
-  "web_commit": "6d3e5a2e0808757db116c41c52c64812fbc3c5be",
-  "published_at": "2026-10-20T12:02:52.6516813Z"
+  "version": "0.2.2",
+  "release_url": "https://github.com/sainspdwater-dev/sainspd-lap-pembaikan/releases/tag/desktop-v0.2.2",
+  "sha256": "84d229504c46b6b50270aa331d4897a6a6fe56050c2dcb64798c2cbb07f9f55f",
+  "web_commit": "cca289fef7e26c0770b68e5e8f0f966ba3f09964",
+  "published_at": "2026-10-20T12:07:28.2347260Z"
 }
