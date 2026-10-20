@@ -3,14 +3,8 @@ name: SAINS PD desktop pilot update
 on:
   push:
     branches: [main]
-    paths:
-      - '.github/workflows/desktop-release.yml'
-      - 'desktop/**'
-      - 'index.html'
-      - 'dashboard.html'
-      - '*.mjs'
-      - '*.csv'
-      - 'map polygon/**'
+    paths-ignore:
+      - 'desktop-update.json'
   workflow_dispatch:
 
 permissions:
