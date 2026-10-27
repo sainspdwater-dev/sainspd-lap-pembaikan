@@ -25,6 +25,7 @@
         }
     </script>
 
+    <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.1/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.1/examples/jsm/"}}</script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css" />
@@ -390,6 +391,10 @@
                 <div class="p-4 bg-slate-100 dark:bg-gray-800 flex justify-between items-center border-b border-slate-200 dark:border-gray-700">
                     <h3 class="font-semibold flex items-center gap-2 text-slate-800 dark:text-white"><i class="fa-solid fa-map-location-dot text-blue-500"></i>Peta Lokasi & Sempadan DMZ</h3>
                     <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-1" aria-label="Paparan peta Dashboard">
+                            <button type="button" data-dashboard-map="leaflet" aria-pressed="true" class="text-xs border border-blue-500 rounded px-2 py-1">Leaflet 2D</button>
+                            <button type="button" data-dashboard-map="cesium" aria-pressed="false" class="text-xs border border-blue-500 rounded px-2 py-1">Cesium 3D</button>
+                        </div>
                         <button id="btn-pipe-map" type="button" class="hidden text-sm bg-cyan-700 hover:bg-cyan-600 px-3 py-1 rounded text-white transition" title="Jajaran paip D1, admin sahaja"><i class="fa-solid fa-route"></i> Jajaran Paip</button>
                         <button id="btn-toggle-map" type="button" aria-pressed="false" class="text-sm bg-blue-600 hover:bg-blue-500 px-3 py-1 rounded text-white transition"><i class="fa-solid fa-fire"></i> Tunjuk Heatmap</button>
                     </div>
@@ -399,7 +404,9 @@
                     <span id="heatmap-count" role="status" aria-live="polite" class="text-xs text-slate-600 dark:text-gray-300"></span>
                     <span class="text-xs text-slate-500 dark:text-gray-400">Biru = kurang, merah = lebih banyak kes berdekatan.</span>
                 </div>
+                <div id="dashboard-map-mode-status" class="hidden px-4 py-1 text-xs text-slate-600 dark:text-slate-300" role="status"></div>
                 <div id="map" class="w-full h-[500px] min-h-[500px]"></div>
+                <div id="dashboard-cesium-map" class="hidden w-full h-[500px] min-h-[500px]"></div>
             </section>
 
             <section class="dashboard-card p-4 overflow-x-auto">
@@ -607,6 +614,21 @@
                 <div class="w-full lg:w-3/5 flex flex-col border-r border-slate-200 dark:border-gray-700 min-h-[1000px] lg:min-h-0 lg:h-full bg-slate-50 dark:bg-gray-900 overflow-hidden lg:overflow-y-auto lg:overscroll-contain">
                     
                     <div class="p-3 bg-slate-100 dark:bg-gray-800 border-b border-slate-200 dark:border-gray-700 flex flex-col gap-2 shrink-0">
+                        <section id="astra3-command-center" class="rounded-2xl border border-cyan-300 bg-white p-4 text-sm shadow-md dark:border-cyan-800 dark:bg-gray-800" aria-label="ASTRA 3 Autonomous Hydraulic Command Center">
+                            <div class="flex flex-wrap items-start justify-between gap-2">
+                                <div><p class="text-[11px] font-bold uppercase tracking-widest text-cyan-700 dark:text-cyan-300">ASTRA 3.0 · TEST setempat</p><h3 class="text-lg font-bold text-slate-900 dark:text-white">Pusat Arahan Hidraulik</h3><p class="text-xs text-slate-600 dark:text-gray-300">Tanya dalam bahasa biasa. ASTRA mencari bukti, mengira yang boleh dikira dan menerangkan perkara yang masih tidak dapat dipastikan.</p></div>
+                                <span class="rounded-full bg-amber-100 px-2 py-1 text-[11px] font-bold text-amber-900">SAINS operasi: simulasi dikunci</span>
+                            </div>
+                            <label class="mt-3 block font-semibold text-slate-800 dark:text-white" for="astra-command-input">Apa yang hendak dianalisis?</label>
+                            <textarea id="astra-command-input" class="form-input mt-1 w-full rounded-xl text-sm" rows="3" maxlength="2000" placeholder="ASTRA, analisis 900mm Sirusa 5. Flow 1500m3/h, tekanan 3bar. Cari data sendiri, kira hidraulik dan semak baki kapasiti."></textarea>
+                            <div class="mt-2 flex flex-wrap gap-2 text-xs" aria-label="Contoh soalan ASTRA"><button type="button" data-astra3-example="synthetic" class="rounded-full border border-cyan-500 px-3 py-1 text-cyan-800 dark:text-cyan-200">Contoh TEST 900mm</button><button type="button" data-astra3-example="incomplete" class="rounded-full border border-cyan-500 px-3 py-1 text-cyan-800 dark:text-cyan-200">Contoh data tidak lengkap</button></div>
+                            <div class="mt-2 flex flex-wrap gap-2"><button id="astra-command-run" type="button" class="rounded-lg bg-cyan-700 px-4 py-2 font-bold text-white disabled:opacity-50">Siasat secara automatik</button><button id="astra-command-upload" type="button" class="rounded-lg border border-cyan-700 px-3 py-2">Muat naik bacaan</button><button id="astra-command-advanced" type="button" class="rounded-lg border border-cyan-700 px-3 py-2">Alat jurutera</button></div>
+                            <div id="astra-command-status" class="mt-3 whitespace-pre-line rounded-lg bg-slate-100 p-2 text-xs text-slate-700 dark:bg-gray-900 dark:text-gray-200" role="status" aria-live="polite">Belum dijalankan. Hasil TEST akan dipisahkan kepada fakta, kiraan, andaian dan perkara tidak tersedia.</div>
+                            <div id="astra3-results" class="mt-3 grid gap-2" aria-live="polite"></div>
+                            <details id="astra3-evidence" class="mt-3 rounded-lg border border-slate-200 p-2 text-xs dark:border-gray-600"><summary class="cursor-pointer font-semibold">Langkah alat, bukti &amp; had analisis</summary><div id="astra3-evidence-body" class="mt-2 whitespace-pre-line"></div></details>
+                            <div class="mt-2 flex flex-wrap items-center gap-2 text-xs"><label for="astra3-run-id" class="font-semibold">Siasatan terdahulu</label><input id="astra3-run-id" class="form-input min-w-40 flex-1 text-xs" placeholder="Run ID TEST setempat" aria-label="ASTRA 3 Run ID"><button id="astra3-retrieve" type="button" class="rounded border border-cyan-700 px-2 py-1">Ambil semula</button></div>
+                        </section>
+                        <details id="astra-legacy-prompt-panel" class="rounded border border-slate-200 bg-white p-2 text-xs dark:bg-gray-800"><summary class="cursor-pointer font-semibold text-slate-700 dark:text-gray-200">Analisis operasi &amp; prompt lama</summary>
                         <div id="ai-prompt-chips" class="flex flex-wrap gap-1">
                             <button onclick="setAiPrompt('Analisis kes bulanan mengikut kategori', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-chart-column text-purple-500 mr-1"></i> Analisis Bulanan</button>
                             <button onclick="setAiPrompt('Prestasi kontraktor paling tinggi', this)" class="ai-chip whitespace-nowrap px-2.5 py-1 bg-white dark:bg-gray-700 border border-slate-300 dark:border-gray-600 rounded-full text-[11px] font-semibold text-slate-700 dark:text-gray-200 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition shadow-sm"><i class="fa-solid fa-hard-hat text-amber-500 mr-1"></i> Prestasi Kontraktor</button>
@@ -629,6 +651,104 @@
                                 <button type="button" id="ai-prompt-guide-map" class="px-2 py-1 rounded border border-violet-500">Lihat isu pada peta</button>
                             </div>
                         </section>
+                        </details>
+                        <details id="astra-field-panel" class="rounded border border-cyan-300 bg-white p-3 text-xs dark:bg-gray-800" aria-label="ASTRA Import Data Lapangan dan pengiraan asas">
+                            <summary class="cursor-pointer font-bold text-cyan-800 dark:text-cyan-300">ASTRA — Import Data Lapangan &amp; Kira Asas (tanpa simulasi SAINS)</summary>
+                            <button id="astra-command-legacy" type="button" class="mt-2 rounded border border-cyan-700 px-2 py-1">Penghala TEST lama (lanjutan)</button>
+                            <p class="mt-2 text-amber-800 dark:text-amber-300">Bacaan yang diimport kekal DRAFT dan belum dipadankan kepada paip/nod. Pengiraan asas bukan reserve margin, kalibrasi atau bukti kebocoran.</p>
+                            <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <label>Diameter paip (mm)<input id="astra-calc-diameter" type="number" min="0" step="any" class="form-input text-xs" placeholder="Contoh 900"></label>
+                                <label>Aliran<input id="astra-calc-flow" type="number" min="0" step="any" class="form-input text-xs" placeholder="Contoh 1500"></label>
+                                <label>Unit aliran<select id="astra-calc-flow-unit" class="form-input text-xs"><option value="m3/h">m³/h</option><option value="m3/day">m³/day</option><option value="L/s">L/s</option><option value="MLD">MLD</option></select></label>
+                                <label>Tekanan gauge<input id="astra-calc-pressure" type="number" min="0" step="any" class="form-input text-xs" placeholder="Contoh 3"></label>
+                                <label>Unit tekanan<select id="astra-calc-pressure-unit" class="form-input text-xs"><option value="bar">bar</option><option value="kPa">kPa</option><option value="psi">psi</option><option value="mH2O">mH2O</option></select></label>
+                                <label class="flex items-center gap-2"><input id="astra-calc-internal-verified" type="checkbox">Diameter dalaman telah disahkan</label>
+                            </div>
+                            <div class="mt-2 flex flex-wrap gap-2"><button id="astra-calc-from-command" type="button" class="rounded border border-cyan-700 px-2 py-1">Ambil nilai jelas daripada arahan AI</button><button id="astra-calc-run" type="button" class="rounded bg-cyan-700 px-2 py-1 text-white">Kira parameter asas</button></div>
+                            <div id="astra-calc-result" class="mt-2 whitespace-pre-line rounded bg-cyan-50 p-2 dark:bg-gray-900" role="status" aria-live="polite">Masukkan diameter, aliran dan tekanan gauge sebenar. Jika diameter hanya nominal, sistem akan label sebagai andaian.</div>
+                            <div class="mt-2 flex flex-wrap items-end gap-2"><label class="flex-1 min-w-40">Pipe ID atau kawasan untuk carian D1<input id="astra-asset-query" class="form-input text-xs" placeholder="Contoh: Sirusa 5 atau Pipe ID sebenar"></label><button id="astra-asset-search" type="button" class="rounded border border-cyan-700 px-2 py-1">Cari aset &amp; bacaan berkait</button></div>
+                            <div id="astra-asset-result" class="mt-1 whitespace-pre-line" role="status" aria-live="polite">Carian ini hanya menampilkan calon aset dan sejarah bacaan yang disemak; bukan tekanan simulasi.</div>
+                            <section id="astra-model-panel" class="mt-3 rounded border border-violet-300 bg-violet-50 p-3 dark:bg-gray-900" aria-label="Autonomous Model Preparation">
+                                <h4 class="font-bold text-violet-800 dark:text-violet-300">Autonomous Model Preparation — DRAFT / TEST sahaja</h4>
+                                <p class="mt-1">ASTRA cari aset dan hubungan nod yang sudah direkod, kemudian terangkan data yang belum diluluskan. Tiada simulasi SAINS dijalankan.</p>
+                                <div class="mt-2 flex flex-wrap items-end gap-2">
+                                    <label class="flex-1 min-w-40">Pipe ID tepat atau kawasan<input id="astra-model-query" class="form-input text-xs" placeholder="Contoh: SYNTH-S5-900 atau Sirusa 5"></label>
+                                    <button id="astra-model-prepare" type="button" class="rounded bg-violet-700 px-3 py-2 text-white">Sediakan Model Automatik</button>
+                                </div>
+                                <div id="astra-model-status" class="mt-2 whitespace-pre-line rounded bg-white p-2 dark:bg-gray-800" role="status" aria-live="polite">Belum disediakan. Masukkan Pipe ID/kawasan atau ambil nilai daripada arahan AI di atas.</div>
+                                <div id="astra-model-summary" class="mt-2 whitespace-pre-line"></div>
+                                <details class="mt-2 rounded border p-2"><summary class="cursor-pointer font-semibold">Bukti parameter &amp; diagnostik rangkaian (jurutera)</summary><div id="astra-model-evidence" class="mt-2 max-h-72 overflow-auto whitespace-pre-line">Tiada laporan.</div></details>
+                                <div class="mt-2 flex flex-wrap items-end gap-2"><label class="flex-1 min-w-40">Preparation ID<input id="astra-model-id" class="form-input text-xs" placeholder="Tampal ID selepas refresh"></label><button id="astra-model-retrieve" type="button" class="rounded border border-violet-700 px-2 py-1">Ambil semula laporan</button><button id="astra-model-export" type="button" class="rounded border border-violet-700 px-2 py-1" disabled>Muat turun calon TEST JSON</button></div>
+                            </section>
+                            <section id="astra-calibration-panel" class="mt-3 rounded border border-amber-400 bg-amber-50 p-3 dark:bg-gray-900" aria-label="Hydraulic Calibration Intelligence">
+                                <h4 class="font-bold text-amber-900 dark:text-amber-300">Hydraulic Calibration Intelligence — TEST setempat sahaja</h4>
+                                <p class="mt-1">Bandingkan bacaan tekanan D1 yang dipadankan dan disemak dengan keputusan EPANET. Model SAINS sebenar tidak dikalibrasi.</p>
+                                <div class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                    <label>Condition ID sintetik<input id="astra-cal-condition" class="form-input text-xs" placeholder="TEST-PH6-CONDITION"></label>
+                                    <label>Link TEST untuk kepekaan (pilihan)<input id="astra-cal-pipe" class="form-input text-xs" placeholder="Contoh: TEST-S5-L900"></label>
+                                    <label>Observation ID holdout (pilihan)<input id="astra-cal-holdout" class="form-input text-xs" placeholder="Pisahkan dengan koma"></label>
+                                </div>
+                                <div class="mt-2 flex flex-wrap gap-2"><button id="astra-cal-run" type="button" class="rounded bg-amber-700 px-3 py-2 text-white">Semak kalibrasi TEST</button><button id="astra-cal-retrieve" type="button" class="rounded border border-amber-700 px-2 py-1">Ambil semula laporan</button><button id="astra-cal-download" type="button" class="rounded border border-amber-700 px-2 py-1" disabled>Muat turun laporan BM</button></div>
+                                <label class="mt-2 block">Calibration Run ID<input id="astra-cal-id" class="form-input text-xs" placeholder="Tampal ID selepas refresh"></label>
+                                <div id="astra-cal-status" class="mt-2 rounded bg-white p-2 dark:bg-gray-800" role="status" aria-live="polite">Sediakan model TEST dan condition sintetik dahulu. Bacaan berlainan masa tidak digabung.</div>
+                                <div id="astra-cal-summary" class="mt-2 whitespace-pre-line"></div>
+                                <div id="astra-cal-chart" class="mt-2 overflow-x-auto" aria-label="Carta tekanan diperhati dan disimulasi TEST"></div>
+                                <details class="mt-2 rounded border p-2"><summary class="cursor-pointer font-semibold">Bacaan, diagnostik &amp; kepekaan (jurutera)</summary><div id="astra-cal-evidence" class="mt-2 max-h-72 overflow-auto whitespace-pre-line">Tiada laporan.</div></details>
+                            </section>
+                            <section id="astra-reserve-panel" class="mt-3 rounded border border-blue-300 bg-blue-50 p-3 dark:bg-gray-900" aria-label="Reserve Margin TEST">
+                                <h4 class="font-bold text-blue-900 dark:text-blue-300">Reserve Margin — rangkaian TEST sahaja</h4>
+                                <p>Had tekanan, halaju, lokasi demand dan julat carian mesti wujud dalam condition sintetik bersumber. Diameter dan tekanan purata sahaja tidak menentukan kapasiti.</p>
+                                <div class="mt-2 flex flex-wrap items-end gap-2"><label class="flex-1 min-w-40">Condition ID kapasiti TEST<input id="astra-reserve-condition" class="form-input text-xs" placeholder="TEST-PH7-CONDITION"></label><button id="astra-reserve-run" type="button" class="rounded bg-blue-700 px-3 py-2 text-white">Kira kapasiti TEST</button></div>
+                                <div id="astra-reserve-result" class="mt-2 whitespace-pre-line" role="status" aria-live="polite">Belum dijalankan.</div>
+                                <div class="mt-2 flex gap-2"><input id="astra-reserve-id" class="form-input flex-1 text-xs" placeholder="Run ID untuk ambil semula selepas refresh" aria-label="Reserve Run ID"><button id="astra-reserve-retrieve" type="button" class="rounded border border-blue-700 px-2 py-1">Ambil semula</button></div>
+                                <div id="astra-reserve-chart" class="mt-2 overflow-x-auto" aria-label="Carta senario tekanan minimum TEST"></div>
+                            </section>
+                            <section id="astra-leak-panel" class="mt-3 rounded border border-rose-300 bg-rose-50 p-3 dark:bg-gray-900" aria-label="Leak Intelligence TEST">
+                                <h4 class="font-bold text-rose-900 dark:text-rose-300">Leak Intelligence — siasatan TEST sahaja</h4>
+                                <p>Bandingkan calon emitter dengan bacaan tekanan sintetik yang telah dipadankan. Kedudukan teratas bukan pengesahan bocor.</p>
+                                <div class="mt-2 flex flex-wrap items-end gap-2"><label class="flex-1 min-w-40">Condition ID kebocoran TEST<input id="astra-leak-condition" class="form-input text-xs" placeholder="TEST-PH8-CONDITION"></label><button id="astra-leak-run" type="button" class="rounded bg-rose-700 px-3 py-2 text-white">Siasat calon TEST</button></div>
+                                <div id="astra-leak-result" class="mt-2 whitespace-pre-line" role="status" aria-live="polite">Belum dijalankan.</div>
+                                <div class="mt-2 flex gap-2"><input id="astra-leak-id" class="form-input flex-1 text-xs" placeholder="Run ID untuk ambil semula selepas refresh" aria-label="Leak Run ID"><button id="astra-leak-retrieve" type="button" class="rounded border border-rose-700 px-2 py-1">Ambil semula</button></div>
+                            </section>
+                            <div id="astra-field-drop" class="mt-4 rounded border-2 border-dashed border-cyan-400 p-3 text-center">Seret fail CSV / XLSX / JSON ke sini atau <label for="astra-field-file" class="cursor-pointer font-bold text-blue-700 underline">pilih fail</label><input id="astra-field-file" type="file" accept=".csv,.xlsx,.json" class="sr-only"></div>
+                            <p class="mt-1 text-slate-600 dark:text-gray-300">Maksimum 2 MiB dan 100 bacaan setiap fail. Koordinat mesti WGS84 (latitude, longitude). Tiada padanan paip automatik.</p>
+                            <div class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <label>Unit tekanan jika tiada kolum<select id="astra-field-pressure-unit" class="form-input text-xs"><option value="">Pilih unit</option><option value="bar">bar</option><option value="kPa">kPa</option><option value="psi">psi</option><option value="mH2O">mH2O</option></select></label>
+                                <label>Jenis tekanan<select id="astra-field-pressure-type" class="form-input text-xs"><option value="">Pilih jenis</option><option value="GAUGE">Gauge</option><option value="ABSOLUTE">Absolute</option><option value="PRESSURE_HEAD">Pressure head</option><option value="HYDRAULIC_HEAD">Hydraulic head</option></select></label>
+                                <label>Zon masa jika tarikh+masa berasingan<select id="astra-field-timezone" class="form-input text-xs"><option value="">Pilih jika berkenaan</option><option value="Asia/Kuala_Lumpur">Malaysia UTC+08:00</option></select></label>
+                            </div>
+                            <div id="astra-field-mapping" class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2" aria-label="Pemetaan kolum fail"></div>
+                            <button id="astra-field-preview" type="button" class="mt-2 rounded bg-blue-700 px-2 py-1 text-white">Pratonton bacaan fail</button>
+                            <details class="mt-3 rounded border p-2"><summary class="cursor-pointer font-semibold">Masukkan bacaan manual (boleh tambah beberapa titik)</summary>
+                                <div class="mt-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                    <label>Latitude<input id="astra-manual-lat" type="number" step="any" class="form-input text-xs"></label>
+                                    <label>Longitude<input id="astra-manual-lng" type="number" step="any" class="form-input text-xs"></label>
+                                    <label>Tekanan<input id="astra-manual-pressure" type="number" min="0" step="any" class="form-input text-xs"></label>
+                                    <label>Masa bacaan ISO dengan zon (pilihan)<input id="astra-manual-timestamp" type="text" class="form-input text-xs" placeholder="2026-09-28T09:30:00+08:00"></label>
+                                    <label>ID sensor (pilihan)<input id="astra-manual-sensor" class="form-input text-xs"></label>
+                                    <label>Lokasi (pilihan)<input id="astra-manual-site" class="form-input text-xs"></label>
+                                </div>
+                                <button id="astra-manual-map-pick" type="button" class="mt-2 mr-2 rounded border border-cyan-700 px-2 py-1 text-cyan-800">Ambil koordinat: klik peta</button>
+                                <button id="astra-manual-add" type="button" class="mt-2 rounded bg-slate-700 px-2 py-1 text-white">Tambah titik ke pratonton</button>
+                            </details>
+                            <div id="astra-field-status" class="mt-2 whitespace-pre-line" role="status" aria-live="polite">Belum ada bacaan. Import atau tambah titik manual dahulu.</div>
+                            <div id="astra-field-table" class="mt-2 max-h-56 overflow-auto"></div>
+                            <label class="mt-2 flex items-center gap-2"><input id="astra-field-confirm" type="checkbox"> Saya semak koordinat, jenis/unit tekanan dan sumber; simpan sebagai DRAFT sahaja.</label>
+                            <button id="astra-field-save" type="button" disabled class="mt-2 rounded bg-emerald-700 px-2 py-1 text-white disabled:opacity-40">Simpan set bacaan DRAFT ke D1</button>
+                            <div class="mt-3 rounded border border-cyan-200 p-2" aria-label="Padanan calon GIS ASTRA">
+                                <p class="font-semibold">Padanan calon paip/nod — semakan ADMIN</p>
+                                <p class="mt-1 text-amber-800">Simpan DRAFT dahulu. Jarak pada peta bukan bukti sambungan hidraulik; calon DRAFT atau berbeza DMA tidak boleh disahkan.</p>
+                                <div class="mt-2 flex flex-wrap gap-2 items-end">
+                                    <label class="flex-1 min-w-48">Dataset ID<input id="astra-match-dataset-id" class="form-input text-xs" placeholder="ID selepas simpan; boleh tampal semula selepas refresh"></label>
+                                    <button id="astra-match-load" type="button" class="rounded border border-cyan-700 px-2 py-1">Ambil semula DRAFT</button>
+                                    <label>Jejari (m)<input id="astra-match-radius" type="number" min="1" max="500" value="75" class="form-input text-xs w-20"></label>
+                                    <button id="astra-match-run" type="button" class="rounded bg-cyan-700 px-2 py-1 text-white">Cari calon GIS</button>
+                                </div>
+                                <div id="astra-match-status" class="mt-2" role="status" aria-live="polite">Belum ada padanan. Tiada model diubah.</div>
+                                <div class="mt-2 flex gap-2 items-end"><label class="flex-1">Run ID<input id="astra-match-run-id" class="form-input text-xs" placeholder="ID carian untuk semak semula sejarah"></label><button id="astra-match-load-run" type="button" class="rounded border border-cyan-700 px-2 py-1">Ambil semula calon</button></div>
+                                <div id="astra-match-results" class="mt-2 max-h-80 overflow-auto"></div>
+                            </div>
+                        </details>
 
                         <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 text-xs">
                             <div>
@@ -910,7 +1030,22 @@
                             <button type="button" onclick="searchLatLngOnMap()" class="px-2 py-0.5 bg-blue-600 hover:bg-blue-50 text-white rounded text-[11px] font-bold transition"><i class="fa-solid fa-magnifying-glass"></i></button>
                         </div>
                     </div>
+                    <div id="astra-map-selector" class="flex flex-wrap gap-1 px-2 py-1 bg-slate-50 dark:bg-gray-900" aria-label="Enjin peta ASTRA">
+                        <button type="button" data-astra-map="leaflet" aria-pressed="true" class="rounded border border-blue-600 px-2 py-1 text-[11px]">Leaflet 2D</button>
+                        <button type="button" data-astra-map="cesium" aria-pressed="false" class="rounded border border-blue-600 px-2 py-1 text-[11px]">Cesium 3D</button>
+                        <button type="button" data-astra-map="three" aria-pressed="false" class="rounded border border-blue-600 px-2 py-1 text-[11px]">Three.js Miniature</button>
+                        <span id="astra-map-status" class="text-[11px]" role="status">Leaflet aktif. 3D dimuatkan hanya apabila dipilih.</span>
+                    </div>
+                    <div id="astra-map-3d-tools" class="hidden flex flex-wrap items-center gap-2 px-2 py-1 text-[11px] bg-white dark:bg-gray-900">
+                        <label><input type="checkbox" data-astra-layer="polygons" checked> Sempadan DMA</label>
+                        <label><input type="checkbox" data-astra-layer="pipes" checked> Jajaran GIS</label>
+                        <label><input type="checkbox" data-astra-layer="points" checked> Titik analisis</label>
+                        <button id="astra-map-reset-camera" type="button" class="rounded border border-blue-600 px-2 py-0.5">Reset kamera</button>
+                        <span id="astra-map-inspector" role="status" class="font-semibold text-blue-800 dark:text-blue-200"></span>
+                    </div>
                     <div id="ai-agent-map" class="flex-1 w-full h-full min-h-[300px] z-10"></div>
+                    <div id="astra-cesium-map" class="hidden flex-1 w-full h-full min-h-[300px]"></div>
+                    <div id="astra-three-map" class="hidden flex-1 w-full h-full min-h-[300px]"></div>
                     <div id="ai-map-pipe-target" class="absolute left-3 top-16 z-[500] hidden max-w-[80%] rounded border-2 border-violet-700 bg-white/95 px-3 py-2 text-xs font-semibold text-violet-900 shadow dark:bg-slate-900/95 dark:text-violet-200" role="status" aria-live="polite"></div>
                     <div id="ai-risk-map-legend" class="absolute bottom-3 left-3 z-[500] hidden rounded-md border border-slate-200 bg-white/95 px-2 py-1.5 text-[10px] shadow dark:border-slate-600 dark:bg-slate-800/95"></div>
                 </div>
@@ -1153,11 +1288,22 @@
             }
         });
 
-        const WORKER_URL = 'https://laporanpembaikan.sainspdwater.workers.dev/';
+        const astraLocalApi = ['127.0.0.1', 'localhost'].includes(location.hostname)
+            ? new URLSearchParams(location.search).get('astraFieldApi') : null;
+        const WORKER_URL = astraLocalApi === 'http://127.0.0.1:8787/'
+            ? astraLocalApi : 'https://laporanpembaikan.sainspdwater.workers.dev/';
+        // ASTRA TEST endpoints are deliberately absent from the production Worker.
+        // Keep the established AI Agent controls accessible there, without dead TEST buttons.
+        if (WORKER_URL !== 'http://127.0.0.1:8787/') {
+            document.getElementById('astra3-command-center').classList.add('hidden');
+            document.getElementById('astra-field-panel').classList.add('hidden');
+            document.getElementById('astra-legacy-prompt-panel').open = true;
+        }
 
         let rawData = [], filteredData = [], dropdownOptions = {}, charts = {};
         let map, aiAgentMap, aiAgentClusterGroup = null, aiHeatLayer = null, aiRiskLayerGroup = null, markerClusterGroup, heatLayer = null, isHeatmapMode = false, dataTable, managementTable, currentMode = 'add';
         const pipeMapStates = {};
+        window.sainsPipeMapFeatures = {main:[],ai:[]};
         let aiTelemetryRows = [];
         let aiSpatialSummary = null;
         let croCurrentPage = 1;
@@ -1625,6 +1771,7 @@
                 }
             }
             updateDmaDatalistFromMap();
+            window.dispatchEvent(new Event('sains-gis-context-changed'));
         }
 
         function updateDmaDatalistFromMap() {
@@ -3687,6 +3834,7 @@
 
         function initMap() {
             map = L.map('map').setView([2.5225, 101.7946], 12);
+            window.sainsMainLeafletMap = map;
             if (!window.sainsDesktop || (navigator.onLine && localStorage.getItem('sainsDesktopOffline') !== 'true')) {
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
             }
@@ -3718,6 +3866,8 @@
                     refreshPipeMap(key);
                 } else {
                     leafletMap.removeLayer(state.group);
+                    window.sainsPipeMapFeatures[key] = [];
+                    window.dispatchEvent(new Event('sains-gis-context-changed'));
                     button.innerHTML = '<i class="fa-solid fa-route"></i> Jajaran Paip';
                 }
             });
@@ -3730,14 +3880,18 @@
             const requestId = ++state.requestId;
             const zone = key === 'ai' ? (document.getElementById('ai-filter-district')?.value || '').trim() : '';
             const bounds = state.map.getBounds();
-            const bbox = [bounds.getWest(), bounds.getSouth(), bounds.getEast(), bounds.getNorth()].join(',');
+            const west = Math.max(-180, bounds.getWest()), south = Math.max(-90, bounds.getSouth());
+            const east = Math.min(180, bounds.getEast()), north = Math.min(90, bounds.getNorth());
+            const bbox = west < east && south < north ? [west,south,east,north].join(',') : null;
             const token = localStorage.getItem('sainsToken');
             if (!token) return;
             state.button.textContent = 'Memuat paip…';
             state.group.clearLayers();
+            window.sainsPipeMapFeatures[key] = [];
             let offset = 0;
             let total = 0;
             try {
+                if (!zone && !bbox) throw new Error('Zum masuk untuk melihat jajaran paip.');
                 do {
                     const params = new URLSearchParams({ limit: '500', offset: String(offset) });
                     if (zone) params.set('zone', zone);
@@ -3749,6 +3903,7 @@
                     if (requestId !== state.requestId || !state.active) return;
                     if (!response.ok || payload.status !== 'success') throw new Error(payload.message || 'Gagal membaca jajaran paip');
                     const features = Array.isArray(payload.features) ? payload.features : [];
+                    window.sainsPipeMapFeatures[key].push(...features);
                     if (features.length) {
                         L.geoJSON({ type: 'FeatureCollection', features }, {
                             style: { color: '#0891b2', weight: 3, opacity: 0.85 },
@@ -3762,10 +3917,12 @@
                     offset = payload.nextOffset;
                 } while (offset !== null && offset !== undefined && total < 5000);
                 if (requestId === state.requestId) state.button.textContent = `Paip: ${total} garisan`;
+                window.dispatchEvent(new Event('sains-gis-context-changed'));
             } catch (error) {
                 if (requestId === state.requestId) {
                     state.button.textContent = 'Jajaran Paip (ralat)';
                     console.error('pipe_map_load_failed', error);
+                    window.dispatchEvent(new Event('sains-gis-context-changed'));
                 }
             }
         }
@@ -3915,7 +4072,24 @@
             toggle.setAttribute('aria-pressed', String(isHeatmapMode));
             toggle.innerHTML = `<i class="fa-solid fa-fire"></i> ${isHeatmapMode?'Tunjuk Penanda':'Tunjuk Heatmap'}`;
             if(zoomToCases) fitDashboardMapToFilteredCases();
+            window.dispatchEvent(new Event('sains-dashboard-map-changed'));
         }
+
+        window.sainsDashboardMapContext = () => ({
+            polygons: window.koleksiPoligonDMZ || [],
+            pipes: pipeMapStates.main?.active ? window.sainsPipeMapFeatures.main : [],
+            points: filteredData.map(row => {
+                const position = caseCoordinates(row);
+                if (!position) return null;
+                const category = String(row['KATEGORI'] || '').toUpperCase();
+                return {longitude:position[1],latitude:position[0],
+                    name:`Kes ${row['NO ADUAN'] || ''} • ${category || 'Kategori tidak dinyatakan'}`,
+                    color:category.includes('PECAH')?'#ef4444':category.includes('BOCOR')?'#eab308':'#10b981'};
+            }).filter(Boolean),
+            heatmap:isHeatmapMode,
+            center:map ? [map.getCenter().lng,map.getCenter().lat] : [101.7946,2.5225],
+            zoom:map?.getZoom() || 12
+        });
 
         function updateTable() {
             const tableData = filteredData.map(r => [
@@ -4396,5 +4570,13 @@
     <script src="ai-prompt-hydraulic-guide.mjs" type="module"></script>
     <script src="pipe-clip-ui.mjs?v=fd486b6" type="module"></script>
     <script src="ai-map-capture.mjs?v=map-points-2" type="module"></script>
+    <script src="astra-maps.mjs" type="module"></script>
+    <script src="dashboard-cesium.mjs" type="module"></script>
+    <script type="module">
+      if (['127.0.0.1','localhost'].includes(location.hostname) &&
+          new URLSearchParams(location.search).get('astraFieldApi') === 'http://127.0.0.1:8787/') {
+        import('./astra-field-ui.mjs');
+      }
+    </script>
 </body>
 </html>
