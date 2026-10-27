@@ -2,9 +2,17 @@
 // authoritative pipe_network_* tables or enables a hydraulic simulation.
 const actions=new Set(['beginPipeCandidateDraft','appendPipeCandidateParts',
   'finalizePipeCandidateDraft','getPipeCandidateDraft']);
-// This published DMA polygon has candidate lines but no line in the current
-// active import. It is valid for REVIEW_REQUIRED candidates only, never active GIS.
-const draftOnlyPolygonZones=new Set(['500mm Sunggala Boundry']);
+// Published polygon names are allowed for spatial display candidates even when
+// an older asset-matched import has no segment in that polygon. This does NOT
+// establish DMA asset ownership or hydraulic model readiness.
+const publishedPolygonZones=new Set([
+  '300mm Sirusa 3 Desa Permai','350mm Bukit Tunggal','375mm Sirusa 2 Pekan PD',
+  '375MM Sirusa 2 Pekan','375mm Sirusa 2 Sunggala','450mm Sirusa 3 Jalan Pantai',
+  '600mm Sirusa 4','900mm Sirusa 2','900mm Sirusa 5','200mm Kolam Linggi',
+  '250mm PRV Pengkalan Kempas','300mm Bukit Kuau Baru','300mm Bukit Kuau lama',
+  '300mm Telok Kemang Ke Pasir Panjang','300mm Telok Kemang Ke PD',
+  '500mm Sunggala Boundry','Seremban Barat'
+]);
 const reply=(body,headers,status=200)=>new Response(JSON.stringify(body),{status,
   headers:{...headers,'Content-Type':'application/json','Cache-Control':'no-store'}});
 const shaPattern=/^[a-f0-9]{64}$/i;
@@ -127,7 +135,7 @@ export async function handlePipeCandidateAction({action,data,env,user,headers}){
         fail('Setiap upload mesti mengandungi 1–100 bahagian.');
       const zonesResult=await env.DB.prepare(`SELECT DISTINCT z.zone_name FROM pipe_network_zone_lines z
         JOIN pipe_network_active a ON a.import_id=z.import_id AND a.singleton=1`).all();
-      const zones=new Set([...(zonesResult.results||[]).map(row=>row.zone_name),...draftOnlyPolygonZones]);
+      const zones=new Set([...(zonesResult.results||[]).map(row=>row.zone_name),...publishedPolygonZones]);
       if(!zones.size)fail('Tiada polygon/zon aktif D1 untuk padanan calon.',409);
       const rows=[];const seen=new Set();
       for(const input of data.parts){

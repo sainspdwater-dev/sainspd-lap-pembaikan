@@ -3,6 +3,7 @@ import { handlePhase2bAction } from './phase2b.js';
 import { handleHydraulicIntakeAction } from './hydraulic-intake.js';
 import { attachHydraulicPromptContext } from './hydraulic-prompt-context.js';
 import { handlePipeCandidateAction } from './pipe-candidate-intake.js';
+import { handlePipeMapAction, handlePipeMapRead } from './pipe-map-versions.js';
 import { handleStagingHydraulicAction, stagingEnabled } from './hydraulic-staging.js';
 
 const rateLimitMap = new Map();
@@ -684,6 +685,8 @@ export default { async scheduled(controller, env, ctx) { console.log(JSON.string
         });
       }
 
+      const pipeMapResponse = await handlePipeMapRead(request, env, decodedUser, securityHeaders);
+      if (pipeMapResponse) return pipeMapResponse;
       const pipeResponse = await handlePipeNetworkRequest(request, env, decodedUser, securityHeaders);
       if (pipeResponse) return pipeResponse;
 
@@ -787,6 +790,10 @@ export default { async scheduled(controller, env, ctx) { console.log(JSON.string
           action, data: reqData, env, user: decodedUser, headers: securityHeaders
         });
         if (pipeCandidateResponse) return pipeCandidateResponse;
+        const pipeMapActionResponse = await handlePipeMapAction({
+          action, data: reqData, env, user: decodedUser, headers: securityHeaders
+        });
+        if (pipeMapActionResponse) return pipeMapActionResponse;
         const phase2bResponse = await handlePhase2bAction({
           action, data: reqData, env, user: decodedUser, headers: securityHeaders
         });
