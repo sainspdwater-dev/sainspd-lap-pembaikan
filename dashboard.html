@@ -275,6 +275,9 @@
             <button id="nav-ai" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="AI Agent">
                 <i class="fa-solid fa-robot w-6 text-center text-purple-500"></i> <span class="sidebar-text ml-3 font-medium">AI Agent</span>
             </button>
+            <button id="nav-pipe-upload" class="hidden w-full items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="Jajaran Paip KML — ADMIN">
+                <i class="fa-solid fa-route w-6 text-center text-cyan-600"></i> <span class="sidebar-text ml-3 font-medium">Jajaran Paip KML</span>
+            </button>
             <button id="nav-kolam" class="w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white transition-colors" title="Automasi Kolam">
                 <i class="fa-solid fa-water-ladder w-6 text-center text-cyan-500"></i> <span class="sidebar-text ml-3 font-medium">Automasi Kolam</span>
             </button>
@@ -1068,6 +1071,32 @@
                     <div id="astra-three-map" class="hidden flex-1 w-full h-full min-h-[300px]"></div>
                     <div id="ai-map-pipe-target" class="absolute left-3 top-16 z-[500] hidden max-w-[80%] rounded border-2 border-violet-700 bg-white/95 px-3 py-2 text-xs font-semibold text-violet-900 shadow dark:bg-slate-900/95 dark:text-violet-200" role="status" aria-live="polite"></div>
                     <div id="ai-risk-map-legend" class="absolute bottom-3 left-3 z-[500] hidden rounded-md border border-slate-200 bg-white/95 px-2 py-1.5 text-[10px] shadow dark:border-slate-600 dark:bg-slate-800/95"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="pipe-upload-content" class="hidden pb-24" aria-label="Ganti jajaran paip daripada KML">
+            <header class="mb-4"><h2 class="text-2xl font-bold text-slate-900 dark:text-white"><i class="fa-solid fa-route text-cyan-600 mr-2"></i>Jajaran Paip KML</h2>
+                <p class="text-sm text-slate-600 dark:text-gray-300">Ganti garisan paip yang dipaparkan di peta untuk semua DMA. Polygon sempadan, daftar aset dan model hidraulik tidak diubah.</p></header>
+            <div class="dashboard-card p-4 md:p-6">
+                <p id="pipe-upload-active" class="rounded bg-slate-100 p-3 text-sm dark:bg-gray-800" role="status">Menyemak versi jajaran aktif…</p>
+                <div class="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    <section>
+                        <label for="pipe-upload-file" class="form-label">1. Pilih KML garisan paip baharu (seluruh kawasan)</label>
+                        <input id="pipe-upload-file" type="file" accept=".kml" class="form-input" aria-describedby="pipe-upload-explain">
+                        <p id="pipe-upload-explain" class="mt-1 text-xs text-slate-600 dark:text-gray-300">Fail mesti mengandungi LineString/MultiLineString WGS84. Fail polygon DMA tidak diterima. Fail asal kekal pada peranti anda; hanya garisan yang telah di-clip dihantar ke D1.</p>
+                        <button id="pipe-upload-preview" type="button" class="mt-3 rounded bg-blue-700 px-4 py-2 font-semibold text-white disabled:opacity-40">2. Pratonton &amp; clip semua DMA</button>
+                        <p id="pipe-upload-progress" class="mt-2 text-sm" role="status" aria-live="polite">Belum pilih fail.</p>
+                        <div id="pipe-upload-summary" class="mt-3 max-h-80 overflow-auto text-xs"></div>
+                        <div class="mt-4 rounded border border-amber-400 bg-amber-50 p-3 text-sm text-amber-900 dark:bg-gray-800 dark:text-amber-200">
+                            <p><b>3. Ganti selepas semak.</b> Ini menggantikan lapisan garisan aktif pada peta sahaja. Versi lama disimpan untuk pemulihan. Padanan DMA berdasarkan clip spatial belum membuktikan pemilikan paip atau kesediaan EPANET.</p>
+                            <label for="pipe-upload-confirm" class="mt-2 block font-semibold">Taip tepat GANTI JAJARAN:</label>
+                            <input id="pipe-upload-confirm" class="form-input mt-1" autocomplete="off" placeholder="GANTI JAJARAN">
+                            <button id="pipe-upload-replace" type="button" disabled class="mt-2 rounded bg-amber-700 px-4 py-2 font-bold text-white disabled:opacity-40">Sahkan &amp; ganti jajaran peta</button>
+                        </div>
+                        <p id="pipe-upload-result" class="mt-2 text-sm" role="status" aria-live="polite">Tiada data diubah.</p>
+                    </section>
+                    <section><h3 class="font-semibold">Pratonton pada peta</h3><p class="mb-2 text-xs text-slate-600 dark:text-gray-300">Klik “Lihat” pada baris DMA untuk memeriksa garisan yang telah di-clip.</p><div id="pipe-upload-map" class="h-[480px] rounded border border-slate-300"></div></section>
                 </div>
             </div>
         </div>
@@ -2920,7 +2949,12 @@
             const navCro = document.getElementById('nav-cro');
             const navDaily = document.getElementById('nav-daily');
             const navAi = document.getElementById('nav-ai');
+            const navPipeUpload = document.getElementById('nav-pipe-upload');
             const navKolam = document.getElementById('nav-kolam');
+            if (localStorage.getItem('sainsUserLevel') === 'ADMIN') {
+                navPipeUpload.classList.remove('hidden');
+                navPipeUpload.classList.add('flex');
+            }
 
             const hideAllTabs = () => {
                 document.getElementById('dashboard-content').style.display = 'none';
@@ -2928,11 +2962,13 @@
                 document.getElementById('cro-content').style.display = 'none';
                 document.getElementById('daily-content').style.display = 'none';
                 document.getElementById('ai-agent-content').style.display = 'none';
+                document.getElementById('pipe-upload-content').style.display = 'none';
                 document.getElementById('kolam-content').style.display = 'none';
                 
                 const inactiveClass = "w-full flex items-center p-3 hover:bg-slate-100 dark:hover:bg-gray-800 rounded-lg text-slate-600 dark:text-gray-400 transition-colors";
                 navD.className = inactiveClass; navU.className = inactiveClass; navCro.className = inactiveClass; navDaily.className = inactiveClass; 
                 if(navAi) navAi.className = inactiveClass;
+                if(navPipeUpload && localStorage.getItem('sainsUserLevel') === 'ADMIN') navPipeUpload.className = inactiveClass;
                 if(navKolam) navKolam.className = inactiveClass;
             };
 
@@ -2974,6 +3010,14 @@
                     else setTimeout(() => aiAgentMap.invalidateSize(), 300);
                 });
             }
+
+            navPipeUpload.addEventListener('click', () => {
+                if (localStorage.getItem('sainsUserLevel') !== 'ADMIN') return;
+                hideAllTabs();
+                document.getElementById('pipe-upload-content').style.display = 'block';
+                navPipeUpload.className = 'w-full flex items-center p-3 bg-blue-600 rounded-lg text-white transition-colors';
+                window.dispatchEvent(new Event('sains-pipe-upload-open'));
+            });
 
             if(navKolam) {
                 navKolam.addEventListener('click', () => {
@@ -3237,7 +3281,7 @@
                     attribution: '&copy; OpenStreetMap'
                 }).addTo(aiAgentMap);
             }
-            
+
             aiAgentClusterGroup = L.markerClusterGroup();
             aiAgentMap.addLayer(aiAgentClusterGroup);
             aiRiskLayerGroup = L.layerGroup().addTo(aiAgentMap);
@@ -3915,7 +3959,8 @@
                             style: { color: '#0891b2', weight: 3, opacity: 0.85 },
                             onEachFeature: (feature, layer) => {
                                 const p = feature.properties || {};
-                                layer.bindPopup(`<b>Paip ${escapeHTML(p.asset_num || 'ID tidak dinyatakan')}</b><br>${escapeHTML(p.material || 'Bahan tidak dinyatakan')} · ${escapeHTML(String(p.size_mm ?? '-'))} mm<br>${escapeHTML(String(Math.round(p.length_m || 0)))} m${p.dma ? `<br>${escapeHTML(p.dma)}` : ''}`);
+                                const draftNote = p.source === 'KML_SPATIAL_ONLY' ? '<br><b>Clip KML untuk paparan sahaja · belum disahkan untuk model</b>' : '';
+                                layer.bindPopup(`<b>Paip ${escapeHTML(p.asset_num || 'ID tidak dinyatakan')}</b><br>${escapeHTML(p.material || 'Bahan tidak dinyatakan')} · ${escapeHTML(String(p.size_mm ?? '-'))} mm<br>${escapeHTML(String(Math.round(p.length_m || 0)))} m${p.dma ? `<br>${escapeHTML(p.dma)}` : ''}${draftNote}`);
                             }
                         }).addTo(state.group);
                     }
@@ -4018,6 +4063,9 @@
             return Number.isFinite(lat) && Number.isFinite(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180
                 ? [lat, lng] : null;
         }
+        window.addEventListener('sains-pipe-map-replaced', () => {
+            Object.keys(pipeMapStates).forEach(refreshPipeMap);
+        });
 
         function fitDashboardMapToFilteredCases() {
             const points = filteredData.map(caseCoordinates).filter(Boolean);
@@ -4575,6 +4623,7 @@
     <script src="engineering-intake.mjs?v=field-safety-2" type="module"></script>
     <script src="ai-prompt-hydraulic-guide.mjs" type="module"></script>
     <script src="pipe-clip-ui.mjs?v=fd486b6" type="module"></script>
+    <script src="pipe-map-upload.mjs?v=pipe-map-1" type="module"></script>
     <script src="ai-map-capture.mjs?v=map-points-2" type="module"></script>
     <script src="astra-maps.mjs" type="module"></script>
     <script src="dashboard-cesium.mjs" type="module"></script>
