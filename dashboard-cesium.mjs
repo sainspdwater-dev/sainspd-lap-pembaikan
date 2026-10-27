@@ -1,9 +1,11 @@
 import {loadCesium,createGisViewer,addGisContext} from './gis-cesium.mjs';
+import {bindBuildingTiles} from './cesium-tiles.mjs';
 
 const leaflet=document.getElementById('map');
 const target=document.getElementById('dashboard-cesium-map');
 const message=document.getElementById('dashboard-map-mode-status');
-let viewer=null,mode='leaflet';
+const tilesControls=document.getElementById('dashboard-cesium-tiles-controls');
+let viewer=null,tilesController=null,mode='leaflet';
 
 function setMessage(text){message.textContent=text;message.classList.toggle('hidden',!text);}
 function sync(){
@@ -23,24 +25,30 @@ async function switchMode(next){
   if(next==='cesium'){
     if(!window.WebGL2RenderingContext){setMessage('WebGL2 tidak tersedia; Leaflet 2D kekal aktif.');return;}
     target.classList.remove('hidden');leaflet.classList.add('hidden');
+    tilesControls.classList.remove('hidden');
     try{
       const C=await loadCesium();
       if(!viewer){
         viewer=createGisViewer(C,target);
+        tilesController=bindBuildingTiles(C,viewer,tilesControls);
         viewer.imageryLayers.get(0)?.imageryProvider?.errorEvent?.addEventListener(()=>
           setMessage('Imej OSM gagal dimuat. Pilih Leaflet 2D untuk peta operasi; titik dan sempadan GIS tidak diubah.'));
       }
       mode='cesium';sync();
     }catch(error){
       target.classList.add('hidden');leaflet.classList.remove('hidden');
+      tilesControls.classList.add('hidden');
       setMessage(`${error.message} Leaflet 2D kekal aktif.`);
+      tilesController?.destroy();tilesController=null;
       if(viewer&&!viewer.isDestroyed())viewer.destroy();viewer=null;
       window.sainsMainLeafletMap?.invalidateSize();
       return;
     }
   }else{
     target.classList.add('hidden');leaflet.classList.remove('hidden');
+    tilesControls.classList.add('hidden');
     mode='leaflet';
+    tilesController?.destroy();tilesController=null;
     if(viewer&&!viewer.isDestroyed())viewer.destroy();viewer=null;
     window.sainsMainLeafletMap?.invalidateSize();
     setMessage('');

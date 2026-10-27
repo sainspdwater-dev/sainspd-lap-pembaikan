@@ -405,6 +405,17 @@
                     <span class="text-xs text-slate-500 dark:text-gray-400">Biru = kurang, merah = lebih banyak kes berdekatan.</span>
                 </div>
                 <div id="dashboard-map-mode-status" class="hidden px-4 py-1 text-xs text-slate-600 dark:text-slate-300" role="status"></div>
+                <div id="dashboard-cesium-tiles-controls" class="hidden px-4 py-2 border-y border-blue-200 bg-blue-50 text-xs dark:bg-gray-900 dark:text-white" aria-label="Gaya bangunan Cesium 3D Tiles">
+                    <div class="flex flex-wrap items-end gap-2">
+                        <label class="min-w-48">Gaya 3D Tiles<br><select data-tiles-style class="filter-select w-full rounded px-2 py-1" aria-label="Pilih warna atau highlight bangunan 3D">
+                            <option value="original">Warna asal</option><option value="blue">Warna biru</option><option value="green">Warna hijau</option><option value="orange">Warna jingga</option><option value="material">Warna ikut bahan bangunan</option><option value="residential">Highlight kediaman</option><option value="office">Highlight pejabat/komersial</option>
+                        </select></label>
+                        <label class="min-w-52">Cesium ion token (baca sahaja)<br><input data-tiles-token type="password" autocomplete="off" class="form-input w-full py-1" placeholder="Token OSM Buildings 3D Tiles"></label>
+                        <button data-tiles-load type="button" class="rounded bg-blue-700 px-3 py-2 font-semibold text-white">Muat bangunan 3D Tiles</button>
+                    </div>
+                    <p data-tiles-status role="status" aria-live="polite" class="mt-1">Perlukan token Cesium ion terhad kepada OSM Buildings; token tidak disimpan oleh aplikasi. Jajaran paip GIS kekal berasingan daripada model hidraulik.</p>
+                    <p class="mt-1">Belum ada token? <a href="https://ion.cesium.com/tokens" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline">Cipta di Cesium ion</a> dengan <code>assets:read</code>, asset <code>96188</code> dan URL aplikasi ini sahaja.</p>
+                </div>
                 <div id="map" class="w-full h-[500px] min-h-[500px]"></div>
                 <div id="dashboard-cesium-map" class="hidden w-full h-[500px] min-h-[500px]"></div>
             </section>
@@ -1042,6 +1053,15 @@
                         <label><input type="checkbox" data-astra-layer="points" checked> Titik analisis</label>
                         <button id="astra-map-reset-camera" type="button" class="rounded border border-blue-600 px-2 py-0.5">Reset kamera</button>
                         <span id="astra-map-inspector" role="status" class="font-semibold text-blue-800 dark:text-blue-200"></span>
+                    </div>
+                    <div id="astra-cesium-tiles-controls" class="hidden px-2 py-2 border-y border-blue-200 bg-blue-50 text-[11px] dark:bg-gray-900 dark:text-white" aria-label="Gaya bangunan Cesium 3D Tiles">
+                        <div class="flex flex-wrap items-end gap-2">
+                            <label>Gaya 3D Tiles<br><select data-tiles-style class="filter-select rounded px-2 py-1" aria-label="Pilih warna atau highlight bangunan 3D"><option value="original">Warna asal</option><option value="blue">Warna biru</option><option value="green">Warna hijau</option><option value="orange">Warna jingga</option><option value="material">Warna ikut bahan bangunan</option><option value="residential">Highlight kediaman</option><option value="office">Highlight pejabat/komersial</option></select></label>
+                            <label>Cesium ion token (baca sahaja)<br><input data-tiles-token type="password" autocomplete="off" class="form-input py-1" placeholder="Token OSM Buildings 3D Tiles"></label>
+                            <button data-tiles-load type="button" class="rounded bg-blue-700 px-2 py-1 font-semibold text-white">Muat bangunan 3D Tiles</button>
+                        </div>
+                        <p data-tiles-status role="status" aria-live="polite" class="mt-1">Perlukan token Cesium ion terhad kepada OSM Buildings; token tidak disimpan oleh aplikasi. Bangunan OSM bukan aras atau kedalaman paip SAINS.</p>
+                        <p class="mt-1">Belum ada token? <a href="https://ion.cesium.com/tokens" target="_blank" rel="noopener noreferrer" class="text-blue-700 underline">Cipta di Cesium ion</a> dengan <code>assets:read</code>, asset <code>96188</code> dan URL aplikasi ini sahaja.</p>
                     </div>
                     <div id="ai-agent-map" class="flex-1 w-full h-full min-h-[300px] z-10"></div>
                     <div id="astra-cesium-map" class="hidden flex-1 w-full h-full min-h-[300px]"></div>
@@ -1944,10 +1964,10 @@
         function initSessionTimeouts() {
             const now = Date.now();
             let sessionStart = localStorage.getItem('sainsSessionStart');
-            let lastActivity = localStorage.getItem('sainsLastActivity');
 
             if (!sessionStart) { localStorage.setItem('sainsSessionStart', now); sessionStart = now; }
-            if (!lastActivity) { localStorage.setItem('sainsLastActivity', now); lastActivity = now; }
+            // Legacy 2-hour idle expiry is retired. Only the 8-hour absolute limit applies.
+            localStorage.removeItem('sainsLastActivity');
 
             const absoluteLimit = 8 * 60 * 60 * 1000;
             if (now - parseInt(sessionStart) > absoluteLimit) {
@@ -1955,26 +1975,12 @@
                 return;
             }
 
-            const idleLimit = 2 * 60 * 60 * 1000;
-            if (now - parseInt(lastActivity) > idleLimit) {
-                safeLogout("Sesi anda ditamatkan kerana terbiar (idle) melebihi 2 jam.");
-                return;
-            }
-
-            const resetIdle = () => { localStorage.setItem('sainsLastActivity', Date.now()); };
-            ['mousemove', 'mousedown', 'keypress', 'touchstart', 'scroll'].forEach(evt => {
-                window.addEventListener(evt, resetIdle, { passive: true });
-            });
-
             setInterval(() => {
                 const currentTime = Date.now();
                 const start = parseInt(localStorage.getItem('sainsSessionStart') || currentTime);
-                const active = parseInt(localStorage.getItem('sainsLastActivity') || currentTime);
 
                 if (currentTime - start > absoluteLimit) {
                     safeLogout("Sesi anda telah tamat selepas 8 jam.");
-                } else if (currentTime - active > idleLimit) {
-                    safeLogout("Sesi anda ditamatkan kerana terbiar (idle) melebihi 2 jam.");
                 }
             }, 30000);
         }

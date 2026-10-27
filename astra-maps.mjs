@@ -1,11 +1,12 @@
 import {localMetres,lineCoordinates,makeAstraMapState} from './astra-map-core.mjs';
 import {featureLines,extentOfLines} from './gis-view-core.mjs';
 import {loadCesium,createGisViewer,addGisContext,flyToGis} from './gis-cesium.mjs';
+import {bindBuildingTiles} from './cesium-tiles.mjs';
 
 // Only the AI Agent owns this map switcher. No operational SAINS map is replaced.
 export const astraMapState=makeAstraMapState();
 const byId=id=>document.getElementById(id);
-let cesiumViewer=null,threeView=null;
+let cesiumViewer=null,cesiumTilesController=null,threeView=null;
 function status(message){byId('astra-map-status').textContent=message;}
 function centre(){
   const coords=lineCoordinates(astraMapState.pipeGeometry).flat();
@@ -16,7 +17,10 @@ function centre(){
   return [101.7946,2.5225];
 }
 function validPoint(lon,lat){return Number.isFinite(lon)&&Number.isFinite(lat)&&Math.abs(lon)<=180&&Math.abs(lat)<=90;}
-function destroyCesium(){if(cesiumViewer&&!cesiumViewer.isDestroyed())cesiumViewer.destroy();cesiumViewer=null;}
+function destroyCesium(){
+  cesiumTilesController?.destroy();cesiumTilesController=null;
+  if(cesiumViewer&&!cesiumViewer.isDestroyed())cesiumViewer.destroy();cesiumViewer=null;
+}
 function destroyThree(){
   if(!threeView)return;
   cancelAnimationFrame(threeView.frame);
@@ -71,6 +75,7 @@ async function showCesium(){
   const target=byId('astra-cesium-map');
   if(!cesiumViewer){
     cesiumViewer=createGisViewer(C,target);
+    cesiumTilesController=bindBuildingTiles(C,cesiumViewer,byId('astra-cesium-tiles-controls'));
     cesiumViewer.imageryLayers.get(0)?.imageryProvider?.errorEvent?.addEventListener(()=>
       status('Imej OSM gagal dimuat. Pilih Leaflet 2D; sempadan/jajaran masih data GIS tanpa terrain sebenar.'));
     const handler=new C.ScreenSpaceEventHandler(cesiumViewer.scene.canvas);
@@ -174,6 +179,7 @@ async function switchEngine(engine){
   for(const [mode,id] of [['leaflet','ai-agent-map'],['cesium','astra-cesium-map'],['three','astra-three-map']])
     byId(id).classList.toggle('hidden',mode!==engine);
   byId('astra-map-3d-tools').classList.toggle('hidden',engine==='leaflet');
+  byId('astra-cesium-tiles-controls').classList.toggle('hidden',engine!=='cesium');
   astraMapState.engine=engine;
   try{
     if(engine==='leaflet'){
@@ -191,6 +197,7 @@ async function switchEngine(engine){
     byId('ai-agent-map').classList.remove('hidden');
     byId('astra-cesium-map').classList.add('hidden');byId('astra-three-map').classList.add('hidden');
     byId('astra-map-3d-tools').classList.add('hidden');
+    byId('astra-cesium-tiles-controls').classList.add('hidden');
     disposeCesium();destroyThree();
     if(typeof aiAgentMap!=='undefined'&&aiAgentMap)aiAgentMap.invalidateSize();
   }
